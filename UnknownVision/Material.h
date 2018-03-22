@@ -14,7 +14,6 @@ class PixelShader1;
 class VertexShader1;
 class GeometryShader1;
 class Sampler;
-class StructuredBuffer;
 
 struct ConstantBufferState {
 	ConstantBuffer*									buffer;

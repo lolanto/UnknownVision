@@ -77,8 +77,7 @@ void Pipeline::Bind(ID3D11DeviceContext* devCtx) {
 	}
 	if (m_DS && m_bcDS)
 		devCtx->ClearDepthStencilView(m_DS, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0, 0);
-	if (m_RTs.size()) devCtx->OMSetRenderTargets(m_RTs.size(), &m_RTs[0], m_DS);
-	else if (m_DS) devCtx->OMSetRenderTargets(0, NULL, m_DS);
+	devCtx->OMSetRenderTargets(m_RTs.size(), &m_RTs[0], m_DS);
 	// bind meshes
 	for (auto iter = m_mesh.begin(), end = m_mesh.end(); iter != end; ++iter) {
 		(*iter)->Bind(devCtx);

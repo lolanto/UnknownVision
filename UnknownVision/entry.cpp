@@ -32,7 +32,7 @@ void main() {
 		return;
 	}
 
-	MyAlg(&renderer, &mc);
+	BruteForce(&renderer, &mc);
 	
 	CoUninitialize();
 	system("pause");

@@ -594,8 +594,7 @@ void BruteForce(ALGDefualtParam) {
 	CAMERA_DESC camDesc(WIDTH, HEIGHT);
 	camDesc.fov = 0.79;
 	camDesc.lookAt = DirectX::XMFLOAT3();
-	//camDesc.position = DirectX::XMFLOAT3(0.0f, 8.0f, -3.0f);
-	camDesc.position = DirectX::XMFLOAT3(0.0f, 1.0f, -1.0f);
+	camDesc.position = DirectX::XMFLOAT3(0.0f, 8.0f, -3.0f);
 	Camera cc(camDesc);
 	RendererSetup(cc);
 	// 添加摄像机控制器
@@ -603,7 +602,7 @@ void BruteForce(ALGDefualtParam) {
 	CameraControllerSetting(obController);
 
 	// 创建贴图
-	CommonTexture BC(L"./CubeMapScene/BC.png");
+	CommonTexture BC(L"./SSRScene/BC.png");
 	RendererSetup(BC);
 
 	// Sampler
@@ -659,7 +658,7 @@ void BruteForce(ALGDefualtParam) {
 	renderer->Setup(plane.get());
 	plane->SetModel(&basic);
 	
-	std::vector<std::shared_ptr<Mesh>> meshList = mf.Load("./CubeMapScene/testEnv.obj");
+	std::vector<std::shared_ptr<Mesh>> meshList = mf.Load("./SSRScene/testScene.obj");
 	for (auto iter = meshList.begin(), end = meshList.end(); iter != end; ++iter) {
 		renderer->Setup(iter->get());
 		iter->get()->SetModel(&basic);
@@ -767,7 +766,7 @@ void MyAlg(ALGDefualtParam)
 	CAMERA_DESC camDesc(WIDTH, HEIGHT);
 	camDesc.fov = 0.79;
 	camDesc.lookAt = DirectX::XMFLOAT3();
-	camDesc.position = DirectX::XMFLOAT3(0.0f, 4.0f, -1.0f);
+	camDesc.position = DirectX::XMFLOAT3(0.0f, 8.0f, -3.0f);
 	Camera cc(camDesc);
 	RendererSetup(cc);
 	// 添加摄像机控制器
@@ -779,7 +778,7 @@ void MyAlg(ALGDefualtParam)
 	const int SamplePoints = SamplePointX * SamplePointY;
 
 	// 创建texture
-	CommonTexture BC(L"./CubeMapScene/BC.png");
+	CommonTexture BC(L"./SSRScene/BC.png");
 	RendererSetup(BC);
 
 	// 创建模型和网格
@@ -790,14 +789,11 @@ void MyAlg(ALGDefualtParam)
 	RendererSetup(*plane.get());
 	plane->SetModel(&basicModel);
 	
-	std::vector<std::shared_ptr<Mesh>> meshList = mf.Load("./CubeMapScene/testEnv4.obj");
+	std::vector<std::shared_ptr<Mesh>> meshList = mf.Load("./SSRScene/testScene.obj");
 	for (auto iter = meshList.begin(), end = meshList.end(); iter != end; ++iter) {
 		RendererSetup(*iter->get());
 		iter->get()->SetModel(&basicModel);
 	}
-
-	RendererSetup(linearSampler);
-	RendererSetup(pointSampler);
 
 	// pass1 创建SS的G-Buffer需要的材料
 	// 创建Canvas
@@ -811,7 +807,7 @@ void MyAlg(ALGDefualtParam)
 	RendererSetup(SSAlbedo);
 
 	// 创建shader
-	ShaderGenVGP(SSBasic, MyAlgSS);
+	ShaderGenVP(SSBasic, MyAlgSS);
 
 	// 创建Mat
 	Material SSMat;
@@ -837,132 +833,4 @@ void MyAlg(ALGDefualtParam)
 	// pass2 创建构造采样点相关的材料
 	// 创建记录
 	StructuredBuffer VPLMatrixs(SamplePoints, sizeof(DirectX::XMFLOAT4X4), false);
-	RendererSetup(VPLMatrixs);
-	ComputeShader1 catCS("../Debug/MyAlgCatCS.cso");
-	RendererSetup(catCS);
-	ComputePipeline catPipeline(&catCS, {1, 1, 1});
-	catPipeline.BindResource(&SSPos, 0);
-	catPipeline.BindResource(&SSNor, 1);
-	catPipeline.BindUATarget(&VPLMatrixs, 0);
-	RendererSetup(catPipeline);
-
-	// pass3 创建shadow map
-	const float GSMSize = 1280.0f;
-	D3D11_VIEWPORT GSMViewport;
-	GSMViewport.Height = GSMViewport.Width = GSMSize;
-	GSMViewport.MaxDepth = 1.0f;
-	GSMViewport.MinDepth = 0.0f;
-	GSMViewport.TopLeftX = GSMViewport.TopLeftY = 0;
-	RasterState GSMRasterState(D3D11_CULL_NONE);
-	RendererSetup(GSMRasterState);
-
-	DepthTexture GSMDepTex(GSMSize, GSMSize);
-	RendererSetup(GSMDepTex);
-	Canvas GSMUV(GSMSize, GSMSize);
-	RendererSetup(GSMUV);
-
-	ShaderGenVGP(GenShadowMap, MyAlgGenShadowMap);
-
-	Material GSMMat;
-	MaterialSettingBeg(GSMMat);
-	MatSetVGP(GenShadowMap);
-	MatSetTexture(VPLMatrixs, SBT_GEOMETRY_SHADER, 0);
-	MaterialSettingEnd;
-	Pipeline GSMPipeline;
-	PipelineSettingBeg(GSMPipeline);
-	PplSetDS(GSMDepTex.GetDSV(), Ppl_BC_NAC);
-	PplSetMat(GSMMat);
-	PplAddRT(GSMUV, Ppl_BC_NAC);
-	PplAddMesh(meshList[0].get());
-	PplSetCam(cc);
-	PipelineSettingEnd;
-
-	// pass4 创建 scene map
-	const float SceneMapSize = 2048.0f;
-	Canvas SMPos(SceneMapSize, SceneMapSize, DXGI_FORMAT_R32G32B32A32_FLOAT);
-	RendererSetup(SMPos);
-	Canvas SMNor(SceneMapSize, SceneMapSize, DXGI_FORMAT_R32G32B32A32_FLOAT);
-	RendererSetup(SMNor);
-	Canvas SMAlbedo(SceneMapSize, SceneMapSize);
-	RendererSetup(SMAlbedo);
-
-	ShaderGenVP(SceneMap, MyAlgSM);
-
-	Material SceneMapMat;
-	MaterialSettingBeg(SceneMapMat);
-	MatSetVP(SceneMap);
-	MatSetTexture(BC, SBT_PIXEL_SHADER, 0);
-	MatSetSamplerState(linearSampler, SBT_PIXEL_SHADER, 0);
-	MaterialSettingEnd;
-
-	Pipeline SceneMapPipeline;
-	PipelineSettingBeg(SceneMapPipeline);
-	PplSetMat(SceneMapMat);
-	PplAddRT(SMPos, Ppl_BC_NAC);
-	PplAddRT(SMNor, Ppl_BC_NAC);
-	PplAddRT(SMAlbedo, Ppl_BC_NAC);
-	PplAddMesh(meshList[0].get());
-	PipelineSettingEnd;
-
-	RasterState SceneMapRS(D3D11_CULL_NONE);
-	RendererSetup(SceneMapRS);
-
-	D3D11_VIEWPORT SceneMapVP;
-	SceneMapVP.Height = SceneMapSize;
-	SceneMapVP.Width = SceneMapSize;
-	SceneMapVP.TopLeftX = SceneMapVP.TopLeftY = 0.0f;
-	SceneMapVP.MaxDepth = 1.0f;
-	SceneMapVP.MinDepth = 0.0f;
-
-	// pass5 创建GB2
-	Canvas SRAlbedo(WIDTH, HEIGHT);
-	SRAlbedo.unorderAccess = true;
-	RendererSetup(SRAlbedo);
-	
-	ComputeShader1 SRCSGS("../Debug/MyAlgSRCS.cso");
-	RendererSetup(SRCSGS);
-	ComputePipeline SRPipeline(&SRCSGS, { 128, 96, 1 });
-	SRPipeline.BindResource(&GSMUV, 0);
-	SRPipeline.BindResource(&SSPos, 1);
-	SRPipeline.BindResource(&SSRef, 2);
-	SRPipeline.BindResource(&SMAlbedo, 3);
-	SRPipeline.BindResource(&VPLMatrixs, 4);
-	SRPipeline.BindUATarget(&SRAlbedo, 0);
-	RendererSetup(SRPipeline);
-
-
-	// pass0 创建承载后处理结果的quad
-	// 创建shader
-	ShaderGenVP(QuadBasic, MyAlgQuad);
-	// 创建mat
-	Material QuadBasicMat;
-	MaterialSettingBeg(QuadBasicMat);
-	MatSetVP(QuadBasic);
-	MatSetTexture(SRAlbedo, SBT_PIXEL_SHADER, 0);
-	MatSetTexture(SSAlbedo, SBT_PIXEL_SHADER, 1);
-	MatSetSamplerState(pointSampler, SBT_PIXEL_SHADER, 0);
-	MaterialSettingEnd;
-	// 创建pipeline
-	Pipeline QuadBasicPipeline;
-	PipelineSettingBeg(QuadBasicPipeline);
-	PplAddMesh(plane.get());
-	PplSetCam(cc);
-	PplSetMat(QuadBasicMat);
-	PplAddRT(*MainRT, Ppl_BC_NAC);
-	PipelineSettingEnd;
-
-	renderer->SetRenderState(&SceneMapRS, &SceneMapVP);
-	IMRunPipeline(SceneMapPipeline);
-	mc->Run([&] {
-		renderer->ClearRenderTarget(&SRAlbedo);
-		SetRS(normalRS);
-		IMRunPipeline(SSPipeline);
-		IMRunPipeline(catPipeline);
-		renderer->SetRenderState(&GSMRasterState, &GSMViewport);
-		IMRunPipeline(GSMPipeline);
-		SetRS(normalRS);
-		IMRunPipeline(SRPipeline);
-		IMRunPipeline(QuadBasicPipeline);
-		EndFrame;
-	});
 }

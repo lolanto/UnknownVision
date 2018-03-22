@@ -33,9 +33,6 @@
     <ClCompile Include="MainClass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="RendererProxy.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
     <ClCompile Include="DXRenderer.cpp">
       <Filter>UnknownVision\Scrouce</Filter>
     </ClCompile>
@@ -52,9 +49,6 @@
       <Filter>UnknownVision\Scrouce</Filter>
     </ClCompile>
     <ClCompile Include="Canvas.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderTarget.cpp">
       <Filter>UnknownVision\Scrouce</Filter>
     </ClCompile>
     <ClCompile Include="Texture.cpp">
@@ -99,13 +93,16 @@
     <ClCompile Include="Buffer.cpp">
       <Filter>UnknownVision\Scrouce</Filter>
     </ClCompile>
+    <ClCompile Include="Resource.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Pass.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainClass.h">
       <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="RendererProxy.h">
-      <Filter>UnknownVision\Header</Filter>
     </ClInclude>
     <ClInclude Include="DXRenderer.h">
       <Filter>UnknownVision\Header</Filter>
@@ -126,12 +123,6 @@
       <Filter>UnknownVision\Header</Filter>
     </ClInclude>
     <ClInclude Include="BasicModel.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="UObject.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderTarget.h">
       <Filter>UnknownVision\Header</Filter>
     </ClInclude>
     <ClInclude Include="Texture.h">
@@ -168,6 +159,12 @@
       <Filter>UnknownVision\Header</Filter>
     </ClInclude>
     <ClInclude Include="Buffer.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Pass.h">
       <Filter>UnknownVision\Header</Filter>
     </ClInclude>
   </ItemGroup>
@@ -254,42 +251,6 @@
       <Filter>UnknownVision\Shader</Filter>
     </FxCompile>
     <FxCompile Include="shader\BruteForce\BruteForceReflectCS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyAlgCatCS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyAlgSSPS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyAlgSSVS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyAlgQuadPS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyAlgQuadVS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyAlgGenShadowMapVS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyAlgGenShadowMapGS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyAlgGenShadowMapPS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyAlgSRCS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyAlgSMPS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyAlgSMVS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyAlgSSGS.hlsl">
       <Filter>UnknownVision\Shader</Filter>
     </FxCompile>
   </ItemGroup>

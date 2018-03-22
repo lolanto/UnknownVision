@@ -2,7 +2,7 @@
 #include <DirectXMath.h>
 #include <memory>
 #include <wrl.h>
-#include "UnknownObject.h"
+#include "Buffer.h"
 
 typedef unsigned int UINT;
 typedef unsigned char byte;
@@ -46,8 +46,8 @@ public:
 
 public:
 	bool Setup(ID3D11Device*);
-	void Bind(ID3D11DeviceContext*);
-	void Unbind(ID3D11DeviceContext*);
+	void Bind(ID3D11DeviceContext*, ShaderBindTarget, SIZE_T);
+	void Unbind(ID3D11DeviceContext*, ShaderBindTarget, SIZE_T);
 
 	DirectX::XMFLOAT3 GetPosition() const;
 	DirectX::XMFLOAT3 GetLookAt() const;
@@ -87,10 +87,8 @@ private:
 		DirectX::XMFLOAT3											m_pos;
 		float temp;
 		DirectX::XMFLOAT4											m_param;
-	}																			m_cameraDataStruct,
+	}																			/*m_cameraDataStruct,*/
 																				m_cameraPrevData;
-
-	std::shared_ptr<byte>											m_vpMatrixdata;
 
 	DirectX::XMFLOAT3												m_lookAt;
 
@@ -99,12 +97,7 @@ private:
 	float																		m_near;
 	float																		m_far;
 
-	// Camera const buffer
-	Microsoft::WRL::ComPtr<ID3D11Buffer>				m_ccbuf;
-	// buffer bind slot
-	UINT																	m_VSSlot;
-	UINT																	m_PSSlot;
-	bool																		m_hasSetup;
+	ConstantBuffer<CameraDataStruct>					m_buf;
 };
 
 

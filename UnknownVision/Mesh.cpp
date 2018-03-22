@@ -87,17 +87,7 @@ bool Mesh::Setup(ID3D11Device* dev) {
 	return true;
 }
 
-void Mesh::Bind(ID3D11DeviceContext* devCtx) {
-	if (!m_hasSetup) {
-		// 尚未初始化缓存，不能绑定
-		MLOG(LL, "Mesh::Bind: have not setup mesh!");
-		return;
-	}
-	if (m_model)
-		m_model->Bind(devCtx);
-	else
-		// 尚未绑定模型
-		MLOG(LW, "Mesh::Bind: have not set model!");
+void Mesh::Bind(ID3D11DeviceContext* devCtx, ShaderBindTarget sbt, SIZE_T slot) {
 	static UINT stride = -1;
 	static UINT offset = 0;
 	// Model
@@ -120,13 +110,8 @@ void Mesh::Bind(ID3D11DeviceContext* devCtx) {
 	devCtx->DrawIndexed(m_index.size(), 0, 0);
 }
 
-void Mesh::Unbind(ID3D11DeviceContext*) {
-	//MLOG(LW, "Mesh::Unbind: no unbind!");
+void Mesh::Unbind(ID3D11DeviceContext* devCtx, ShaderBindTarget sbt, SIZE_T slot) {
 	return;
-}
-
-void Mesh::SetModel(Model* m) {
-	m_model = m;
 }
 
 // 获取Mesh中的位置信息

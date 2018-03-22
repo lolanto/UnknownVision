@@ -120,106 +120,101 @@ bool HDRTexture::Setup(ID3D11Device* dev) {
 ID3D11ShaderResourceView** HDRTexture::GetSRV() { return m_shaderResource.GetAddressOf(); }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////   InternalTexture   ///////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////
-InternalTexture::InternalTexture(ID3D11ShaderResourceView* srv) {
-	m_shaderResource.Attach(srv);
-}
-
-bool InternalTexture::Setup(ID3D11Device* dev) {
-	return true;
-}
-
-ID3D11ShaderResourceView** InternalTexture::GetSRV() { return m_shaderResource.GetAddressOf(); }
-
-/////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////   QuadDepthTexture   //////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
-DepthTexture::DepthTexture(float width, float height, UINT arraySize,
+DepthTexture::DepthTexture(float width, float height, bool hasMipmap, UINT arraySize,
 	DXGI_FORMAT bufFormat, DXGI_FORMAT depFormat, DXGI_FORMAT resFormat)
 	: width(width), height(height), 
 	bufFormat(bufFormat), depFormat(depFormat), resFormat(resFormat),
-	m_cubemap(false), m_mipmap(false), m_arraySize(arraySize) {}
+	hasMipMap(hasMipMap), m_arraySize(arraySize) {}
+
+void DepthTexture::preSetDesc() {
+	ZeroMemory(&m_texDesc, sizeof(m_texDesc));
+	ZeroMemory(&m_dsDesc, sizeof(m_dsDesc));
+	ZeroMemory(&m_rsvDesc, sizeof(m_rsvDesc));
+
+	m_texDesc.ArraySize = m_arraySize;
+	m_texDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+	m_texDesc.CPUAccessFlags = 0;
+	m_texDesc.Format = bufFormat;
+	m_texDesc.Height = height;
+	m_texDesc.Width = width;
+	m_texDesc.MipLevels = hasMipMap ? 0 : 1;
+	m_texDesc.SampleDesc.Count = 1;
+	m_texDesc.SampleDesc.Quality = 0;
+	m_texDesc.Usage = D3D11_USAGE_DEFAULT;
+
+	m_dsDesc.Format = depFormat;
+	if (m_arraySize > 1) {
+		m_dsDesc.Texture2DArray.ArraySize = m_arraySize;
+		m_dsDesc.Texture2DArray.FirstArraySlice = 0;
+		m_dsDesc.Texture2DArray.MipSlice = 0;
+		m_dsDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+	}
+	else {
+		m_dsDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+		m_dsDesc.Texture2D.MipSlice = 0;
+	}
+
+	m_rsvDesc.Format = resFormat;
+	m_rsvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	if (m_arraySize > 1) {
+		m_rsvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+		m_rsvDesc.Texture2DArray.ArraySize = m_arraySize;
+		m_rsvDesc.Texture2DArray.FirstArraySlice = 0;
+		m_rsvDesc.Texture2DArray.MipLevels = hasMipMap ? -1 : 1;
+		m_rsvDesc.Texture2DArray.MostDetailedMip = 0;
+	}
+	else {
+		m_rsvDesc.Texture2D.MipLevels = hasMipMap ? -1 : 1;
+		m_rsvDesc.Texture2D.MostDetailedMip = 0;
+	}
+}
 
 bool DepthTexture::Setup(ID3D11Device* dev) {
-	const static char* funcTag = "QuadDepthTexture::Setup: ";
-	if (width != height && m_cubemap) {
-		MLOG(LL, funcTag, LE, "width and height is not equal, can not gen cube map!");
-		return false;
-	}
-	D3D11_TEXTURE2D_DESC texDesc;
-	D3D11_DEPTH_STENCIL_VIEW_DESC dsDesc;
-	D3D11_SHADER_RESOURCE_VIEW_DESC rsvDesc;
-	ZeroMemory(&texDesc, sizeof(texDesc));
-	ZeroMemory(&dsDesc, sizeof(dsDesc));
-	ZeroMemory(&rsvDesc, sizeof(rsvDesc));
-
-	texDesc.ArraySize = m_arraySize;
-	texDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
-	texDesc.CPUAccessFlags = 0;
-	texDesc.Format = bufFormat;
-	texDesc.Height = height;
-	texDesc.Width = width;
-	texDesc.MipLevels = m_mipmap ? 0 : 1;
-	texDesc.MiscFlags = m_cubemap ? D3D11_RESOURCE_MISC_TEXTURECUBE : 0;
-	texDesc.SampleDesc.Count = 1;
-	texDesc.SampleDesc.Quality = 0;
-	texDesc.Usage = D3D11_USAGE_DEFAULT;
-
-	if (FAILED(dev->CreateTexture2D(&texDesc, NULL, m_texture.ReleaseAndGetAddressOf()))) {
-		MLOG(LL, funcTag, LW, "Create depth texture failed!");
+	preSetDesc();
+	if (FAILED(dev->CreateTexture2D(&m_texDesc, NULL, m_texture.ReleaseAndGetAddressOf()))) {
+		MLOG(LL, __FUNCTION__, LW, "Create depth texture failed!");
 		return false;
 	}
 
-	dsDesc.Format = depFormat;
-	if (m_arraySize > 1) {
-		dsDesc.Texture2DArray.ArraySize = m_arraySize;
-		dsDesc.Texture2DArray.FirstArraySlice = 0;
-		dsDesc.Texture2DArray.MipSlice = 0;
-		dsDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
-	}
-	else {
-		dsDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-		dsDesc.Texture2D.MipSlice = 0;
-	}
-
-	if (FAILED(dev->CreateDepthStencilView(m_texture.Get(), &dsDesc, m_depStenView.ReleaseAndGetAddressOf()))) {
-		MLOG(LL, funcTag, LW, "Create depth view failed!");
+	if (FAILED(dev->CreateDepthStencilView(m_texture.Get(), &m_dsDesc, m_dsv.ReleaseAndGetAddressOf()))) {
+		MLOG(LL, __FUNCTION__, LW, "Create depth view failed!");
 		return false;
 	}
 
-	rsvDesc.Format = resFormat;
-	rsvDesc.ViewDimension = m_cubemap ? D3D11_SRV_DIMENSION_TEXTURECUBE : D3D11_SRV_DIMENSION_TEXTURE2D;
-	if (m_cubemap) {
-		rsvDesc.TextureCube.MipLevels = m_mipmap ? -1 : 1;
-		rsvDesc.TextureCube.MostDetailedMip = 0;
-	}
-	else if (m_arraySize > 1) {
-		rsvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
-		rsvDesc.Texture2DArray.ArraySize = m_arraySize;
-		rsvDesc.Texture2DArray.FirstArraySlice = 0;
-		rsvDesc.Texture2DArray.MipLevels = m_mipmap ? -1 : 1;
-		rsvDesc.Texture2DArray.MostDetailedMip = 0;
-	}
-	else {
-		rsvDesc.Texture2D.MipLevels = m_mipmap ? -1 : 1;
-		rsvDesc.Texture2D.MostDetailedMip = 0;
-	}
-	
-	if (FAILED(dev->CreateShaderResourceView(m_texture.Get(), &rsvDesc, m_shaderResource.ReleaseAndGetAddressOf()))) {
-		MLOG(LL, funcTag, LW, "Create depth shader resource failed!");
+	if (FAILED(dev->CreateShaderResourceView(m_texture.Get(), &m_rsvDesc, m_srv_tex.ReleaseAndGetAddressOf()))) {
+		MLOG(LL, __FUNCTION__, LW, "Create depth shader resource failed!");
 		return false;
 	}
 
 	return true;
 }
 
-void DepthTexture::SetCubeMap() { m_cubemap = true; m_arraySize = 6; }
-void DepthTexture::SetMipMap() { m_mipmap = true; }
+/////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////   CubeMapDepthTexture   //////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
 
-ID3D11DepthStencilView* DepthTexture::GetDSV() { return m_depStenView.Get(); }
-ID3D11ShaderResourceView** DepthTexture::GetSRV() { return m_shaderResource.GetAddressOf(); }
+CubeMapDepthTexture::CubeMapDepthTexture(float size, bool hasMipMap, 
+	DXGI_FORMAT bufFormat, DXGI_FORMAT depFormat, DXGI_FORMAT resFormat)
+	: DepthTexture(size, size, hasMipMap, 6, bufFormat, depFormat,resFormat) {}
+
+bool CubeMapDepthTexture::Setup(ID3D11Device * dev)
+{
+	preSetDesc();
+	return DepthTexture::Setup(dev);
+}
+
+void CubeMapDepthTexture::preSetDesc()
+{
+	DepthTexture::preSetDesc();
+	m_texDesc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
+	m_rsvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+	m_rsvDesc.TextureCube.MipLevels = hasMipMap ? -1 : 1;
+	m_rsvDesc.TextureCube.MostDetailedMip = 0;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////   TextureFactory   /////////////////////////////////////////

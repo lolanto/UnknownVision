@@ -28,21 +28,18 @@ public:
 	//bool BindModel(Model*);
 	//void SetupModel(Model*);
 
-	void Setup(UObject*);
 	void Setup(Canvas*);
 	void Setup(ITexture*);
 	void Setup(LightProxy*);
 	void Setup(IShader*);
 	void Setup(UnknownObject*);
 
-	void Bind(UObject*);
 	void Bind(RenderTargetsDesc*, bool, bool);
 	void Bind(ShaderResourcesDesc*);
 	void Bind(LightProxy*);
 	void Bind(IShader*);
 	void Bind(UnknownObject*);
 
-	void Unbind(UObject*);
 	void Unbind(RenderTargetsDesc*);
 	void Unbind(ShaderResourcesDesc*);
 	void Unbind(LightProxy*);
