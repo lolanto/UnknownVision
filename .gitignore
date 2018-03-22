@@ -1,0 +1,13 @@
+/.vs/
+/Debug/
+/UnknownVision/Debug/
+*.jpg
+*.png
+*.obj
+*.mtl
+*.blend
+*.blend1
+*.json
+*.hdr
+*.ibl
+*.zip

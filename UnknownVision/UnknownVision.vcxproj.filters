@@ -1,0 +1,296 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="UnknownVision">
+      <UniqueIdentifier>{d031025f-bcc3-4147-819a-8dac71824510}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UnknownVision\Header">
+      <UniqueIdentifier>{dd2d6842-e226-497c-a8e1-e1cde91b6135}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UnknownVision\Scrouce">
+      <UniqueIdentifier>{02584cca-9324-4602-bf5f-12c0a1d562f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UnknownVision\Shader">
+      <UniqueIdentifier>{d20f9a67-20e6-44fa-ac7e-95437d06f19d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="entry.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MainClass.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RendererProxy.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="DXRenderer.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="InfoLog.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="Canvas.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderTarget.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="Light.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectionLight.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="PointLight.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="OrbitController.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="UI.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="UnknownObject.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="Pipeline.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="Sampler.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="RasterState.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="Alg.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="Buffer.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="MainClass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RendererProxy.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="DXRenderer.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="InfoLog.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Canvas.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="BasicModel.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="UObject.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderTarget.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Light.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="UI.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="UnknownObject.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Pipeline.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Sampler.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="RasterState.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Alg.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="MMarco.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Buffer.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="shader\cubeMapGen\GenCubeMapCubeMapReadPixelShader.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\cubeMapGen\GenCubeMapQuadVertexShader.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\cubeMapGen\GenCubeMapSimpleGeometryShader.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\cubeMapGen\GenCubeMapSimplePixelShader.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\cubeMapGen\GenCubeMapSimpleVertexShader.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\InputLayout.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\DeepGBuffer\DeepGBufferGS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\DeepGBuffer\DeepGBufferPS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\DeepGBuffer\DeepGBufferVS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\DeepGBuffer\DeepGBufferQuadPS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\DeepGBuffer\DeepGBufferQuadVS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionVS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionPS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionQuadPS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionQuadVS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\cubeMapGen\GenCubeMapScenePS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\cubeMapGen\GenCubeMapSceneVS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\imageBasedLighting\imageBasedLightingPS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\imageBasedLighting\imageBasedLightingVS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\imageBasedLighting\imageBasedLightingBasicPS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\imageBasedLighting\imageBasedLightingBasicVS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\BruteForce\BruteForceSceneMapPS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\BruteForce\BruteForceSceneMapVS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\BruteForce\BruteForceSSPS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\BruteForce\BruteForceSSVS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\BruteForce\BruteForceQuadPS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\BruteForce\BruteForceQuadVS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\BruteForce\BruteForceReflectCS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\MyAlg\MyAlgCatCS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\MyAlg\MyAlgSSPS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\MyAlg\MyAlgSSVS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\MyAlg\MyAlgQuadPS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\MyAlg\MyAlgQuadVS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\MyAlg\MyAlgGenShadowMapVS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\MyAlg\MyAlgGenShadowMapGS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\MyAlg\MyAlgGenShadowMapPS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\MyAlg\MyAlgSRCS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\MyAlg\MyAlgSMPS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\MyAlg\MyAlgSMVS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\MyAlg\MyAlgSSGS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+  </ItemGroup>
+</Project>
