@@ -31,6 +31,7 @@ class ComputeShader;
 class Camera;
 class Mesh;
 class Light;
+class RasterState;
 
 enum SourceType {
 	MST_INVALID_TYPE = 0,
@@ -80,10 +81,15 @@ protected:
 
 class ShadingPass : public BasePass {
 public:
-	ShadingPass(VertexShader*, PixelShader*, GeometryShader* gs = nullptr);
+	static BindingData													Def_RasterState;
+	static D3D11_VIEWPORT											Def_ViewPort;
+public:
+	ShadingPass(VertexShader*, PixelShader* ps = nullptr, GeometryShader* gs = nullptr);
+	using BasePass::BindSource;
 	void BindSource(IRenderTarget*, bool beforeClear, bool afterClear);
 	void BindSource(IDepthStencil*, bool beforeClear, bool afterClear);
-	void BindSource(Mesh*);
+	void BindSource(Mesh*, ShaderBindTarget sbt = SBT_UNKNOWN, SIZE_T slot = -1);
+	void BindSource(RasterState* rs = nullptr, D3D11_VIEWPORT* vs = nullptr);
 	void BindSource(UnknownObject*, ShaderBindTarget, SIZE_T);
 
 	void Run(ID3D11DeviceContext*);
@@ -95,7 +101,12 @@ private:
 	IDepthStencil*																m_ds;
 	ClearScheme																m_dsClearScheme;
 
+	// 模型绑定信息，不显式绑定则不允许执行该pass
 	BindingData																	m_meshBindingData;
+	// 设置光栅状态，不显式绑定则调用渲染器默认光栅设置
+	BindingData																	m_rasterStateData;
+	// 设置view port状态
+	D3D11_VIEWPORT*														m_viewport;
 
 	VertexShader*																m_vs;
 	PixelShader*																	m_ps;

@@ -79,7 +79,7 @@ protected:
 
 class IDepthStencil {
 public:
-	virtual ID3D11DepthStencilView* GetDSV() = 0;
+	virtual ID3D11DepthStencilView* GetDSV();
 protected:
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView>				m_dsv;
 };

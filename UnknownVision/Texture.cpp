@@ -68,7 +68,7 @@ bool CommonTexture::Setup(ID3D11Device* dev) {
 		return false;
 	}
 
-	if (FAILED(dev->CreateShaderResourceView(m_tex2d.Get(), &SRVDesc, m_shaderResource.ReleaseAndGetAddressOf()))) {
+	if (FAILED(dev->CreateShaderResourceView(m_tex2d.Get(), &SRVDesc, m_srv_tex.ReleaseAndGetAddressOf()))) {
 		MLOG(LL, funcTag, LW, "Create shader resource failed!");
 		return false;
 	}
@@ -76,7 +76,7 @@ bool CommonTexture::Setup(ID3D11Device* dev) {
 	return true;
 }
 
-ID3D11ShaderResourceView** CommonTexture::GetSRV() { return m_shaderResource.GetAddressOf(); }
+ID3D11ShaderResourceView** CommonTexture::GetSRV() { return m_srv_tex.GetAddressOf(); }
 
 /////////////////////////
 // private Function
@@ -110,14 +110,14 @@ bool HDRTexture::Setup(ID3D11Device* dev) {
 		MLOG(LL, funcTag, LE, "create texture2d failed!");
 		return false;
 	}
-	if (dev->CreateShaderResourceView(m_tex2d.Get(), &SRVDesc, m_shaderResource.ReleaseAndGetAddressOf())) {
+	if (dev->CreateShaderResourceView(m_tex2d.Get(), &SRVDesc, m_srv_tex.ReleaseAndGetAddressOf())) {
 		MLOG(LL, funcTag, LE, "create texture2d shader resource view failed!");
 		return false;
 	}
 	return true;
 }
 
-ID3D11ShaderResourceView** HDRTexture::GetSRV() { return m_shaderResource.GetAddressOf(); }
+ID3D11ShaderResourceView** HDRTexture::GetSRV() { return m_srv_tex.GetAddressOf(); }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////   QuadDepthTexture   //////////////////////////////

@@ -47,6 +47,7 @@ public:
 	const UINT AssetID;
 public:
 	virtual bool Setup(ID3D11Device*) = 0;
+	// device context, target shader, slot
 	virtual void Bind(ID3D11DeviceContext*, ShaderBindTarget, SIZE_T) = 0;
 	virtual void Unbind(ID3D11DeviceContext*, ShaderBindTarget, SIZE_T) = 0;
 };

@@ -20,7 +20,6 @@ public:
 
 private:
 	Microsoft::WRL::ComPtr<ID3D11Texture2D>						m_tex2d;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>	m_shaderResource;
 	const wchar_t*																		m_source;
 };
 
@@ -35,7 +34,6 @@ public:
 
 private:
 	Microsoft::WRL::ComPtr<ID3D11Texture2D>						m_tex2d;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>	m_shaderResource;
 	const wchar_t*																		m_source;
 };
 

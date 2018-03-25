@@ -3,7 +3,7 @@
 #include <memory>
 #include <map>
 #include <wrl.h>
-
+#include "InfoLog.h"
 #include "UnknownObject.h"
 #include "Resource.h"
 template<typename T>

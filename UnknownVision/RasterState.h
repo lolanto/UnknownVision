@@ -14,8 +14,8 @@ public:
 		D3D11_FILL_MODE fillMode = D3D11_FILL_SOLID);
 
 	bool Setup(ID3D11Device*);
-	void Bind(ID3D11DeviceContext*);
-	void Unbind(ID3D11DeviceContext*);
+	void Bind(ID3D11DeviceContext*, ShaderBindTarget, SIZE_T);
+	void Unbind(ID3D11DeviceContext*, ShaderBindTarget, SIZE_T);
 public:
 	D3D11_RASTERIZER_DESC													m_rasterDesc;
 private:

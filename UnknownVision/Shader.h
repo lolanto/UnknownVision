@@ -42,8 +42,8 @@ public:
 	virtual ShaderDesc* GetDescription();
 	virtual ConstBufferDesc* GetShaderCBuffer(UINT);
 	virtual bool Setup(ID3D11Device*) = 0;
-	virtual void Bind(ID3D11DeviceContext*) = 0;
-	virtual void Unbind(ID3D11DeviceContext*) = 0;
+	virtual void Bind(ID3D11DeviceContext*, ShaderBindTarget, SIZE_T) = 0;
+	virtual void Unbind(ID3D11DeviceContext*, ShaderBindTarget, SIZE_T) = 0;
 protected:
 	ShaderDesc																					m_desc;
 };
@@ -52,8 +52,8 @@ class VertexShader : public ShaderObject {
 public:
 	VertexShader(std::string filePath);
 	bool Setup(ID3D11Device*);
-	void Bind(ID3D11DeviceContext*);
-	void Unbind(ID3D11DeviceContext*);
+	void Bind(ID3D11DeviceContext*, ShaderBindTarget sbt = SBT_UNKNOWN, SIZE_T slot = -1);
+	void Unbind(ID3D11DeviceContext*, ShaderBindTarget sbt = SBT_UNKNOWN , SIZE_T slot = -1);
 	// 简单的输入结构的描述，只用做校验
 	std::vector<ParamIOLayout>* GetInputLayout();
 private:
@@ -65,8 +65,8 @@ class PixelShader : public ShaderObject {
 public:
 	PixelShader(std::string filePath);
 	bool Setup(ID3D11Device*);
-	void Bind(ID3D11DeviceContext*);
-	void Unbind(ID3D11DeviceContext*);
+	void Bind(ID3D11DeviceContext*, ShaderBindTarget sbt = SBT_UNKNOWN, SIZE_T slot = -1);
+	void Unbind(ID3D11DeviceContext*, ShaderBindTarget sbt = SBT_UNKNOWN, SIZE_T slot = -1);
 	std::vector<ParamIOLayout>* GetOutputLayout();
 private:
 	Microsoft::WRL::ComPtr<ID3D11PixelShader>								m_shader;
@@ -77,8 +77,8 @@ class GeometryShader : public ShaderObject {
 public:
 	GeometryShader(std::string filePath);
 	bool Setup(ID3D11Device*);
-	void Bind(ID3D11DeviceContext*);
-	void Unbind(ID3D11DeviceContext*);
+	void Bind(ID3D11DeviceContext*, ShaderBindTarget sbt = SBT_UNKNOWN, SIZE_T slot = -1);
+	void Unbind(ID3D11DeviceContext*, ShaderBindTarget sbt = SBT_UNKNOWN, SIZE_T slot = -1);
 private:
 	Microsoft::WRL::ComPtr<ID3D11GeometryShader>						m_shader;
 };
@@ -87,8 +87,8 @@ class ComputeShader : public ShaderObject {
 public:
 	ComputeShader(std::string filePath);
 	bool Setup(ID3D11Device*);
-	void Bind(ID3D11DeviceContext*);
-	void Unbind(ID3D11DeviceContext*);
+	void Bind(ID3D11DeviceContext*, ShaderBindTarget sbt = SBT_UNKNOWN, SIZE_T slot = -1);
+	void Unbind(ID3D11DeviceContext*, ShaderBindTarget sbt = SBT_UNKNOWN, SIZE_T slot = -1);
 private:
 	Microsoft::WRL::ComPtr<ID3D11ComputeShader>						m_shader;
 };

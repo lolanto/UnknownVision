@@ -1,4 +1,5 @@
 #include <windowsx.h>
+#include <DirectXMath.h>
 #include "MainClass.h"
 #include "InfoLog.h"
 
@@ -24,15 +25,14 @@ void main() {
 		system("pause");
 		return;
 	}
-	DXRenderer renderer = DXRenderer::GetInstance();
-	if (!renderer.InitSys(mc.GetWindowHandle(), WIDTH, HEIGHT)) {
+	if (!DXRenderer::GetInstance().InitSys(mc.GetWindowHandle(), WIDTH, HEIGHT)) {
 		// ‰÷»æ∆˜≥ı ºªØ ß∞‹
 		MLOG(LE, "Renderer Initialize Failed!");
 		system("pause");
 		return;
 	}
 
-	BruteForce(&renderer, &mc);
+	ImageBasedLighting(&DXRenderer::GetInstance(), &mc);
 	
 	CoUninitialize();
 	system("pause");

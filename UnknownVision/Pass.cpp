@@ -3,14 +3,18 @@
 #include "InfoLog.h"
 #include "Shader.h"
 #include "Mesh.h"
+#include "RasterState.h"
+
+BindingData ShadingPass::Def_RasterState;
+D3D11_VIEWPORT ShadingPass::Def_ViewPort;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////   Clear Scheme   ///////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 ClearScheme::ClearScheme(bool bc, bool ac) : bc(bc), ac(ac) {}
 
-BindingData::BindingData(SourceType st = MST_INVALID_TYPE,
-	ShaderBindTarget sbt = SBT_UNKNOWN, SIZE_T slot = -1)
+BindingData::BindingData(SourceType st,
+	ShaderBindTarget sbt, SIZE_T slot)
 	: resType(st), bindTarget(sbt), slot(slot) {
 	resPointer.object = nullptr;
 }
@@ -63,9 +67,9 @@ void BasePass::BindSource(ISamplerState * res, ShaderBindTarget sbt, SIZE_T slot
 ///////////////////////////////////   Shading Pass   ////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
-ShadingPass::ShadingPass(VertexShader* vs, PixelShader* ps, GeometryShader* gs = nullptr)
+ShadingPass::ShadingPass(VertexShader* vs, PixelShader* ps, GeometryShader* gs)
 	:m_vs(vs), m_ps(ps), m_gs(gs),
-	m_ds(nullptr){}
+	m_ds(nullptr), m_viewport(nullptr){}
 
 void ShadingPass::BindSource(IRenderTarget * rt, bool beforeClear, bool afterClear)
 {
@@ -79,10 +83,23 @@ void ShadingPass::BindSource(IDepthStencil* ds, bool beforeClear, bool afterClea
 	m_dsClearScheme.ac = afterClear;
 }
 
-void ShadingPass::BindSource(Mesh * res)
+void ShadingPass::BindSource(Mesh * res, ShaderBindTarget sbt, SIZE_T slot)
 {
 	m_meshBindingData.resPointer.object = res;
 	m_meshBindingData.resType = MST_UNKNOWN_OBJECT;
+	m_meshBindingData.bindTarget = sbt;
+	m_meshBindingData.slot = slot;
+}
+
+void ShadingPass::BindSource(RasterState * rs, D3D11_VIEWPORT* vp)
+{
+	if (rs) {
+		m_rasterStateData.resPointer.object = rs;
+		m_rasterStateData.resType = MST_UNKNOWN_OBJECT;
+	}
+	if (vp) {
+		m_viewport = vp;
+	}
 }
 
 void ShadingPass::BindSource(UnknownObject* res, ShaderBindTarget sbt, SIZE_T slot) {
@@ -99,7 +116,7 @@ void ShadingPass::BindSource(UnknownObject* res, ShaderBindTarget sbt, SIZE_T sl
 }
 
 void ShadingPass::Run(ID3D11DeviceContext* devCtx) {
-	if (m_vs == nullptr || m_ps == nullptr) {
+	if (m_vs == nullptr) {
 		MLOG(LW, __FUNCTION__, LL, "expect vertex/pixel shader!");
 		return;
 	}
@@ -109,7 +126,7 @@ void ShadingPass::Run(ID3D11DeviceContext* devCtx) {
 	}
 	static float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	m_vs->Bind(devCtx);
-	m_ps->Bind(devCtx);
+	if (m_ps) m_ps->Bind(devCtx);
 	if (m_gs) m_gs->Bind(devCtx);
 	// bind resource
 	for (auto& iter : m_bindingData) {
@@ -144,9 +161,31 @@ void ShadingPass::Run(ID3D11DeviceContext* devCtx) {
 	if (m_dsClearScheme.bc && m_ds) devCtx->ClearDepthStencilView(m_ds->GetDSV(),
 		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
+	// Set Raster state
+	if (m_rasterStateData.resType == MST_UNKNOWN_OBJECT) {
+		m_rasterStateData.resPointer.object->Bind(devCtx, SBT_UNKNOWN, 0);
+	}
+	else {
+		// use default raster state
+		Def_RasterState.resPointer.object->Bind(devCtx, SBT_UNKNOWN, 0);
+	}
+
+	// Set View Port
+	if (m_viewport) {
+		devCtx->RSSetViewports(1, m_viewport);
+	}
+	else {
+		devCtx->RSSetViewports(1, &Def_ViewPort);
+	}
+
 	// binding RT
-	if (m_ds) devCtx->OMSetRenderTargets(m_rtvs.size(), &m_rtvs[0], m_ds->GetDSV());
-	else devCtx->OMSetRenderTargets(m_rtvs.size(), &m_rtvs[0], nullptr);
+	if (m_ds) {
+		if (m_rtvs.size()) devCtx->OMSetRenderTargets(m_rtvs.size(), &m_rtvs[0], m_ds->GetDSV());
+		// 适用于只设置vs的情况
+		else devCtx->OMSetRenderTargets(0, nullptr, m_ds->GetDSV());
+	}
+	else if (m_rtvs.size()) devCtx->OMSetRenderTargets(m_rtvs.size(), &m_rtvs[0], nullptr);
+	else devCtx->OMSetRenderTargets(0, nullptr, nullptr);
 
 	// bind mesh and submit draw call
 	m_meshBindingData.resPointer.object->Bind(devCtx, m_meshBindingData.bindTarget, m_meshBindingData.slot);
@@ -196,7 +235,15 @@ void ShadingPass::End(ID3D11DeviceContext* devCtx) {
 	if (m_dsClearScheme.ac && m_ds) devCtx->ClearDepthStencilView(m_ds->GetDSV(),
 		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	// Unbinding RT
+	// Unbind raster state
+	if (m_rasterStateData.resType == MST_UNKNOWN_OBJECT) {
+		m_rasterStateData.resPointer.object->Bind(devCtx, SBT_UNKNOWN, 0);
+	}
+	else {
+		Def_RasterState.resPointer.object->Bind(devCtx, SBT_UNKNOWN, 0);
+	}
+
+	// Unbind RT
 	devCtx->OMSetRenderTargets(0, NULL, nullptr);
 
 	// unbind mesh and submit draw call

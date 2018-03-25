@@ -4,7 +4,6 @@
 #include <wrl.h>
 #include <vector>
 #include <memory>
-#include "UObject.h"
 
 enum LightType {
 	LT_DIRECTION = 0,

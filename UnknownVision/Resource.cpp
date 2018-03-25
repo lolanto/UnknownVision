@@ -214,6 +214,11 @@ ID3D11RenderTargetView* IRenderTarget::GetRTV() {
 	return m_rtv.Get();
 }
 
+ID3D11DepthStencilView* IDepthStencil::GetDSV() {
+	assert(m_dsv.Get() != NULL);
+	return m_dsv.Get();
+}
+
 RenderTargetWrapper::RenderTargetWrapper(ID3D11RenderTargetView* rtv) {
 	m_rtv.Attach(rtv);
 }

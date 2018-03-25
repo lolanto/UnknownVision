@@ -25,10 +25,20 @@ bool Camera::Setup(ID3D11Device* dev) {
 	// calculate data
 	calcProjMatrix();
 	calcViewMatrix();
+	m_buf.Setup(dev);
 	return true;
 }
 
 void Camera::Bind(ID3D11DeviceContext* devCtx, ShaderBindTarget sbt, SIZE_T slot) {
+	// update data;
+	if (m_isProjDirty) {
+		calcProjMatrix();
+		m_isProjDirty = false;
+	}
+	if (m_isViewDirty) {
+		calcViewMatrix();
+		m_isViewDirty = false;
+	}
 	// bind buffer to shader
 	m_buf.Bind(devCtx, sbt, slot);
 }

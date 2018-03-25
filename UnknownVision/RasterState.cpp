@@ -26,10 +26,10 @@ bool RasterState::Setup(ID3D11Device* dev) {
 	return true;
 }
 
-void RasterState::Bind(ID3D11DeviceContext* devCtx) {
+void RasterState::Bind(ID3D11DeviceContext* devCtx, ShaderBindTarget, SIZE_T) {
 	devCtx->RSSetState(m_rasterState.Get());
 }
 
-void RasterState::Unbind(ID3D11DeviceContext* devCtx) {
+void RasterState::Unbind(ID3D11DeviceContext* devCtx, ShaderBindTarget, SIZE_T) {
 	// Do Nothing!
 }

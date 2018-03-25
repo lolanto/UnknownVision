@@ -69,16 +69,10 @@
     <ClCompile Include="Shader.cpp">
       <Filter>UnknownVision\Scrouce</Filter>
     </ClCompile>
-    <ClCompile Include="Material.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
     <ClCompile Include="UI.cpp">
       <Filter>UnknownVision\Scrouce</Filter>
     </ClCompile>
     <ClCompile Include="UnknownObject.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
-    <ClCompile Include="Pipeline.cpp">
       <Filter>UnknownVision\Scrouce</Filter>
     </ClCompile>
     <ClCompile Include="Sampler.cpp">
@@ -128,12 +122,6 @@
     <ClInclude Include="Texture.h">
       <Filter>UnknownVision\Header</Filter>
     </ClInclude>
-    <ClInclude Include="Material.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="Light.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
     <ClInclude Include="Shader.h">
       <Filter>UnknownVision\Header</Filter>
     </ClInclude>
@@ -141,9 +129,6 @@
       <Filter>UnknownVision\Header</Filter>
     </ClInclude>
     <ClInclude Include="UnknownObject.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="Pipeline.h">
       <Filter>UnknownVision\Header</Filter>
     </ClInclude>
     <ClInclude Include="Sampler.h">
@@ -169,55 +154,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="shader\cubeMapGen\GenCubeMapCubeMapReadPixelShader.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\cubeMapGen\GenCubeMapQuadVertexShader.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\cubeMapGen\GenCubeMapSimpleGeometryShader.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\cubeMapGen\GenCubeMapSimplePixelShader.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\cubeMapGen\GenCubeMapSimpleVertexShader.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
     <FxCompile Include="shader\InputLayout.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\DeepGBuffer\DeepGBufferGS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\DeepGBuffer\DeepGBufferPS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\DeepGBuffer\DeepGBufferVS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\DeepGBuffer\DeepGBufferQuadPS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\DeepGBuffer\DeepGBufferQuadVS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionVS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionPS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionQuadPS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionQuadVS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\cubeMapGen\GenCubeMapScenePS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\cubeMapGen\GenCubeMapSceneVS.hlsl">
       <Filter>UnknownVision\Shader</Filter>
     </FxCompile>
     <FxCompile Include="shader\imageBasedLighting\imageBasedLightingPS.hlsl">
@@ -230,27 +167,6 @@
       <Filter>UnknownVision\Shader</Filter>
     </FxCompile>
     <FxCompile Include="shader\imageBasedLighting\imageBasedLightingBasicVS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\BruteForce\BruteForceSceneMapPS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\BruteForce\BruteForceSceneMapVS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\BruteForce\BruteForceSSPS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\BruteForce\BruteForceSSVS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\BruteForce\BruteForceQuadPS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\BruteForce\BruteForceQuadVS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\BruteForce\BruteForceReflectCS.hlsl">
       <Filter>UnknownVision\Shader</Filter>
     </FxCompile>
   </ItemGroup>

@@ -2,17 +2,17 @@
 #include <d3d11.h>
 #include <wrl.h>
 #include <map>
-#include "RendererProxy.h"
-#include "RenderTarget.h"
+#include <memory>
+#include "RasterState.h"
+
+#define GetMainDev DXRenderer::GetInstance().GetDevice()
+#define GetMainDevCtx DXRenderer::GetInstance().GetContext()
 
 typedef std::map<UINT, Microsoft::WRL::ComPtr<ID3D11Buffer>>					BufferList;
 
-class UObject;
-class Canvas;
-class LightProxy;
-class InternalTexture;
-class IShader;
 class RasterState;
+class RenderTargetWrapper;
+class DepthTexture;
 
 class UnknownObject;
 
@@ -23,43 +23,15 @@ private:
 	static D3D11_INPUT_ELEMENT_DESC															Static_InputElementDesc[];
 	static D3D11_INPUT_ELEMENT_DESC															Dynamic_InputElementDesc[];
 public:
-// RenderProxy virtual function
 	bool InitSys(HWND, float, float);
-	//bool BindModel(Model*);
-	//void SetupModel(Model*);
-
-	void Setup(Canvas*);
-	void Setup(ITexture*);
-	void Setup(LightProxy*);
-	void Setup(IShader*);
-	void Setup(UnknownObject*);
-
-	void Bind(RenderTargetsDesc*, bool, bool);
-	void Bind(ShaderResourcesDesc*);
-	void Bind(LightProxy*);
-	void Bind(IShader*);
-	void Bind(UnknownObject*);
-
-	void Unbind(RenderTargetsDesc*);
-	void Unbind(ShaderResourcesDesc*);
-	void Unbind(LightProxy*);
-	void Unbind(IShader*);
-	void Unbind(UnknownObject*);
-
-	void ClearRenderTarget(IRenderTarget*);
-	void ClearDepthStencil(ID3D11DepthStencilView*);
-
-	void SetRenderState(RasterState*, D3D11_VIEWPORT* viewport = NULL);
 	void EndRender();
 
-	ID3D11Device** GetDevice();
-	ID3D11DeviceContext** GetDeviceContext();
-	IRenderTarget* GetMainRT();
-	ID3D11DepthStencilView* GetMainDepthStencilBuffer();
-	ITexture* GetMainDS();
+	ID3D11Device* GetDevice();
+	ID3D11DeviceContext* GetContext();
 
-	void IterateFuncs();
-	void AddIterateObject(IterateObject*);
+	RenderTargetWrapper* GetMainRT();
+	DepthTexture* GetMainDS();
+
 
 private:
 	DXRenderer();
@@ -75,18 +47,14 @@ private:
 private:
 
 private:
-	std::vector<IterateObject*>																			m_iterateList;
+	//std::vector<IterateObject*>																			m_iterateList;
 	Microsoft::WRL::ComPtr<ID3D11Device>													m_dev;
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext>										m_devContext;
-	Microsoft::WRL::ComPtr<IDXGISwapChain>													m_swapChain;
-
-	Microsoft::WRL::ComPtr<ID3D11DepthStencilView>									m_depthStencilView;
-	Microsoft::WRL::ComPtr<ID3D11Texture2D>												m_depthStencilTexture;
+	Microsoft::WRL::ComPtr<IDXGISwapChain>												m_swapChain;
 
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>											m_comInputLayout;
-
-	D3D11_VIEWPORT																						m_viewport;
-	CommonRenderTarget																					m_mainRenderTarget;
-	std::shared_ptr<InternalTexture>																	m_mainDSResource;
-	BufferList																										m_bufferList;
+	RasterState																									m_defRasterState;
+	D3D11_VIEWPORT																						m_defViewport;
+	std::shared_ptr<RenderTargetWrapper>														m_mainRenderTarget;
+	std::shared_ptr<DepthTexture>																	m_mainDepthTexture;
 };

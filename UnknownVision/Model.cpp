@@ -18,6 +18,7 @@ Model::Model(XMFLOAT3 pos, XMFLOAT3 rotate)
 bool Model::Setup(ID3D11Device* dev) {
 	// Create buffer
 	calcModelMatrix();
+	m_buf.Setup(dev);
 	return true;
 }
 
