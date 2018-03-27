@@ -133,3 +133,26 @@ void ImageBasedLighting(DefaultParameters) {
 	});
 
 }
+
+void LTC(DefaultParameters) {
+	// 创建camera
+	CAMERA_DESC camDesc(WIDTH, HEIGHT);
+	camDesc.fov = 0.79;
+	camDesc.lookAt = DirectX::XMFLOAT3();
+	camDesc.position = DirectX::XMFLOAT3(0.0f, 5.0f, -3.0f);
+	Camera cc(camDesc);
+	cc.Setup(GetMainDev);
+	// 添加摄像机控制器
+	OrbitController obController(&cc);
+	CameraControllerSetting(obController);
+
+	// Shaders
+	VertexShader planeVS("../Debug/imageBasedLightingBasicVS.cso");
+	planeVS.Setup(GetMainDev);
+	PixelShader planePS("../Debug/imageBasedLightingRefPS.cso");
+	planePS.Setup(GetMainDev);
+
+	// plane
+	std::shared_ptr<Mesh>
+
+}

@@ -5,3 +5,5 @@ class MainClass;
 #define DefaultParameters DXRenderer* renderer, MainClass* mc
 
 void ImageBasedLighting(DefaultParameters);
+
+void LTC(DefaultParameters);
