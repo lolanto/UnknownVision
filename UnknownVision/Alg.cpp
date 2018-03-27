@@ -32,35 +32,35 @@ void ImageBasedLighting(DefaultParameters) {
 	camDesc.lookAt = DirectX::XMFLOAT3();
 	camDesc.position = DirectX::XMFLOAT3(0.0f, 5.0f, -3.0f);
 	Camera cc(camDesc);
-	cc.Setup(GetMainDev);
+	cc.Setup(MainDev);
 	// Ìí¼ÓÉãÏñ»ú¿ØÖÆÆ÷
 	OrbitController obController(&cc);
 	CameraControllerSetting(obController);
 
-	gLinearSampler.Setup(GetMainDev);
-	gPointSampler.Setup(GetMainDev);
+	gLinearSampler.Setup(MainDev);
+	gPointSampler.Setup(MainDev);
 
 	// Shaders
 	VertexShader IBLVS("../Debug/imageBasedLightingVS.cso");
-	IBLVS.Setup(GetMainDev);
+	IBLVS.Setup(MainDev);
 	PixelShader IBLPS("../Debug/imageBasedLightingPS.cso");
-	IBLPS.Setup(GetMainDev);
+	IBLPS.Setup(MainDev);
 
 	VertexShader IBLBasicVS("../Debug/imageBasedLightingBasicVS.cso");
-	IBLBasicVS.Setup(GetMainDev);
+	IBLBasicVS.Setup(MainDev);
 	PixelShader IBLBasicPS("../Debug/imageBasedLightingBasicPS.cso");
-	IBLBasicPS.Setup(GetMainDev);
+	IBLBasicPS.Setup(MainDev);
 
 	// Model
 	Model basicModel;
-	basicModel.Setup(GetMainDev);
+	basicModel.Setup(MainDev);
 
 	Model iblModel;
 	DirectX::XMFLOAT3 dir = { 0.0f, 2.0f, 3.0f };
 	DirectX::XMFLOAT3 rag = { 0.0f, 0.2f, 0.0f };
 	iblModel.Translate(dir);
 	iblModel.RotateAroundOrigin(rag);
-	iblModel.Setup(GetMainDev);
+	iblModel.Setup(MainDev);
 	
 	struct iblMatrixStruct {
 		DirectX::XMFLOAT4X4 matrix;
@@ -72,27 +72,27 @@ void ImageBasedLighting(DefaultParameters) {
 
 	ConstantBuffer<iblMatrixStruct>  iblMatrixCB;
 	iblMatrixCB.GetData().matrix = iblModel.GetModelData().modelMatrixInv;
-	iblMatrixCB.Setup(GetMainDev);
+	iblMatrixCB.Setup(MainDev);
 	ConstantBuffer<iblWidthHeight> iblWidthHeightCB;
 	iblWidthHeightCB.GetData().wh = { 1.0f, 1.0f, 0.0f, 0.0f };
-	iblWidthHeightCB.Setup(GetMainDev);
+	iblWidthHeightCB.Setup(MainDev);
 
 	// Mesh
 	std::vector<std::shared_ptr<Mesh>> meshList;
 	meshList = gMF.Load("./ImageBasedLighting/testEnv.obj");
 	for (auto iter = meshList.begin(), end = meshList.end(); iter != end; ++iter) {
-		iter->get()->Setup(GetMainDev);
+		iter->get()->Setup(MainDev);
 	}
 
 	std::shared_ptr<Mesh> plane;
 	gMF.Load(BMT_PLANE, plane, 1.0f, 1.0f);
-	plane.get()->Setup(GetMainDev);
+	plane.get()->Setup(MainDev);
 
 	// texture
 	CommonTexture BC(L"./ImageBasedLighting/AO.png");
-	BC.Setup(GetMainDev);
+	BC.Setup(MainDev);
 	CommonTexture refImage(L"./ImageBasedLighting/based.jpg");
-	refImage.Setup(GetMainDev);
+	refImage.Setup(MainDev);
 
 	// pass0
 	ShadingPass pass0(&IBLVS, &IBLPS);
@@ -125,10 +125,10 @@ void ImageBasedLighting(DefaultParameters) {
 	pass1.BindSource(renderer->GetMainDS(), false, false);
 
 	mc->Run([&]{
-		pass0.Run(GetMainDevCtx);
-		pass0.End(GetMainDevCtx);
-		pass1.Run(GetMainDevCtx);
-		pass1.End(GetMainDevCtx);
+		pass0.Run(MainDevCtx);
+		pass0.End(MainDevCtx);
+		pass1.Run(MainDevCtx);
+		pass1.End(MainDevCtx);
 		renderer->EndRender();
 	});
 
@@ -141,18 +141,49 @@ void LTC(DefaultParameters) {
 	camDesc.lookAt = DirectX::XMFLOAT3();
 	camDesc.position = DirectX::XMFLOAT3(0.0f, 5.0f, -3.0f);
 	Camera cc(camDesc);
-	cc.Setup(GetMainDev);
+	cc.Setup(MainDev);
 	// Ìí¼ÓÉãÏñ»ú¿ØÖÆÆ÷
 	OrbitController obController(&cc);
 	CameraControllerSetting(obController);
 
+	gPointSampler.Setup(MainDev);
+
 	// Shaders
-	VertexShader planeVS("../Debug/imageBasedLightingBasicVS.cso");
-	planeVS.Setup(GetMainDev);
+	VertexShader planeVS("../Debug/imageBasedLightingRefVS.cso");
+	planeVS.Setup(MainDev);
 	PixelShader planePS("../Debug/imageBasedLightingRefPS.cso");
-	planePS.Setup(GetMainDev);
+	planePS.Setup(MainDev);
+
+	// model
+	Model basicModel;
+	basicModel.Setup(MainDev);
 
 	// plane
-	std::shared_ptr<Mesh>
+	std::shared_ptr<Mesh> plane;
+	gMF.Load(BMT_PLANE, plane, 2.0f, 2.0f);
+	plane.get()->Setup(MainDev);
 
+	// Texture
+	DDSTexture ltc_mat(L"./LTC/ltc_mat.dds");
+	ltc_mat.Setup(MainDev);
+
+	// pass0
+	ShadingPass pass0(&planeVS, &planePS);
+	// vs res
+	pass0
+		.BindSource(plane.get())
+		.BindSource(&basicModel, SBT_VERTEX_SHADER, 1)
+		.BindSource(&cc, SBT_VERTEX_SHADER, 2);
+
+	// ps res
+	pass0
+		.BindSource(&cc, SBT_PIXEL_SHADER, 0)
+		.BindSource(renderer->GetMainRT(), true, false)
+		.BindSource(&ltc_mat, SBT_PIXEL_SHADER, 0)
+		.BindSource(&gPointSampler, SBT_PIXEL_SHADER, 0);
+
+	mc->Run([&] {
+		pass0.Run(MainDevCtx).End(MainDevCtx);
+		renderer->EndRender();
+	});
 }

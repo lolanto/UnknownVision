@@ -32,7 +32,7 @@ void main() {
 		return;
 	}
 
-	ImageBasedLighting(&DXRenderer::GetInstance(), &mc);
+	LTC(&DXRenderer::GetInstance(), &mc);
 	
 	CoUninitialize();
 	system("pause");

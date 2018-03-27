@@ -82,6 +82,7 @@ private:
 
 	struct CameraDataStruct {
 		DirectX::XMFLOAT4X4										m_viewMatrix;
+		DirectX::XMFLOAT4X4										m_viewMatrixInv;
 		DirectX::XMFLOAT4X4										m_projMatrix;
 		DirectX::XMFLOAT4X4										m_projMatrixInv;
 		DirectX::XMFLOAT3											m_pos;

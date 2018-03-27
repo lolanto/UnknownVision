@@ -5,8 +5,8 @@
 #include <memory>
 #include "RasterState.h"
 
-#define GetMainDev DXRenderer::GetInstance().GetDevice()
-#define GetMainDevCtx DXRenderer::GetInstance().GetContext()
+#define MainDev DXRenderer::GetInstance().GetDevice()
+#define MainDevCtx DXRenderer::GetInstance().GetContext()
 
 typedef std::map<UINT, Microsoft::WRL::ComPtr<ID3D11Buffer>>					BufferList;
 

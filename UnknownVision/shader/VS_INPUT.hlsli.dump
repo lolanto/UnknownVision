@@ -1,4 +1,4 @@
-// 预定义的输入格式以及必定提供的全局变量
+// 棰勫畾涔夌殑杈撳叆鏍煎紡浠ュ強蹇呭畾鎻愪緵鐨勫叏灞�鍙橀噺
 
 struct a2v {
 	float3 position : POSITION;

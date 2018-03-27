@@ -76,8 +76,6 @@ bool CommonTexture::Setup(ID3D11Device* dev) {
 	return true;
 }
 
-ID3D11ShaderResourceView** CommonTexture::GetSRV() { return m_srv_tex.GetAddressOf(); }
-
 /////////////////////////
 // private Function
 /////////////////////////
@@ -117,7 +115,38 @@ bool HDRTexture::Setup(ID3D11Device* dev) {
 	return true;
 }
 
-ID3D11ShaderResourceView** HDRTexture::GetSRV() { return m_srv_tex.GetAddressOf(); }
+/////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////   DDSTexture   //////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+
+DDSTexture::DDSTexture(const wchar_t* file) : m_source(file) {}
+
+bool DDSTexture::Setup(ID3D11Device* dev) {
+	// load image file!
+	auto image = std::make_shared<ScratchImage>();
+	if (!TextureFactory::GetInstance().LoadDDSTextureFromFile(m_source, image)) {
+		MLOG(LW, __FUNCTION__, LL, " Load dds file failed!");
+		return false;
+	}
+
+	const Image* img = image->GetImages();
+	// Create Texture 2d
+	D3D11_TEXTURE2D_DESC desc;
+	D3D11_SUBRESOURCE_DATA subData;
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+
+	editDescritionStructure(img, desc, subData, srvDesc);
+	if (dev->CreateTexture2D(&desc, &subData, m_tex2d.ReleaseAndGetAddressOf())) {
+		MLOG(LW, __FUNCTION__ , LL, " create dds texture2d failed!");
+		return false;
+	}
+	if (dev->CreateShaderResourceView(m_tex2d.Get(), &srvDesc, m_srv_tex.ReleaseAndGetAddressOf())) {
+		MLOG(LW, __FUNCTION__, LL, " create dds shader resource view failed!");
+		return false;
+	}
+	return true;
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////   QuadDepthTexture   //////////////////////////////
@@ -264,6 +293,14 @@ bool TextureFactory::LoadCommonTextureFromFile(const wchar_t* file, std::shared_
 
 bool TextureFactory::LoadHDRTextureFromFile(const wchar_t* file, std::shared_ptr<ScratchImage>& image) {
 	if (FAILED(DirectX::LoadFromHDRFile(file, NULL, *image))) {
+		return false;
+	}
+	return true;
+}
+
+bool TextureFactory::LoadDDSTextureFromFile(const wchar_t * file, std::shared_ptr<DirectX::ScratchImage>& image)
+{
+	if (FAILED(DirectX::LoadFromDDSFile(file, DirectX::DDS_FLAGS_NONE, nullptr, *image))) {
 		return false;
 	}
 	return true;

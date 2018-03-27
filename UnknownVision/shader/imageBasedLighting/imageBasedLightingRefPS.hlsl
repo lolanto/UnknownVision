@@ -3,6 +3,7 @@
 
 // 记录线性变换矩阵
 Texture2D ltc_mat : register (t0);
+SamplerState pointSampler : register (s0);
 
 struct VSOutput {
   float4 pos : SV_POSITION;
@@ -24,6 +25,11 @@ struct Ray{
 };
 
 const static float pi = 3.1415926f;
+const static float3x3 IdMat = {
+  1, 0, 0,
+  0, 1, 0,
+  0, 0, 1
+};
 
 void ClipQuadToHorizon(inout float3 L[5], inout int n) {
 // detect clipping config
@@ -139,20 +145,27 @@ void ClipQuadToHorizon(inout float3 L[5], inout int n) {
 float IntegrateEdge(float3 v1, float3 v2) {
   float cosTheta = dot(v1, v2);
   float theta = acos(cosTheta);
-  float res = cross(v1, v2).z * ((theta > 0.001) ? theta / sin(theta) : 1);
+  float res = cross(v2, v1).z * ((theta > 0.001) ? theta / sin(theta) : 1);
   return res;
 }
 
 // 积分器
 float3 LTC_Evaluate(
-  float3 N, float3 V, float3 P, float3 points[4]
+  float3 N, float3 V, float3 P, float3x3 Minv, float3 points[4]
   ) {
   // 构造面发现位置的标准正交基
   float3 T1, T2;
   T1 = normalize(V - N * dot(V, N));
   T2 = cross(N, T1);
 
-  float3x3 Minv = float3x3(T1, T2, N);
+  // float3x3 Minv = float3x3(T1, T2, N);
+  float3x3 temp = {
+    T1.xyz, 
+    T2.xyz,
+    N.xyz
+  };
+
+  Minv = mul(Minv, temp);
 
   float3 L[5];
   L[0] = mul(Minv, points[0] - P);
@@ -160,10 +173,10 @@ float3 LTC_Evaluate(
   L[2] = mul(Minv, points[2] - P);
   L[3] = mul(Minv, points[3] - P);
 
-  int n;
+  int n = 0;
   ClipQuadToHorizon(L, n);
   if (n == 0)
-    return float3(0, 0, 0);
+	  return float3(0, 0, 0);
 
   L[0] = normalize(L[0]);
   L[1] = normalize(L[1]);
@@ -184,7 +197,7 @@ float3 LTC_Evaluate(
   return float3(sum, sum, sum);
 }
 
-bool RayPlaneIntersect(Ray ray, float4 plane, inout float t) {
+bool RayPlaneIntersect(Ray ray, float4 plane, out float t) {
   /*
   dot(plane, float4(ray.origin, 1.0f))
   计算光线起点到平面的垂直距离
@@ -206,15 +219,15 @@ Ray GenerateCameraRay(float2 uv) {
 
   ray.dir = normalize(float3(xy, 2.0f));
 
-  float focalDistance = 2.0f; // 焦距
-  float ft = focalDistance / ray.dir.z;
-  float3 pFocus = ray.dir * ft;
+  // float focalDistance = 2.0f; // 焦距
+  // float ft = focalDistance / ray.dir.z;
+  // float3 pFocus = ray.dir * ft;
 
   ray.origin = float3(0, 0, 0);
-  ray.dir = normalize(pFocus - ray.origin);
+  // ray.dir = normalize(pFocus - ray.origin);
 
-  ray.origin = mul(GViewMatrix, float4(ray.origin, 1.0f)).xyz;
-  ray.dir = mul(GViewMatrix, float4(ray.dir, 0.0f)).xyz;
+  ray.origin = mul(GViewMatrixInv, float4(ray.origin, 1.0f)).xyz;
+  ray.dir = mul(GViewMatrixInv, float4(ray.dir, 0.0f)).xyz;
 
   return ray;
 }
@@ -228,8 +241,8 @@ void InitRect(inout Rect rect) {
   rect.dirx = float3(1.0f, 0.0f, 0.0f);
   rect.diry = float3(0.0f, 1.0f, 0.0f);
 
-  rect.center = float3(0.0f, 6.0f, 2.0f);
-  rect.halfxy = float2(0.5f, 0.5f);
+  rect.center = float3(0.0f, 3.0f, 7.0f);
+  rect.halfxy = float2(1.0f, 1.0f);
 
   float3 rectNor = cross(rect.diry, rect.dirx);
   rect.plane = float4(rectNor, -dot(rectNor, rect.center));
@@ -256,10 +269,10 @@ void InitRectPoints(Rect rect, inout float3 points[4]) {
   float3 ex = rect.halfxy.x * rect.dirx;
   float3 ey = rect.halfxy.y * rect.diry;
 
-  points[0] = rect.center - ex - ey; // 左下角
-  points[1] = rect.center + ex - ey; // 右下角
-  points[2] = rect.center + ex + ey; // 右上角
-  points[3] = rect.center - ex + ey; // 左上角
+  points[3] = rect.center - ex - ey; // 左下角
+  points[2] = rect.center + ex - ey; // 右下角
+  points[1] = rect.center + ex + ey; // 右上角
+  points[0] = rect.center - ex + ey; // 左上角
 }
 
 float4 main(VSOutput i) : SV_Target {
@@ -272,9 +285,9 @@ float4 main(VSOutput i) : SV_Target {
 
   float4 floorPlane = float4(0, 1, 0, 0);
 
-  float3 lcol = float3(0.8, 0.8, 0.8); // 灯光强度
-  float3 dcol = float3(0.2, 0.2, 0.2); // 灯光diffuse颜色
-  float3 scol = float3(0.4, 0.4, 0.4); // 灯光specular颜色
+  float3 lcol = float3(1.0, 1.0, 1.0); // 灯光强度
+  float3 dcol = float3(1.0, 1.0, 1.0); // 灯光diffuse颜色
+  float3 scol = float3(1.0, 1.0, 1.0); // 灯光specular颜色
 
   float3 col = float3(0, 0, 0); // 最终输出的颜色
 
@@ -282,6 +295,7 @@ float4 main(VSOutput i) : SV_Target {
 
   float distToFloor; // 摄像机到地面的距离
   bool hitFloor = RayPlaneIntersect(ray, floorPlane, distToFloor);
+
   if (hitFloor) {
     // 光线与平面的交点
     float3 pos = ray.origin + ray.dir * distToFloor;
@@ -290,23 +304,19 @@ float4 main(VSOutput i) : SV_Target {
     // 光线出射方向，指向视点
     float3 V = -ray.dir;
 
-    // // 视线与平面的角度
-    // float theta = acos(dot(N, V));
+    float theta = acos(dot(N, V));
+    float2 uv = float2(0.1, theta / (0.5 * pi));
 
-    // // 根据观察角度以及表面粗糙度，索引线性变换矩阵
-    // float2 uv = float2(roughness, theta / (0.5f * pi));
-    // // 适当便宜
-    // uv = uv * LUT_SCALE + LUT_BIAS;
+    float4 t = ltc_mat.Sample(pointSampler, uv);
+    float3x3 Minv = {
+      t.x, 0, t.y,
+      0, t.z, 0,
+      t.w, 0, 1
+    };
 
-    // float4 t = ltc_mat.Load(uint3(uv, 0));
-    // float3x3 Minv = float3x3(
-    //     float3(1, 0, t.y),
-    //     float3(0, t.z, 0),
-    //     float3(t.w, 0, t.x)
-    //   );
-
-    float3 diff = LTC_Evaluate(N, V, pos, points);
-    col = lcol * diff * dcol;
+    float3 spec = LTC_Evaluate(N, V, pos, Minv, points) * 4;
+    float3 diff = LTC_Evaluate(N, V, pos, IdMat, points);
+    col = lcol * (diff * dcol + spec * scol);
     col /= 2.0 * pi;
   }
 

@@ -99,7 +99,7 @@ void Camera::calcProjMatrix() {
 	// ´æ´¢Äæ¾ØÕó
 	DirectX::XMStoreFloat4x4(&m_buf.GetData().m_projMatrix, proMat);
 	// ¼ÆËãÍ¶Ó°¾ØÕóµÄÄæ¾ØÕó
-	DirectX::XMStoreFloat4x4(&m_buf.GetData().m_projMatrixInv, DirectX::XMMatrixInverse(NULL, proMat));
+	DirectX::XMStoreFloat4x4(&m_buf.GetData().m_projMatrixInv, DirectX::XMMatrixInverse(nullptr, proMat));
 }
 
 void Camera::calcViewMatrix() {
@@ -111,10 +111,12 @@ void Camera::calcViewMatrix() {
 	eyePos = DirectX::XMLoadFloat3(&m_buf.ReadData().m_pos);
 	lookAt = DirectX::XMLoadFloat3(&m_lookAt);
 
-	DirectX::XMStoreFloat4x4(&m_buf.GetData().m_viewMatrix,
-		DirectX::XMMatrixLookAtLH(eyePos, lookAt, up)
-	);
+	DirectX::XMMATRIX viewMat = DirectX::XMMatrixLookAtLH(eyePos, lookAt, up);
 
+	// ¼ÆËãÉãÏñ»ú¿Õ¼ä±ä»»¾ØÕóworld->view
+	DirectX::XMStoreFloat4x4(&m_buf.GetData().m_viewMatrix,viewMat);
+	// ¼ÆËãÉãÏñ»ú¿Õ¼ä±ä»»Äæ¾ØÕóview->world
+	DirectX::XMStoreFloat4x4(&m_buf.GetData().m_viewMatrixInv, DirectX::XMMatrixInverse(nullptr, viewMat));
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

@@ -3,6 +3,7 @@
 
 cbuffer CameraData : register(b0) {
 	matrix GViewMatrix;
+  matrix GViewMatrixInv;
 	matrix GProjectMatrix;
 	matrix GProjectMatrixInv;
 	float4 GEyePos;

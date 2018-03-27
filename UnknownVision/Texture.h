@@ -16,7 +16,6 @@ public:
 
 public:
 	bool Setup(ID3D11Device* dev);
-	ID3D11ShaderResourceView** GetSRV();
 
 private:
 	Microsoft::WRL::ComPtr<ID3D11Texture2D>						m_tex2d;
@@ -30,8 +29,19 @@ public:
 
 public:
 	bool Setup(ID3D11Device* dev);
-	ID3D11ShaderResourceView** GetSRV();
 
+private:
+	Microsoft::WRL::ComPtr<ID3D11Texture2D>						m_tex2d;
+	const wchar_t*																		m_source;
+};
+
+// 通过外部文件加载dds文件——只读
+class DDSTexture : public ITexture {
+public:
+	DDSTexture(const wchar_t* file);
+
+public:
+	bool Setup(ID3D11Device* dev);
 private:
 	Microsoft::WRL::ComPtr<ID3D11Texture2D>						m_tex2d;
 	const wchar_t*																		m_source;
@@ -85,6 +95,7 @@ public:
 public:
 	bool LoadCommonTextureFromFile(const wchar_t* file, std::shared_ptr<DirectX::ScratchImage>&);
 	bool LoadHDRTextureFromFile(const wchar_t* file, std::shared_ptr<DirectX::ScratchImage>&);
+	bool LoadDDSTextureFromFile(const wchar_t* file, std::shared_ptr<DirectX::ScratchImage>&);
 private:
 	TextureFactory();
 };

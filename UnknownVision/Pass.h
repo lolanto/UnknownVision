@@ -69,12 +69,12 @@ struct ClearScheme {
 class BasePass {
 public:
 	// sourceType, bind target, slot
-	virtual void BindSource(IConstantBuffer*, ShaderBindTarget, SIZE_T);
-	virtual void BindSource(ITexture*, ShaderBindTarget, SIZE_T);
-	virtual void BindSource(IBuffer*, ShaderBindTarget, SIZE_T);
-	virtual void BindSource(ISamplerState*, ShaderBindTarget, SIZE_T);
-	virtual void Run(ID3D11DeviceContext*) = 0;
-	virtual void End(ID3D11DeviceContext*) = 0;
+	virtual BasePass& BindSource(IConstantBuffer*, ShaderBindTarget, SIZE_T);
+	virtual BasePass& BindSource(ITexture*, ShaderBindTarget, SIZE_T);
+	virtual BasePass& BindSource(IBuffer*, ShaderBindTarget, SIZE_T);
+	virtual BasePass& BindSource(ISamplerState*, ShaderBindTarget, SIZE_T);
+	virtual BasePass& Run(ID3D11DeviceContext*) = 0;
+	virtual BasePass& End(ID3D11DeviceContext*) = 0;
 protected:
 	std::vector<BindingData>							m_bindingData;
 };
@@ -86,14 +86,14 @@ public:
 public:
 	ShadingPass(VertexShader*, PixelShader* ps = nullptr, GeometryShader* gs = nullptr);
 	using BasePass::BindSource;
-	void BindSource(IRenderTarget*, bool beforeClear, bool afterClear);
-	void BindSource(IDepthStencil*, bool beforeClear, bool afterClear);
-	void BindSource(Mesh*, ShaderBindTarget sbt = SBT_UNKNOWN, SIZE_T slot = -1);
-	void BindSource(RasterState* rs = nullptr, D3D11_VIEWPORT* vs = nullptr);
-	void BindSource(UnknownObject*, ShaderBindTarget, SIZE_T);
+	ShadingPass& BindSource(IRenderTarget*, bool beforeClear, bool afterClear);
+	ShadingPass& BindSource(IDepthStencil*, bool beforeClear, bool afterClear);
+	ShadingPass& BindSource(Mesh*, ShaderBindTarget sbt = SBT_UNKNOWN, SIZE_T slot = -1);
+	ShadingPass& BindSource(RasterState* rs = nullptr, D3D11_VIEWPORT* vs = nullptr);
+	ShadingPass& BindSource(UnknownObject*, ShaderBindTarget, SIZE_T);
 
-	void Run(ID3D11DeviceContext*);
-	void End(ID3D11DeviceContext*);
+	ShadingPass& Run(ID3D11DeviceContext*);
+	ShadingPass& End(ID3D11DeviceContext*);
 private:
 	std::vector<ID3D11RenderTargetView*>					m_rtvs;
 	std::vector<ClearScheme>											m_rtvsClearSchemes;
@@ -116,8 +116,8 @@ private:
 class ComputingPass : public BasePass {
 public:
 	ComputingPass(ComputeShader*, DirectX::XMFLOAT3);
-	void Run(ID3D11DeviceContext*);
-	void End(ID3D11DeviceContext*);
+	ComputingPass& Run(ID3D11DeviceContext*);
+	ComputingPass& End(ID3D11DeviceContext*);
 private:
 	DirectX::XMFLOAT3										m_groups;
 	ComputeShader*											m_cs;
