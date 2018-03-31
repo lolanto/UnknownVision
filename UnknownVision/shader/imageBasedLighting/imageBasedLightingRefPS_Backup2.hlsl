@@ -162,13 +162,14 @@ float IntegrateEdge(float3 v1, float3 v2) {
 
 // 积分器
 float3 LTC_Evaluate(
-  float3 N, float3 V, float3 P, float3x3 Minv, float3 points[4]
+  float3 N, float3 V, float3 P, float3x3 Minv, float3 points[4], bool isDif
   ) {
   // 构造面发现位置的标准正交基
   float3 T1, T2;
   T1 = normalize(V - N * dot(V, N));
   T2 = cross(N, T1);
 
+  // float3x3 Minv = float3x3(T1, T2, N);
   float3x3 temp = {
     T1.xyz, 
     T2.xyz,
@@ -176,28 +177,45 @@ float3 LTC_Evaluate(
   };
 
   Minv = mul(Minv, temp);
+
   float3 L[5];
-  L[0] = mul(Minv, points[0] - P);
-  L[1] = mul(Minv, points[1] - P);
-  L[2] = mul(Minv, points[2] - P);
-  L[3] = mul(Minv, points[3] - P);
-
-  float3 ldx = L[2] - L[3];
-  float3 ldy = L[0] - L[3];
-  float3 ldn = normalize(cross(ldx, ldy));
-  float distToOrigin = dot(L[0], ldn);
-  float3 fetchPoint = distToOrigin * ldn;
-  float2 tuv;
-
-  fetchPoint = fetchPoint - L[3];
-  tuv.x = dot(fetchPoint, ldx) / (length(ldx) * length(ldx));
-  tuv.y = dot(fetchPoint, ldy) / (length(ldy) * length(ldy));
-  float3 difCol = glass.SampleLevel(linearSampler, tuv, distToOrigin * distToOrigin).xyz;
+  float3 T[4];
+  T[0] = L[0] = mul(Minv, points[0] - P);
+  T[1] = L[1] = mul(Minv, points[1] - P);
+  T[2] = L[2] = mul(Minv, points[2] - P);
+  T[3] = L[3] = mul(Minv, points[3] - P);
 
   int n = 0;
   ClipQuadToHorizon(L, n);
   if (n == 0)
-	  return float3(0, 0, 0);
+    return float3(0, 0, 0);
+
+  float3 difCol;
+  if (isDif) {
+    float3 aveDir;
+    // 求平均位置
+    if (n == 3) {
+      aveDir = (L[0] + L[1]) / 4 + L[2] / 2;
+    } else if (n == 4) {
+      aveDir = (L[0] + L[1] + L[2] + L[3]) / 4;
+    } else if (n == 5) {
+      aveDir = (L[0] + L[1]) / 8 + (L[2] + L[3] + L[4]) / 4;
+    }
+  
+    aveDir = aveDir - T[3];
+    float2 tuv;
+    float3 delta = T[2] - T[3];
+    float deltaLength = length(delta);
+    tuv.x = dot(aveDir, delta);
+    tuv.x /= deltaLength * deltaLength;
+    // tuv.x = dot(aveDir, T[2] - T[3]) / length(T[2] - T[3]);
+    delta = T[0] - T[3];
+    deltaLength = length(delta);
+    tuv.y = dot(aveDir, delta);
+    tuv.y /= deltaLength * deltaLength;
+    // tuv.y = dot(aveDir, T[0] - T[3]) / length(T[0] - T[3]);
+    difCol = glass.Sample(linearSampler, tuv).xyz;
+  }
 
   L[0] = normalize(L[0]);
   L[1] = normalize(L[1]);
@@ -215,7 +233,8 @@ float3 LTC_Evaluate(
   if (n == 5)
     sum += IntegrateEdge(L[4], L[0]);
 
-  return float3(sum, sum, sum) * difCol;
+  if (isDif) return float3(sum, sum, sum) * difCol;
+  return float3(sum, sum, sum);
 }
 
 bool RayPlaneIntersect(Ray ray, float4 plane, out float t) {
@@ -356,10 +375,34 @@ float4 main(VSOutput i) : SV_Target {
       t.y, 0, t.x
     };
 
-    float3 spec = LTC_Evaluate(N, V, pos, Minv, points);
-    float3 diff = LTC_Evaluate(N, V, pos, IdMat, points);
+    float3 spec = LTC_Evaluate(N, V, pos, Minv, points, false);
+    float3 diff = LTC_Evaluate(N, V, pos, IdMat, points, true);
 
-    col = lcol * (spec);
+    Ray sRay;
+    sRay.origin = pos;
+    sRay.dir = reflect(ray.dir, N);
+    RayRectIntersect(sRay, rect, distToRect);
+    float3 hPos = sRay.origin + sRay.dir * distToRect;
+    hPos = hPos - points[3];
+    float2 tuv;
+    float deltaLength = length(points[2] - points[3]);
+    tuv.x = dot(hPos, points[2] - points[3]) / (deltaLength * deltaLength);
+    deltaLength = length(points[0] - points[3]);
+    tuv.y = dot(hPos, points[0] - points[3]) / (deltaLength * deltaLength);
+    uvChange(tuv.x);
+    uvChange(tuv.y);
+    float level = distToRect * distToRect * 0.25f;
+    float3 res = glass.SampleLevel(linearSampler, tuv, level).xyz;
+    // uint2 min_max;
+    // min_max.x = floor(level);
+    // min_max.y = ceil(level);
+    // float3 res = 
+    //   base.Sample(linearSampler, float3(tuv, min_max.x)) * (min_max.y - level) +
+    //   base.Sample(linearSampler, float3(tuv, min_max.y)) * (level - min_max.x);
+
+    // spec *= res;
+
+    col = lcol * (diff * 3 + spec);
     col /= 2.0 * pi;
   }
 

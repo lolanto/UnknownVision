@@ -175,5 +175,8 @@
     <FxCompile Include="shader\imageBasedLighting\imageBasedLightingRefVS.hlsl">
       <Filter>UnknownVision\Shader</Filter>
     </FxCompile>
+    <FxCompile Include="shader\imageBasedLighting\imageBasedLightingRefPS_Backup2.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

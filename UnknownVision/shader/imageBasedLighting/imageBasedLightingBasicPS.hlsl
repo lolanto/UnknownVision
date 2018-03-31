@@ -14,6 +14,6 @@ SamplerState linearSampler : register (s0);
 
 PSOutput main (VSOutput i) {
   PSOutput o;
-  o.color = basicColor.Sample(linearSampler, i.uv);
+  o.color = basicColor.SampleLevel(linearSampler, i.uv * 0.75 + 0.125, 0);
   return o;
 }

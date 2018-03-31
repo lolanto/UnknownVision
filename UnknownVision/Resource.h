@@ -42,6 +42,7 @@ class ITexture {
 public:
 	virtual void Bind(ID3D11DeviceContext*, ShaderBindTarget, SIZE_T);
 	virtual void Unbind(ID3D11DeviceContext*, ShaderBindTarget, SIZE_T);
+	virtual void GenMipMap(ID3D11DeviceContext*);
 protected:
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		m_srv_tex;
 };

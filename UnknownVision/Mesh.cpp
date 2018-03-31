@@ -289,9 +289,9 @@ Mesh* MeshFactory::createPlane(float width, float height) {
 	// tangent
 	std::vector<DirectX::XMFLOAT3> tangent = {
 		{ 1.0f, 0.0f, 0.0f },
-		{ 0.0f, -1.0f, 0.0f },
-		{ -1.0f, 0.0f, 0.0f },
-		{ 0.0f, 1.0f, 0.0f }
+		{ 1.0f, 0.0f, 0.0f },
+		{ 1.0f, 0.0f, 0.0f },
+		{ 1.0f, 0.0f, 0.0f }
 	};
 	// texcoord
 	std::vector<DirectX::XMFLOAT2> texcoord = {

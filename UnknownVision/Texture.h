@@ -47,6 +47,34 @@ private:
 	const wchar_t*																		m_source;
 };
 
+class DDSTextureArray : public ITexture {
+public:
+	template<typename... Args>
+	DDSTextureArray(const wchar_t* path, Args... args) {
+		reader(path, args...);
+	}
+
+	//DDSTextureArray(const wchar_t* path) {
+	//	m_sources.push_back(path);
+	//}
+
+	template<typename... Args>
+	void reader(const wchar_t* path, Args... args) {
+		m_sources.push_back(path);
+		reader(args...);
+	}
+
+	void reader(const wchar_t* path) {
+		m_sources.push_back(path);
+	}
+
+public:
+	bool Setup(ID3D11Device* dev);
+private:
+	Microsoft::WRL::ComPtr<ID3D11Texture2D>						m_tex2d;
+	std::vector<const wchar_t*>												m_sources;
+};
+
 class DepthTexture : public ITexture, public IDepthStencil {
 public:
 	DepthTexture(float width, float height, bool hasMipMap = false, UINT arraySize = 1,

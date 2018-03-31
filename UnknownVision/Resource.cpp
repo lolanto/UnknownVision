@@ -165,6 +165,10 @@ void ITexture::Unbind(UnbindParams) {
 	}
 }
 
+void ITexture::GenMipMap(ID3D11DeviceContext* devCtx) {
+	devCtx->GenerateMips(m_srv_tex.Get());
+}
+
 void ISamplerState::Bind(BindParams)
 {
 	switch (sbt)
