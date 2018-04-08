@@ -5,7 +5,7 @@
 #include "Mesh.h"
 #include "RasterState.h"
 
-BindingData ShadingPass::Def_RasterState;
+BindingData<RasterState> ShadingPass::Def_RasterState;
 D3D11_VIEWPORT ShadingPass::Def_ViewPort;
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -13,58 +13,84 @@ D3D11_VIEWPORT ShadingPass::Def_ViewPort;
 /////////////////////////////////////////////////////////////////////////////////////////
 ClearScheme::ClearScheme(bool bc, bool ac) : bc(bc), ac(ac) {}
 
-BindingData::BindingData(SourceType st,
-	ShaderBindTarget sbt, SIZE_T slot)
-	: resType(st), bindTarget(sbt), slot(slot) {
-	resPointer.object = nullptr;
-}
-
 /////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////   BasePass   ////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
 BasePass& BasePass::BindSource(IConstantBuffer * res, ShaderBindTarget sbt, SIZE_T slot)
 {
-	BindingData bd;
+	BindingData<IConstantBuffer> bd;
 	bd.bindTarget = sbt;
-	bd.resPointer.constBuf = res;
-	bd.resType = MST_CONSTANT_BUFFER;
+	bd.resPointer = res;
 	bd.slot = slot;
-	m_bindingData.push_back(bd);
+	m_bdOfConstBuffer.push_back(bd);
 
 	return *this;
 }
 
 BasePass& BasePass::BindSource(ITexture * res, ShaderBindTarget sbt, SIZE_T slot)
 {
-	BindingData bd;
+	BindingData<ITexture> bd;
 	bd.bindTarget = sbt;
-	bd.resPointer.tex = res;
-	bd.resType = MST_TEXTURE;
+	bd.resPointer = res;
 	bd.slot = slot;
-	m_bindingData.push_back(bd);
+	m_bdOfTexture.push_back(bd);
 	return *this;
 }
 
 BasePass& BasePass::BindSource(IBuffer * res, ShaderBindTarget sbt, SIZE_T slot)
 {
-	BindingData bd;
+	BindingData<IBuffer> bd;
 	bd.bindTarget = sbt;
-	bd.resPointer.buf = res;
-	bd.resType = MST_BUFFER;
+	bd.resPointer = res;
 	bd.slot = slot;
-	m_bindingData.push_back(bd);
+	m_bdOfBuffer.push_back(bd);
 	return *this;
 }
 
 BasePass& BasePass::BindSource(ISamplerState * res, ShaderBindTarget sbt, SIZE_T slot)
 {
-	BindingData bd;
+	BindingData<ISamplerState> bd;
 	bd.bindTarget = sbt;
-	bd.resPointer.sampler = res;
-	bd.resType = MST_SAMPLER_STATE;
+	bd.resPointer = res;
 	bd.slot = slot;
-	m_bindingData.push_back(bd);
+	m_bdOfSamplerState.push_back(bd);
+	return *this;
+}
+
+BasePass& BasePass::BindSource(IUnorderAccess* res, ShaderBindTarget sbt, SIZE_T slot)
+{
+	BindingData<IUnorderAccess> bd;
+	bd.bindTarget = sbt;
+	bd.resPointer = res;
+	bd.slot = slot;
+	m_bdOfUnorderAccess.push_back(bd);
+	return *this;
+}
+
+BasePass& BasePass::Run(ID3D11DeviceContext* devCtx) {
+	// binding resources
+	ITERATE_BINDING_DATA(devCtx, m_bdOfBuffer);
+	ITERATE_BINDING_DATA(devCtx, m_bdOfConstBuffer);
+	ITERATE_BINDING_DATA(devCtx, m_bdOfSamplerState);
+	ITERATE_BINDING_DATA(devCtx, m_bdOfTexture);
+	ITERATE_BINDING_DATA(devCtx, m_bdOfUnorderAccess);
+
+	ITERATE_BINDING_DATA(devCtx, m_bdOfUnknownObject);
+
+	return *this;
+}
+
+BasePass& BasePass::End(ID3D11DeviceContext* devCtx) {
+	// Unbind resource
+	ITERATE_UNBINDING_DATA(devCtx, m_bdOfBuffer);
+	ITERATE_UNBINDING_DATA(devCtx, m_bdOfConstBuffer);
+	ITERATE_UNBINDING_DATA(devCtx, m_bdOfSamplerState);
+	ITERATE_UNBINDING_DATA(devCtx, m_bdOfTexture);
+	ITERATE_UNBINDING_DATA(devCtx, m_bdOfUnorderAccess);
+
+	ITERATE_UNBINDING_DATA(devCtx, m_bdOfUnknownObject);
+
 	return *this;
 }
 
@@ -92,8 +118,7 @@ ShadingPass& ShadingPass::BindSource(IDepthStencil* ds, bool beforeClear, bool a
 
 ShadingPass& ShadingPass::BindSource(Mesh * res, ShaderBindTarget sbt, SIZE_T slot)
 {
-	m_meshBindingData.resPointer.object = res;
-	m_meshBindingData.resType = MST_UNKNOWN_OBJECT;
+	m_meshBindingData.resPointer = res;
 	m_meshBindingData.bindTarget = sbt;
 	m_meshBindingData.slot = slot;
 	return *this;
@@ -102,8 +127,7 @@ ShadingPass& ShadingPass::BindSource(Mesh * res, ShaderBindTarget sbt, SIZE_T sl
 ShadingPass& ShadingPass::BindSource(RasterState * rs, D3D11_VIEWPORT* vp)
 {
 	if (rs) {
-		m_rasterStateData.resPointer.object = rs;
-		m_rasterStateData.resType = MST_UNKNOWN_OBJECT;
+		m_rasterStateData.resPointer = rs;
 	}
 	if (vp) {
 		m_viewport = vp;
@@ -111,17 +135,12 @@ ShadingPass& ShadingPass::BindSource(RasterState * rs, D3D11_VIEWPORT* vp)
 	return *this;
 }
 
-ShadingPass& ShadingPass::BindSource(UnknownObject* res, ShaderBindTarget sbt, SIZE_T slot) {
-	if (sbt == SBT_GEOMETRY_SHADER && m_gs == nullptr) {
-		MLOG(LW, __FUNCTION__, LL, "no geometry shader can not finish binding!");
-		return *this;
-	}
-	BindingData bd;
-	bd.resPointer.object = res;
-	bd.resType = MST_UNKNOWN_OBJECT;
+BasePass& BasePass::BindSource(UnknownObject* res, ShaderBindTarget sbt, SIZE_T slot) {
+	BindingData<UnknownObject> bd;
+	bd.resPointer = res;
 	bd.bindTarget = sbt;
 	bd.slot = slot;
-	m_bindingData.push_back(bd);
+	m_bdOfUnknownObject.push_back(bd);
 	return *this;
 }
 
@@ -130,7 +149,7 @@ ShadingPass& ShadingPass::Run(ID3D11DeviceContext* devCtx) {
 		MLOG(LW, __FUNCTION__, LL, "expect vertex/pixel shader!");
 		return *this;
 	}
-	if (m_meshBindingData.resType != MST_UNKNOWN_OBJECT) {
+	if (m_meshBindingData.resPointer == nullptr) {
 		MLOG(LW, __FUNCTION__, LL, "No mesh binding!");
 		return *this;
 	}
@@ -138,31 +157,9 @@ ShadingPass& ShadingPass::Run(ID3D11DeviceContext* devCtx) {
 	m_vs->Bind(devCtx);
 	if (m_ps) m_ps->Bind(devCtx);
 	if (m_gs) m_gs->Bind(devCtx);
-	// bind resource
-	for (auto& iter : m_bindingData) {
-		switch (iter.resType)
-		{
-		case MST_CONSTANT_BUFFER:
-			iter.resPointer.constBuf->Bind(devCtx, iter.bindTarget, iter.slot);
-			break;
-		case MST_BUFFER:
-			iter.resPointer.buf->Bind(devCtx, iter.bindTarget, iter.slot);
-			break;
-		case MST_TEXTURE:
-			iter.resPointer.tex->Bind(devCtx, iter.bindTarget, iter.slot);
-			break;
-		case MST_SAMPLER_STATE:
-			iter.resPointer.sampler->Bind(devCtx, iter.bindTarget, iter.slot);
-			break;
-		case MST_UNKNOWN_OBJECT:
-			iter.resPointer.object->Bind(devCtx, iter.bindTarget, iter.slot);
-			break;
-		default:
-			MLOG(LW, __FUNCTION__, LL, "Unknown binding target!");
-			break;
-		}
-	}
-	
+
+	BasePass::Run(devCtx);
+
 	// clear RT
 	for (int i = 0; i < m_rtvs.size(); ++i) {
 		if (m_rtvsClearSchemes[i].bc)
@@ -173,12 +170,12 @@ ShadingPass& ShadingPass::Run(ID3D11DeviceContext* devCtx) {
 		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	// Set Raster state
-	if (m_rasterStateData.resType == MST_UNKNOWN_OBJECT) {
-		m_rasterStateData.resPointer.object->Bind(devCtx, SBT_UNKNOWN, 0);
+	if (m_rasterStateData.resPointer != nullptr) {
+		m_rasterStateData.resPointer->Bind(devCtx, SBT_UNKNOWN, 0);
 	}
 	else {
 		// use default raster state
-		Def_RasterState.resPointer.object->Bind(devCtx, SBT_UNKNOWN, 0);
+		Def_RasterState.resPointer->Bind(devCtx, SBT_UNKNOWN, 0);
 	}
 
 	// Set View Port
@@ -199,7 +196,7 @@ ShadingPass& ShadingPass::Run(ID3D11DeviceContext* devCtx) {
 	else devCtx->OMSetRenderTargets(0, nullptr, nullptr);
 
 	// bind mesh and submit draw call
-	m_meshBindingData.resPointer.object->Bind(devCtx, m_meshBindingData.bindTarget, m_meshBindingData.slot);
+	m_meshBindingData.resPointer->Bind(devCtx, m_meshBindingData.bindTarget, m_meshBindingData.slot);
 
 	return *this;
 }
@@ -208,37 +205,16 @@ ShadingPass& ShadingPass::End(ID3D11DeviceContext* devCtx) {
 	if (m_vs == nullptr || m_ps == nullptr) {
 		return *this;
 	}
-	if (m_meshBindingData.resType != MST_UNKNOWN_OBJECT) {
+	if (m_meshBindingData.resPointer == nullptr) {
 		return *this;
 	}
 	static float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	m_vs->Unbind(devCtx);
 	m_ps->Unbind(devCtx);
 	if (m_gs) m_gs->Unbind(devCtx);
-	// Unbind resource
-	for (auto& iter : m_bindingData) {
-		switch (iter.resType)
-		{
-		case MST_CONSTANT_BUFFER:
-			iter.resPointer.constBuf->Unbind(devCtx, iter.bindTarget, iter.slot);
-			break;
-		case MST_BUFFER:
-			iter.resPointer.buf->Unbind(devCtx, iter.bindTarget, iter.slot);
-			break;
-		case MST_TEXTURE:
-			iter.resPointer.tex->Unbind(devCtx, iter.bindTarget, iter.slot);
-			break;
-		case MST_SAMPLER_STATE:
-			iter.resPointer.sampler->Unbind(devCtx, iter.bindTarget, iter.slot);
-			break;
-		case MST_UNKNOWN_OBJECT:
-			iter.resPointer.object->Unbind(devCtx, iter.bindTarget, iter.slot);
-			break;
-		default:
-			MLOG(LW, __FUNCTION__, LL, "Unknown binding target!");
-			break;
-		}
-	}
+
+	BasePass::End(devCtx);
+
 	// clear RT
 	for (int i = 0; i < m_rtvs.size(); ++i) {
 		if (m_rtvsClearSchemes[i].ac)
@@ -249,18 +225,18 @@ ShadingPass& ShadingPass::End(ID3D11DeviceContext* devCtx) {
 		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	// Unbind raster state
-	if (m_rasterStateData.resType == MST_UNKNOWN_OBJECT) {
-		m_rasterStateData.resPointer.object->Bind(devCtx, SBT_UNKNOWN, 0);
+	if (m_rasterStateData.resPointer != nullptr) {
+		m_rasterStateData.resPointer->Unbind(devCtx, SBT_UNKNOWN, 0);
 	}
 	else {
-		Def_RasterState.resPointer.object->Bind(devCtx, SBT_UNKNOWN, 0);
+		Def_RasterState.resPointer->Unbind(devCtx, SBT_UNKNOWN, 0);
 	}
 
 	// Unbind RT
 	devCtx->OMSetRenderTargets(0, NULL, nullptr);
 
 	// unbind mesh and submit draw call
-	m_meshBindingData.resPointer.object->Unbind(devCtx, m_meshBindingData.bindTarget, m_meshBindingData.slot);
+	m_meshBindingData.resPointer->Unbind(devCtx, m_meshBindingData.bindTarget, m_meshBindingData.slot);
 
 	return *this;
 }
@@ -278,30 +254,9 @@ ComputingPass& ComputingPass::Run(ID3D11DeviceContext* devCtx) {
 		return *this;
 	}
 	m_cs->Bind(devCtx);
-	// binding resources
-	for (auto& iter : m_bindingData) {
-		switch (iter.resType)
-		{
-		case MST_CONSTANT_BUFFER:
-			iter.resPointer.constBuf->Bind(devCtx, iter.bindTarget, iter.slot);
-			break;
-		case MST_BUFFER:
-			iter.resPointer.buf->Bind(devCtx, iter.bindTarget, iter.slot);
-			break;
-		case MST_TEXTURE:
-			iter.resPointer.tex->Bind(devCtx, iter.bindTarget, iter.slot);
-			break;
-		case MST_SAMPLER_STATE:
-			iter.resPointer.sampler->Bind(devCtx, iter.bindTarget, iter.slot);
-			break;
-		case MST_UNKNOWN_OBJECT:
-			iter.resPointer.object->Bind(devCtx, iter.bindTarget, iter.slot);
-			break;
-		default:
-			MLOG(LW, __FUNCTION__, LL, "Unknown binding target!");
-			break;
-		}
-	}
+
+	BasePass::Run(devCtx);
+
 	devCtx->Dispatch(m_groups.x, m_groups.y, m_groups.z);
 
 	return *this;
@@ -310,29 +265,6 @@ ComputingPass& ComputingPass::Run(ID3D11DeviceContext* devCtx) {
 ComputingPass& ComputingPass::End(ID3D11DeviceContext* devCtx) {
 	if (!m_cs) return *this;
 	m_cs->Unbind(devCtx);
-	// Unbind resource
-	for (auto& iter : m_bindingData) {
-		switch (iter.resType)
-		{
-		case MST_CONSTANT_BUFFER:
-			iter.resPointer.constBuf->Unbind(devCtx, iter.bindTarget, iter.slot);
-			break;
-		case MST_BUFFER:
-			iter.resPointer.buf->Unbind(devCtx, iter.bindTarget, iter.slot);
-			break;
-		case MST_TEXTURE:
-			iter.resPointer.tex->Unbind(devCtx, iter.bindTarget, iter.slot);
-			break;
-		case MST_SAMPLER_STATE:
-			iter.resPointer.sampler->Unbind(devCtx, iter.bindTarget, iter.slot);
-			break;
-		case MST_UNKNOWN_OBJECT:
-			iter.resPointer.object->Unbind(devCtx, iter.bindTarget, iter.slot);
-			break;
-		default:
-			MLOG(LW, __FUNCTION__, LL, "Unknown binding target!");
-			break;
-		}
-	}
+	BasePass::End(devCtx);
 	return *this;
 }

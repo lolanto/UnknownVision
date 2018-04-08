@@ -178,5 +178,17 @@
     <FxCompile Include="shader\imageBasedLighting\imageBasedLightingRefPS_Backup2.hlsl">
       <Filter>UnknownVision\Shader</Filter>
     </FxCompile>
+    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionPS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionVS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionQuadVS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionQuadPS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

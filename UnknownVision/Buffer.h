@@ -62,7 +62,7 @@ void  ConstantBuffer<T>::Bind(ID3D11DeviceContext* devCtx,
 }
 
 
-template<typename T, int Size>
+template<typename T, int NumEle>
 class StructuredBuffer : public IBuffer, public IUnorderAccess {
 public:
 	StructuredBuffer(bool isReadOnly = true)
@@ -74,15 +74,15 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11Buffer*>		m_buf;
 };
 
-template<typename T, int Size>
-bool StructuredBuffer<T, Size>::Setup(ID3D11Device* dev) {
+template<typename T, int NumEle>
+bool StructuredBuffer<T, NumEle>::Setup(ID3D11Device* dev) {
 	D3D11_BUFFER_DESC desc;
 	D3D11_SUBRESOURCE_DATA subData;
 	ZeroMemory(&desc, sizeof(desc));
 	ZeroMemory(&subData, sizeof(subData));
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 	if (isUnoderAccess) desc.BindFlags |= D3D11_BIND_UNORDERED_ACCESS;
-	desc.ByteWidth = sizeof(T) * Size;
+	desc.ByteWidth = sizeof(T) * NumEle;
 	desc.CPUAccessFlags = 0;
 	desc.MiscFlags = 0;
 	desc.StructureByteStride = sizeof(T);
@@ -111,7 +111,7 @@ bool StructuredBuffer<T, Size>::Setup(ID3D11Device* dev) {
 		D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
 		ZeroMemory(&uavDesc, sizeof(uavDesc));
 		uavDesc.Buffer.FirstElement = 0;
-		uavDesc.Buffer.NumElements = Size;
+		uavDesc.Buffer.NumElements = NumEle;
 		uavDesc.Buffer.Flags = 0;
 		uavDesc.Format = DXGI_FORMAT_UNKNOWN;
 		uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;

@@ -9,9 +9,6 @@
 using std::cout;
 using std::endl;
 
-const float WIDTH = 1280.0f;
-const float HEIGHT = 960.0f;
-
 const float CUBE_MAP_SIZE = 1280.0f;
 
 typedef DirectX::XMFLOAT4 float4;
@@ -32,7 +29,7 @@ void main() {
 		return;
 	}
 
-	LTC(&DXRenderer::GetInstance(), &mc);
+	ScreenSpaceRayTracing(&DXRenderer::GetInstance(), &mc);
 	
 	CoUninitialize();
 	system("pause");

@@ -8,6 +8,8 @@
 
 class Pipeline;
 
+#define VS_MODEL_DATA_SLOT 1
+
 struct ModelData {
 	DirectX::XMFLOAT4X4												modelMatrix;
 	DirectX::XMFLOAT4X4												modelMatrixInv;

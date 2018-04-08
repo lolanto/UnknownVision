@@ -1,6 +1,16 @@
 #pragma once
 #include "UnknownObject.h"
 #include <DirectXMath.h>
+
+
+#define ITERATE_BINDING_DATA(devCtx, bd) for (auto& iter : bd) { \
+	iter.resPointer->Bind(devCtx, iter.bindTarget, iter.slot); \
+} \
+
+#define ITERATE_UNBINDING_DATA(devCtx, bd) for (auto& iter : bd) { \
+	iter.resPointer->Unbind(devCtx, iter.bindTarget, iter.slot); \
+} \
+
 // 每个渲染pass的骨架
 /*
 1. 计算类型的pass
@@ -22,6 +32,7 @@ class IBuffer;
 class ISamplerState;
 class IRenderTarget;
 class IDepthStencil;
+class IUnorderAccess;
 // Shaders
 class VertexShader;
 class PixelShader;
@@ -33,30 +44,17 @@ class Mesh;
 class Light;
 class RasterState;
 
-enum SourceType {
-	MST_INVALID_TYPE = 0,
-	MST_CONSTANT_BUFFER,
-	MST_TEXTURE,
-	MST_BUFFER,
-	MST_SAMPLER_STATE,
-	MST_UNKNOWN_OBJECT
-};
-
+template<typename T>
 struct BindingData {
-	union sourceType
-	{
-		IConstantBuffer* constBuf;
-		ITexture*				tex;
-		IBuffer*				buf;
-		ISamplerState*		sampler;
-		UnknownObject*	object;
-	}								resPointer;
-	SourceType				resType;
+	T*								resPointer;
 	ShaderBindTarget	bindTarget;
 	SIZE_T						slot;
-	BindingData(SourceType st = MST_INVALID_TYPE,
-		ShaderBindTarget sbt = SBT_UNKNOWN, SIZE_T slot = -1);
+	BindingData(T* rp = nullptr, ShaderBindTarget sbt = SBT_UNKNOWN, SIZE_T slot = -1);
 };
+
+template<typename T>
+BindingData<T>::BindingData(T* rp,
+	ShaderBindTarget sbt, SIZE_T slot): resPointer(rp), bindTarget(sbt), slot(slot) {}
 
 struct ClearScheme {
 	// clear the render target before starting rendering
@@ -73,15 +71,22 @@ public:
 	virtual BasePass& BindSource(ITexture*, ShaderBindTarget, SIZE_T);
 	virtual BasePass& BindSource(IBuffer*, ShaderBindTarget, SIZE_T);
 	virtual BasePass& BindSource(ISamplerState*, ShaderBindTarget, SIZE_T);
-	virtual BasePass& Run(ID3D11DeviceContext*) = 0;
-	virtual BasePass& End(ID3D11DeviceContext*) = 0;
+	virtual BasePass& BindSource(IUnorderAccess*, ShaderBindTarget, SIZE_T);
+	virtual BasePass& BindSource(UnknownObject*, ShaderBindTarget, SIZE_T);
+	virtual BasePass& Run(ID3D11DeviceContext*);
+	virtual BasePass& End(ID3D11DeviceContext*);
 protected:
-	std::vector<BindingData>							m_bindingData;
+	std::vector<BindingData<IConstantBuffer>>					m_bdOfConstBuffer;
+	std::vector<BindingData<ITexture>>								m_bdOfTexture;
+	std::vector<BindingData<IBuffer>>								m_bdOfBuffer;
+	std::vector<BindingData<ISamplerState>>					m_bdOfSamplerState;
+	std::vector<BindingData<IUnorderAccess>>					m_bdOfUnorderAccess;
+	std::vector<BindingData<UnknownObject>>					m_bdOfUnknownObject;
 };
 
 class ShadingPass : public BasePass {
 public:
-	static BindingData													Def_RasterState;
+	static BindingData<RasterState>								Def_RasterState;
 	static D3D11_VIEWPORT											Def_ViewPort;
 public:
 	ShadingPass(VertexShader*, PixelShader* ps = nullptr, GeometryShader* gs = nullptr);
@@ -90,7 +95,6 @@ public:
 	ShadingPass& BindSource(IDepthStencil*, bool beforeClear, bool afterClear);
 	ShadingPass& BindSource(Mesh*, ShaderBindTarget sbt = SBT_UNKNOWN, SIZE_T slot = -1);
 	ShadingPass& BindSource(RasterState* rs = nullptr, D3D11_VIEWPORT* vs = nullptr);
-	ShadingPass& BindSource(UnknownObject*, ShaderBindTarget, SIZE_T);
 
 	ShadingPass& Run(ID3D11DeviceContext*);
 	ShadingPass& End(ID3D11DeviceContext*);
@@ -102,9 +106,9 @@ private:
 	ClearScheme																m_dsClearScheme;
 
 	// 模型绑定信息，不显式绑定则不允许执行该pass
-	BindingData																	m_meshBindingData;
+	BindingData<Mesh>													m_meshBindingData;
 	// 设置光栅状态，不显式绑定则调用渲染器默认光栅设置
-	BindingData																	m_rasterStateData;
+	BindingData	<RasterState>											m_rasterStateData;
 	// 设置view port状态
 	D3D11_VIEWPORT*														m_viewport;
 
@@ -122,3 +126,4 @@ private:
 	DirectX::XMFLOAT3										m_groups;
 	ComputeShader*											m_cs;
 };
+

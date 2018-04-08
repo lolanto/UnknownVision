@@ -7,6 +7,9 @@
 typedef unsigned int UINT;
 typedef unsigned char byte;
 
+#define VS_CAMERA_DATA_SLOT 2
+#define PS_CAMERA_DATA_SLOT 0
+
 class CameraController;
 
 enum MouseButton {

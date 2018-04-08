@@ -178,8 +178,7 @@ bool DXRenderer::setRenderState(HWND hwnd, float width, float height) {
 
 	ShadingPass::Def_RasterState.bindTarget = SBT_UNKNOWN;
 	ShadingPass::Def_RasterState.slot = -1;
-	ShadingPass::Def_RasterState.resPointer.object = &m_defRasterState;
-	ShadingPass::Def_RasterState.resType = MST_UNKNOWN_OBJECT;
+	ShadingPass::Def_RasterState.resPointer = &m_defRasterState;
 
 
 	m_defViewport.Width = width;

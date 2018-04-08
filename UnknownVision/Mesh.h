@@ -64,9 +64,14 @@ private:
 class MeshFactory {
 public:
 	std::vector<std::shared_ptr<Mesh>>& Load(const char* path);
-	void Load(BasicMeshType type, std::shared_ptr<Mesh>&, float width = 1, float height = 1);
+	/*
+	for plane: a: width, b: height
+	for cubic: a: width, b: height, c: depth
+	*/
+	void Load(BasicMeshType type, std::shared_ptr<Mesh>&, float a = 1, float b = 1, float c = 1);
 private:
 	Mesh* createPlane(float width, float height);
+	Mesh* createCubic(float width, float height, float depth);
 
 	void processNode(aiNode*, const aiScene*);
 	Mesh* processMesh(aiMesh*, const aiScene*);

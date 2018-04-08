@@ -248,12 +248,12 @@ std::vector<std::shared_ptr<Mesh>>& MeshFactory::Load(const char* path) {
 	return m_tempMesh;
 }
 
-void MeshFactory::Load(BasicMeshType type, std::shared_ptr<Mesh>& re, float width, float height) {
+void MeshFactory::Load(BasicMeshType type, std::shared_ptr<Mesh>& re, float a, float b, float c) {
 	m_tempMesh.clear();
 	Mesh* tmpMesh = NULL;
 	switch (type) {
 	case BMT_PLANE:
-		tmpMesh = createPlane(width, height);
+		tmpMesh = createPlane(a, b);
 		if (!tmpMesh) {
 			MLOG(LL, "MeshFactory::Load: create plane failed!");
 			break;
