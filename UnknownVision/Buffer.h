@@ -66,32 +66,27 @@ template<typename T, int NumEle>
 class StructuredBuffer : public IBuffer, public IUnorderAccess {
 public:
 	StructuredBuffer(bool isReadOnly = true)
-		: m_isDirty(true), isUnoderAccess(!isReadOnly) {}
+		: isUnoderAccess(!isReadOnly) {}
 	bool Setup(ID3D11Device*);
 public:
 	const bool														isUnoderAccess;
 private:
-	Microsoft::WRL::ComPtr<ID3D11Buffer*>		m_buf;
+	Microsoft::WRL::ComPtr<ID3D11Buffer>		m_buf;
 };
 
 template<typename T, int NumEle>
 bool StructuredBuffer<T, NumEle>::Setup(ID3D11Device* dev) {
 	D3D11_BUFFER_DESC desc;
-	D3D11_SUBRESOURCE_DATA subData;
 	ZeroMemory(&desc, sizeof(desc));
-	ZeroMemory(&subData, sizeof(subData));
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 	if (isUnoderAccess) desc.BindFlags |= D3D11_BIND_UNORDERED_ACCESS;
 	desc.ByteWidth = sizeof(T) * NumEle;
 	desc.CPUAccessFlags = 0;
-	desc.MiscFlags = 0;
+	desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 	desc.StructureByteStride = sizeof(T);
 	desc.Usage = D3D11_USAGE_DEFAULT;
 
-	subData.pSysMem = m_data;
-	subData.SysMemPitch = 0;
-	subData.SysMemSlicePitch = 0;
-	if (FAILED(dev->CreateBuffer(&desc, &subData, m_buf.ReleaseAndGetAddressOf()))) {
+	if (FAILED(dev->CreateBuffer(&desc, nullptr, m_buf.ReleaseAndGetAddressOf()))) {
 		MLOG(LE, __FUNCTION__, LL, "create structured buffer failed!");
 		return false;
 	}
@@ -101,7 +96,7 @@ bool StructuredBuffer<T, NumEle>::Setup(ID3D11Device* dev) {
 	srvDesc.Format = DXGI_FORMAT_UNKNOWN;
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 	srvDesc.Buffer.ElementOffset = 0;
-	srvDesc.Buffer.ElementWidth = sizeof(T);
+	srvDesc.Buffer.NumElements = NumEle;
 	if (FAILED(dev->CreateShaderResourceView(m_buf.Get(), &srvDesc, m_srv_buf.ReleaseAndGetAddressOf()))) {
 		MLOG(LE, __FUNCTION__, LL, "create shader resource view failed!");
 		return false;

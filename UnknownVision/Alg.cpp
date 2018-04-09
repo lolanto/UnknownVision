@@ -312,6 +312,9 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 	linkedListData.Setup(MainDev);
 	linkedListData.GetData().data = { WIDTH, HEIGHT * 3,  WIDTH * HEIGHT * 3, 0 };
 
+	StructuredBuffer<LinkedListData,1> structureCounter(false);
+	structureCounter.Setup(MainDev);
+
 	// Shader
 	// 构建屏幕空间信息的两个Shader
 	VertexShader ConstructVS("../Debug/ScreenSpaceReflectionVS.cso");
@@ -335,6 +338,7 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 		.BindSource(&cc, SBT_VERTEX_SHADER, VS_CAMERA_DATA_SLOT)
 		.BindSource(&basicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
 		.BindSource(&BC, SBT_PIXEL_SHADER, 0)
+		.BindSourceUA(&structureCounter, SBT_PIXEL_SHADER, 1)
 		.BindSourceUA(&fragmentHead, SBT_PIXEL_SHADER, 2)
 		.BindSourceUA(&fragmentColor, SBT_PIXEL_SHADER, 3)
 		.BindSourceUA(&fragmentDepthAndNext, SBT_PIXEL_SHADER, 4)
