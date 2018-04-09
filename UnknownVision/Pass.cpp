@@ -75,7 +75,6 @@ BasePass& BasePass::Run(ID3D11DeviceContext* devCtx) {
 	ITERATE_BINDING_DATA(devCtx, m_bdOfSamplerState);
 	ITERATE_BINDING_DATA(devCtx, m_bdOfTexture);
 	ITERATE_BINDING_DATA(devCtx, m_bdOfUnorderAccess);
-
 	ITERATE_BINDING_DATA(devCtx, m_bdOfUnknownObject);
 
 	return *this;
@@ -194,6 +193,23 @@ ShadingPass& ShadingPass::Run(ID3D11DeviceContext* devCtx) {
 	}
 	else if (m_rtvs.size()) devCtx->OMSetRenderTargets(m_rtvs.size(), &m_rtvs[0], nullptr);
 	else devCtx->OMSetRenderTargets(0, nullptr, nullptr);
+
+	// bind unorder access view in pixel shader
+	std::vector<ID3D11UnorderedAccessView*> uavs;
+	std::vector<UINT> initialCount;
+	UINT startSlot = -1;
+	for (auto& iter : m_bdOfUnorderAccess) {
+		if (iter.bindTarget == SBT_PIXEL_SHADER) {
+			uavs.push_back(iter.resPointer->GetUAV());
+			if (startSlot == -1) startSlot = iter.slot;
+		}
+		initialCount.push_back(0);
+	}
+
+	devCtx->OMSetRenderTargetsAndUnorderedAccessViews(
+		D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL, nullptr, nullptr,
+		startSlot, uavs.size(), &uavs[0], &initialCount[0]
+	);
 
 	// bind mesh and submit draw call
 	m_meshBindingData.resPointer->Bind(devCtx, m_meshBindingData.bindTarget, m_meshBindingData.slot);

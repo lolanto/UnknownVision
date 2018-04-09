@@ -14,10 +14,10 @@
 // 每个表内记录了应该被绘制在该位置的最后N个像素信息
 // N为列表的长度
 
-RWStructuredBuffer<int>	RWStructuredCounter : register(LINKED_LIST_U0);
-RWTexture2D<int>	tRWFragmentListHead		    : register(LINKED_LIST_U1);
-RWTexture2D<float4>	tRWFragmentColor		    : register(LINKED_LIST_U2);
-RWTexture2D<int2>	tRWDepthAndLink			      : register(LINKED_LIST_U3);
+RWStructuredBuffer<int4>	RWStructuredCounter : register(LINKED_LIST_U0);
+RWTexture2D<int>	tRWFragmentListHead		      : register(LINKED_LIST_U1);
+RWTexture2D<unorm float4>	tRWFragmentColor		: register(LINKED_LIST_U2);
+RWTexture2D<int2>	tRWDepthAndLink			        : register(LINKED_LIST_U3);
 
 cbuffer LinkedListData						: register(LINKED_LIST_B0) {
 	float4 ScreenWidthHeightStorageSlice;
@@ -40,22 +40,24 @@ void BuildLinkedList(
 	float depth // 当前像素的摄像机空间的深度值
 	) {
 
-	int2 ScreenSpaceAddress = int2(uv * GCameraParam.zw);
+	// int2 ScreenSpaceAddress = int2(uv * GCameraParam.zw);
 	int nNewFragmentAddress = RWStructuredCounter.IncrementCounter();
 	// 假如当前超出容量
 	if (nNewFragmentAddress == int(ScreenWidthHeightStorageSlice.z)) return;
 
 	// update head buffer
-	int nOldFragmentAddress;
-	InterlockedExchange(tRWFragmentListHead[ScreenSpaceAddress],
-		nNewFragmentAddress, nOldFragmentAddress);
+  // int nOldFragmentAddress = 0;
+	// int nOldFragmentAddress = tRWFragmentListHead[ScreenSpaceAddress];
+ //  tRWFragmentListHead[ScreenSpaceAddress] = nNewFragmentAddress;
+	// InterlockedExchange(tRWFragmentListHead[ScreenSpaceAddress],
+	// 	nNewFragmentAddress, nOldFragmentAddress);
 
 	// write the node attribute to the buffer
 	int2 vAddress = GetAddress(nNewFragmentAddress);
   tRWFragmentColor[vAddress] = color;
-  tRWDepthAndLink[vAddress] = int2(int(
-    depth * 100.0f),
-    nOldFragmentAddress);
+  // tRWDepthAndLink[vAddress] = int2(int(
+  //   depth * 100.0f),
+  //   nOldFragmentAddress);
 
   return;
 }

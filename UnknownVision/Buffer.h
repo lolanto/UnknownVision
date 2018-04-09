@@ -107,7 +107,8 @@ bool StructuredBuffer<T, NumEle>::Setup(ID3D11Device* dev) {
 		ZeroMemory(&uavDesc, sizeof(uavDesc));
 		uavDesc.Buffer.FirstElement = 0;
 		uavDesc.Buffer.NumElements = NumEle;
-		uavDesc.Buffer.Flags = 0;
+		// 在uav中添加隐藏计数器并激活其功能
+		uavDesc.Buffer.Flags = D3D11_BUFFER_UAV_FLAG_COUNTER;
 		uavDesc.Format = DXGI_FORMAT_UNKNOWN;
 		uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 		if (FAILED(dev->CreateUnorderedAccessView(m_buf.Get(), &uavDesc, m_uav.ReleaseAndGetAddressOf()))) {

@@ -59,6 +59,7 @@ class IUnorderAccess {
 public:
 	virtual void Bind(ID3D11DeviceContext*, ShaderBindTarget, SIZE_T);
 	virtual void Unbind(ID3D11DeviceContext*, ShaderBindTarget, SIZE_T);
+	virtual ID3D11UnorderedAccessView* GetUAV();
 protected:
 	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView>		m_uav;
 };

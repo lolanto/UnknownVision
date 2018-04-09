@@ -78,16 +78,16 @@ public:
 protected:
 	std::vector<BindingData<IConstantBuffer>>					m_bdOfConstBuffer;
 	std::vector<BindingData<ITexture>>								m_bdOfTexture;
-	std::vector<BindingData<IBuffer>>								m_bdOfBuffer;
-	std::vector<BindingData<ISamplerState>>					m_bdOfSamplerState;
+	std::vector<BindingData<IBuffer>>									m_bdOfBuffer;
+	std::vector<BindingData<ISamplerState>>						m_bdOfSamplerState;
 	std::vector<BindingData<IUnorderAccess>>					m_bdOfUnorderAccess;
 	std::vector<BindingData<UnknownObject>>					m_bdOfUnknownObject;
 };
 
 class ShadingPass : public BasePass {
 public:
-	static BindingData<RasterState>								Def_RasterState;
-	static D3D11_VIEWPORT											Def_ViewPort;
+	static BindingData<RasterState>									Def_RasterState;
+	static D3D11_VIEWPORT												Def_ViewPort;
 public:
 	ShadingPass(VertexShader*, PixelShader* ps = nullptr, GeometryShader* gs = nullptr);
 	using BasePass::BindSource;
@@ -99,7 +99,7 @@ public:
 	ShadingPass& Run(ID3D11DeviceContext*);
 	ShadingPass& End(ID3D11DeviceContext*);
 private:
-	std::vector<ID3D11RenderTargetView*>					m_rtvs;
+	std::vector<ID3D11RenderTargetView*>						m_rtvs;
 	std::vector<ClearScheme>											m_rtvsClearSchemes;
 
 	IDepthStencil*																m_ds;
@@ -114,7 +114,7 @@ private:
 
 	VertexShader*																m_vs;
 	PixelShader*																	m_ps;
-	GeometryShader*														m_gs;
+	GeometryShader*															m_gs;
 };
 
 class ComputingPass : public BasePass {

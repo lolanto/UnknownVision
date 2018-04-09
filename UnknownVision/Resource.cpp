@@ -97,6 +97,8 @@ void IUnorderAccess::Bind(BindParams)
 {
 	switch (sbt)
 	{
+	case SBT_PIXEL_SHADER:
+		break;
 	case SBT_COMPUTE_SHADER:
 		devCtx->CSSetUnorderedAccessViews(slot, 1, m_uav.GetAddressOf(), NULL);
 		break;
@@ -111,6 +113,8 @@ void IUnorderAccess::Unbind(UnbindParams)
 	static ID3D11UnorderedAccessView* ppNull[] = { nullptr };
 	switch (sbt)
 	{
+	case SBT_PIXEL_SHADER:
+		break;
 	case SBT_COMPUTE_SHADER:
 		devCtx->CSSetUnorderedAccessViews(slot, 1, ppNull, NULL);
 		break;
@@ -119,6 +123,11 @@ void IUnorderAccess::Unbind(UnbindParams)
 		break;
 	}
 
+}
+
+ID3D11UnorderedAccessView* IUnorderAccess::GetUAV() {
+	assert(m_uav.Get() != nullptr);
+	return m_uav.Get();
 }
 
 void ITexture::Bind(BindParams)
