@@ -178,16 +178,31 @@
     <FxCompile Include="shader\imageBasedLighting\imageBasedLightingRefPS_Backup2.hlsl">
       <Filter>UnknownVision\Shader</Filter>
     </FxCompile>
-    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionPS.hlsl">
+    <FxCompile Include="shader\ScreenSpaceReflection\LinkedListArrangeCS.hlsl">
       <Filter>UnknownVision\Shader</Filter>
     </FxCompile>
-    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionVS.hlsl">
+    <FxCompile Include="shader\ScreenSpaceReflection\MultiLevelCS.hlsl">
       <Filter>UnknownVision\Shader</Filter>
     </FxCompile>
-    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionQuadVS.hlsl">
+    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceBasicPS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceBasicVS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\ScreenSpaceReflection\BuildLinkedListPS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\ScreenSpaceReflection\BuildLinkedListVS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionCS.hlsl">
       <Filter>UnknownVision\Shader</Filter>
     </FxCompile>
     <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionQuadPS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionQuadVS.hlsl">
       <Filter>UnknownVision\Shader</Filter>
     </FxCompile>
   </ItemGroup>

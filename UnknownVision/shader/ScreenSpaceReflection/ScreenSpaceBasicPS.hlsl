@@ -1,5 +1,4 @@
 #include "../PS_INPUT.hlsli"
-#include "LinkedList.hlsli"
 
 struct VSOutput {
   float4 pos : SV_POSITION;
@@ -9,7 +8,8 @@ struct VSOutput {
 };
 
 struct PSOutput {
-  float4 SSBasicColor : SV_TARGET0;
+  float4 SSNor : SV_TARGET0;
+  float4 SSPos : SV_TARGET1;
 };
 
 Texture2D basicColor : register (t0);
@@ -17,9 +17,8 @@ SamplerState linearSampler : register (s0);
 
 PSOutput main( VSOutput i ) {
   PSOutput o;
-  o.SSBasicColor = basicColor.Sample(linearSampler, i.uv);
-
-  BuildLinkedList(i.pos.xy, o.SSBasicColor, i.pos.z);
+  o.SSNor = float4(i.csNor, 0.0f);
+  o.SSPos = float4(i.csPos, 1.0f);
 
   return o;
 }

@@ -69,11 +69,14 @@ public:
 	void SetPosition(DirectX::XMFLOAT3);
 	void SetLookAt(DirectX::XMFLOAT3);
 	void SetFOV(float);
-	void SetASPECT(float);
+	void SetASPECT(float, float);
 
 private:
 	void calcProjMatrix();
 	void calcViewMatrix();
+
+	void calcParam();
+	void calcParam2();
 private:
 
 	// 影响到view矩阵的参数发生更改
@@ -90,12 +93,15 @@ private:
 		DirectX::XMFLOAT4X4										m_projMatrixInv;
 		DirectX::XMFLOAT3											m_pos;
 		float temp;
+		// m_param---near plane / far plane / screen width / screen height
 		DirectX::XMFLOAT4											m_param;
+		DirectX::XMFLOAT4											m_param2;
 	}																			/*m_cameraDataStruct,*/
 																				m_cameraPrevData;
 
 	DirectX::XMFLOAT3												m_lookAt;
-
+	float																		m_width;
+	float																		m_height;
 	float																		m_fov;
 	float																		m_aspect;
 	float																		m_near;

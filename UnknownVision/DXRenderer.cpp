@@ -219,8 +219,8 @@ void DXRenderer::setInputLayout() {
 	m_devContext->IASetInputLayout(m_comInputLayout.Get());
 }
 
-inline void DXRenderer::clearRenderTargets() {
-	m_devContext->OMSetRenderTargets(0, NULL, NULL);
+void DXRenderer::ClearRenderTarget(IRenderTarget* rt, DirectX::XMFLOAT4 clearColor) {
+	m_devContext->ClearRenderTargetView(rt->GetRTV(), &clearColor.x);
 }
 
 // Set iterate object

@@ -206,10 +206,12 @@ ShadingPass& ShadingPass::Run(ID3D11DeviceContext* devCtx) {
 		initialCount.push_back(0);
 	}
 
-	devCtx->OMSetRenderTargetsAndUnorderedAccessViews(
-		D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL, nullptr, nullptr,
-		startSlot, uavs.size(), &uavs[0], &initialCount[0]
-	);
+	if (uavs.size()) {
+		devCtx->OMSetRenderTargetsAndUnorderedAccessViews(
+			D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL, nullptr, nullptr,
+			startSlot, uavs.size(), &uavs[0], &initialCount[0]
+		);
+	}
 
 	// bind mesh and submit draw call
 	m_meshBindingData.resPointer->Bind(devCtx, m_meshBindingData.bindTarget, m_meshBindingData.slot);
@@ -249,7 +251,10 @@ ShadingPass& ShadingPass::End(ID3D11DeviceContext* devCtx) {
 	}
 
 	// Unbind RT
-	devCtx->OMSetRenderTargets(0, NULL, nullptr);
+	//devCtx->OMSetRenderTargets(0, NULL, nullptr);
+	ID3D11UnorderedAccessView* nullUAV[1] = { nullptr };
+	UINT nullInitValue[1] = { 0 };
+	devCtx->OMSetRenderTargetsAndUnorderedAccessViews(0, nullptr, nullptr, 0, 1, nullUAV, nullInitValue);
 
 	// unbind mesh and submit draw call
 	m_meshBindingData.resPointer->Unbind(devCtx, m_meshBindingData.bindTarget, m_meshBindingData.slot);

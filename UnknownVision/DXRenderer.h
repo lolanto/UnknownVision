@@ -1,5 +1,6 @@
 #pragma once
 #include <d3d11.h>
+#include <DirectXMath.h>
 #include <wrl.h>
 #include <map>
 #include <memory>
@@ -13,6 +14,7 @@ typedef std::map<UINT, Microsoft::WRL::ComPtr<ID3D11Buffer>>					BufferList;
 class RasterState;
 class RenderTargetWrapper;
 class DepthTexture;
+class IRenderTarget;
 
 class UnknownObject;
 
@@ -31,11 +33,10 @@ public:
 
 	RenderTargetWrapper* GetMainRT();
 	DepthTexture* GetMainDS();
-
-
+	// 单独提供渲染对象的清空
+	void ClearRenderTarget(IRenderTarget* rt, DirectX::XMFLOAT4 clearColor = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f) );
 private:
 	DXRenderer();
-	void clearRenderTargets();
 
 	bool setReferenceDev(HWND hwnd, float width, float height);
 	bool setBackBuffer(HWND hwnd, float width, float height);

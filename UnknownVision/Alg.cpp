@@ -256,7 +256,7 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 	CAMERA_DESC camDesc(WIDTH, HEIGHT);
 	camDesc.fov = 0.79;
 	camDesc.lookAt = DirectX::XMFLOAT3();
-	camDesc.position = DirectX::XMFLOAT3(0.0f, 5.0f, -3.0f);
+	camDesc.position = DirectX::XMFLOAT3(4.0f, 10.0f, -4.0f);
 	Camera cc(camDesc);
 	cc.Setup(MainDev);
 	// 添加摄像机控制器
@@ -266,13 +266,17 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 	gLinearSampler.Setup(MainDev);
 	gPointSampler.Setup(MainDev);
 
+	// raster state
+	RasterState noBackCull(D3D11_CULL_NONE);
+	noBackCull.Setup(MainDev);
+
 	// model
 	Model basicModel;
 	basicModel.Setup(MainDev);
 
 	// Mesh
 	std::vector<std::shared_ptr<Mesh>> meshList;
-	meshList = gMF.Load("./CubeMapScene/testEnv.obj");
+	meshList = gMF.Load("./UnknownRoom/UnknownRoom.obj");
 	for (auto ele : meshList) ele->Setup(MainDev);
 
 	std::shared_ptr<Mesh> plane;
@@ -280,7 +284,7 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 	plane->Setup(MainDev);
 
 	// Common Texture
-	CommonTexture BC(L"./CubeMapScene/BC.png");
+	CommonTexture BC(L"./UnknownRoom/BC.png");
 	BC.Setup(MainDev);
 
 	// DepthTexture
@@ -288,8 +292,6 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 	deTex.Setup(MainDev);
 
 	// Canvas
-	Canvas SSBasicColor(WIDTH, HEIGHT);
-	SSBasicColor.Setup(MainDev);
 	// 摄像机空间下的发线
 	Canvas SSNor(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
 	SSNor.Setup(MainDev);
@@ -298,67 +300,213 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 	SSPos.Setup(MainDev);
 
 	// 链表头节点
-	Canvas fragmentHead(WIDTH, HEIGHT, DXGI_FORMAT_R32_SINT, true);
+	Canvas fragmentHead(WIDTH, HEIGHT, DXGI_FORMAT_R32_UINT);
+	fragmentHead.SetUARes();
 	fragmentHead.Setup(MainDev);
-	Canvas fragmentColor(WIDTH, HEIGHT * 3, DXGI_FORMAT_R8G8B8A8_UNORM, true);
+	Canvas fragmentColor(WIDTH, HEIGHT * 4, DXGI_FORMAT_R8G8B8A8_UNORM);
+	fragmentColor.SetUARes();
 	fragmentColor.Setup(MainDev);
-	Canvas fragmentDepthAndNext(WIDTH, HEIGHT * 3, DXGI_FORMAT_R32G32_SINT, true);
+	Canvas fragmentDepthAndNext(WIDTH, HEIGHT * 4, DXGI_FORMAT_R32G32_UINT);
+	fragmentDepthAndNext.SetUARes();
 	fragmentDepthAndNext.Setup(MainDev);
+	Canvas tracingResult(WIDTH, HEIGHT);
+	tracingResult.SetUARes();
+	tracingResult.Setup(MainDev);
+
+	// 充当计数器的结构化缓冲区
+	StructuredBuffer<int, 1> structureCounter(false);
+	structureCounter.Setup(MainDev);
 
 	struct LinkedListData {
 		DirectX::XMFLOAT4 data;
 	};
 	ConstantBuffer<LinkedListData> linkedListData;
 	linkedListData.Setup(MainDev);
-	linkedListData.GetData().data = { WIDTH, HEIGHT * 3,  WIDTH * HEIGHT * 3, 0 };
+	linkedListData.GetData().data = { WIDTH, HEIGHT * 4,  WIDTH * HEIGHT * 4, HEIGHT };
 
-	StructuredBuffer<LinkedListData,1> structureCounter(false);
-	structureCounter.Setup(MainDev);
+	struct MultiLevelData {
+		DirectX::XMFLOAT4 data;
+	};
+	ConstantBuffer<MultiLevelData> multiLevelData;
+	multiLevelData.Setup(MainDev);
+	multiLevelData.GetData().data = { 0, WIDTH, HEIGHT, HEIGHT };
+
+	// 存储分层结果
+	// 存储分层的颜色值
+	Canvas fragmentDiffuse(WIDTH, HEIGHT * 6, DXGI_FORMAT_R8G8B8A8_UNORM);
+	fragmentDiffuse.SetUARes(true, false);
+	fragmentDiffuse.Setup(MainDev);
+
+	// 存储分层的深度值(min, max)
+	Canvas fragmentDepth1(WIDTH, HEIGHT * 6, DXGI_FORMAT_R32G32_FLOAT);
+	fragmentDepth1.SetUARes();
+	fragmentDepth1.Setup(MainDev);
+
+	Canvas fragmentDepth2(WIDTH / 2, (HEIGHT / 2) * 6, DXGI_FORMAT_R32G32_FLOAT);
+	fragmentDepth2.SetUARes();
+	fragmentDepth2.Setup(MainDev);
+
+	Canvas fragmentDepth3(WIDTH / 4, (HEIGHT / 4) * 6, DXGI_FORMAT_R32G32_FLOAT);
+	fragmentDepth3.SetUARes();
+	fragmentDepth3.Setup(MainDev);
+
+	Canvas fragmentDepth4(WIDTH / 8, (HEIGHT / 8) * 6, DXGI_FORMAT_R32G32_FLOAT);
+	fragmentDepth4.SetUARes();
+	fragmentDepth4.Setup(MainDev);
+
+	Canvas fragmentDepth5(WIDTH / 16, (HEIGHT / 16) * 6, DXGI_FORMAT_R32G32_FLOAT);
+	fragmentDepth5.SetUARes();
+	fragmentDepth5.Setup(MainDev);
 
 	// Shader
+	// 构建屏幕空间基本信息
+	VertexShader BasicVS("../Debug/ScreenSpaceBasicVS.cso");
+	BasicVS.Setup(MainDev);
+	PixelShader BasicPS("../Debug/ScreenSpaceBasicPS.cso");
+	BasicPS.Setup(MainDev);
 	// 构建屏幕空间信息的两个Shader
-	VertexShader ConstructVS("../Debug/ScreenSpaceReflectionVS.cso");
-	ConstructVS.Setup(MainDev);
-	PixelShader ConstructPS("../Debug/ScreenSpaceReflectionPS.cso");
-	ConstructPS.Setup(MainDev);
+	VertexShader BuildLLVS("../Debug/BuildLinkedListVS.cso");
+	BuildLLVS.Setup(MainDev);
+	PixelShader BuildLLPS("../Debug/BuildLinkedListPS.cso");
+	BuildLLPS.Setup(MainDev);
 
-	// 读取屏幕空间信息
-	VertexShader SSRVS("../Debug/ScreenSpaceReflectionQuadVS.cso");
-	SSRVS.Setup(MainDev);
-	PixelShader SSRPS("../Debug/ScreenSpaceReflectionQuadPS.cso");
-	SSRPS.Setup(MainDev);
+	// 对构建的屏幕信息进行整理
+	ComputeShader LLCS("../Debug/LinkedListArrangeCS.cso");
+	LLCS.Setup(MainDev);
 
-	ShadingPass pass0(&ConstructVS, &ConstructPS);
-	pass0
+	// 构建多个level
+	ComputeShader FilterCS("../Debug/MultiLevelCS.cso");
+	FilterCS.Setup(MainDev);
+
+	// 光线追踪结果
+	ComputeShader TracingCS("../Debug/ScreenSpaceReflectionCS.cso");
+	TracingCS.Setup(MainDev);
+
+	// 显示结果
+	VertexShader QuadVS("../Debug/ScreenSpaceReflectionQuadVS.cso");
+	QuadVS.Setup(MainDev);
+	PixelShader QuadPS("../Debug/ScreenSpaceReflectionQuadPS.cso");
+	QuadPS.Setup(MainDev);
+
+	ShadingPass passBasic(&BasicVS, &BasicPS);
+	passBasic
 		.BindSource(meshList[0].get())
-		.BindSource(&deTex, true, false)
-		.BindSource(renderer->GetMainRT(), true, false)
-		//.BindSource(&SSNor, true, false).BindSource(&SSPos, true, false)
+		.BindSource(&SSNor, true, false)
+		.BindSource(&SSPos, true, false)
 		.BindSource(&cc, SBT_PIXEL_SHADER, PS_CAMERA_DATA_SLOT)
 		.BindSource(&cc, SBT_VERTEX_SHADER, VS_CAMERA_DATA_SLOT)
 		.BindSource(&basicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
 		.BindSource(&BC, SBT_PIXEL_SHADER, 0)
-		.BindSourceUA(&structureCounter, SBT_PIXEL_SHADER, 1)
-		.BindSourceUA(&fragmentHead, SBT_PIXEL_SHADER, 2)
-		.BindSourceUA(&fragmentColor, SBT_PIXEL_SHADER, 3)
-		.BindSourceUA(&fragmentDepthAndNext, SBT_PIXEL_SHADER, 4)
+		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0);
+
+	ShadingPass pass0(&BuildLLVS, &BuildLLPS);
+	pass0
+		.BindSource(meshList[0].get())
+		.BindSource(&noBackCull)
+		.BindSource(&cc, SBT_PIXEL_SHADER, PS_CAMERA_DATA_SLOT)
+		.BindSource(&cc, SBT_VERTEX_SHADER, VS_CAMERA_DATA_SLOT)
+		.BindSource(&basicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
+		.BindSource(&BC, SBT_PIXEL_SHADER, 0)
+		.BindSourceUA(&structureCounter, SBT_PIXEL_SHADER, 0)
+		.BindSourceUA(&fragmentHead, SBT_PIXEL_SHADER, 1)
+		.BindSourceUA(&fragmentColor, SBT_PIXEL_SHADER, 2)
+		.BindSourceUA(&fragmentDepthAndNext, SBT_PIXEL_SHADER, 3)
 		.BindSource(&linkedListData, SBT_PIXEL_SHADER, 1)
 		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0);
 
-	ShadingPass pass1(&SSRVS, &SSRPS);
+	ComputingPass pass1(&LLCS, { 96, 96 ,1 });
 	pass1
-		.BindSource(renderer->GetMainRT(), true, false)
+		.BindSourceTex(&fragmentColor, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&fragmentHead, SBT_COMPUTE_SHADER, 1)
+		.BindSourceTex(&fragmentDepthAndNext, SBT_COMPUTE_SHADER, 2)
+
+		.BindSourceUA(&fragmentDiffuse, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&fragmentDepth1, SBT_COMPUTE_SHADER, 1)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&linkedListData, SBT_COMPUTE_SHADER, 1);
+
+	ComputingPass pass2(&FilterCS, { 48, 48, 1 });
+	pass2
+		.BindSourceTex(&fragmentDepth1, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&fragmentDepth2, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&multiLevelData, SBT_COMPUTE_SHADER, 1);
+
+	ComputingPass pass3(&FilterCS, { 24, 24, 1 });
+	pass3
+		.BindSourceTex(&fragmentDepth2, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&fragmentDepth3, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&multiLevelData, SBT_COMPUTE_SHADER, 1);
+
+	ComputingPass pass4(&FilterCS, { 12, 12, 1 });
+	pass4
+		.BindSourceTex(&fragmentDepth3, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&fragmentDepth4, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&multiLevelData, SBT_COMPUTE_SHADER, 1);
+
+	ComputingPass pass5(&FilterCS, { 6, 6, 1 });
+	pass5
+		.BindSourceTex(&fragmentDepth4, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&fragmentDepth5, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&multiLevelData, SBT_COMPUTE_SHADER, 1);
+
+	ComputingPass passTracing(&TracingCS, { 96, 96, 1 });
+	passTracing
+		.BindSourceTex(&SSNor, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&SSPos, SBT_COMPUTE_SHADER, 1)
+		.BindSourceTex(&fragmentDiffuse, SBT_COMPUTE_SHADER, 2)
+		.BindSourceTex(&fragmentDepth1, SBT_COMPUTE_SHADER, 3)
+		.BindSourceTex(&fragmentDepth2, SBT_COMPUTE_SHADER, 4)
+		.BindSourceTex(&fragmentDepth3, SBT_COMPUTE_SHADER, 5)
+		.BindSourceTex(&fragmentDepth4, SBT_COMPUTE_SHADER, 6)
+		.BindSourceTex(&fragmentDepth5, SBT_COMPUTE_SHADER, 7)
+		.BindSourceUA(&tracingResult, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0);
+
+	ShadingPass passShow(&QuadVS, &QuadPS);
+	passShow
 		.BindSource(plane.get())
-		.BindSource(&cc, SBT_PIXEL_SHADER, PS_CAMERA_DATA_SLOT)
-		.BindSource(&deTex, SBT_PIXEL_SHADER, 0)
-		.BindSourceTex(&SSBasicColor, SBT_PIXEL_SHADER, 1)
-		.BindSourceTex(&SSNor, SBT_PIXEL_SHADER, 2)
-		.BindSourceTex(&SSPos, SBT_PIXEL_SHADER, 3)
+		.BindSource(renderer->GetMainRT(), true, false)
+		.BindSource(&basicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
+		.BindSourceTex(&tracingResult, SBT_PIXEL_SHADER, 0)
 		.BindSource(&gPointSampler, SBT_PIXEL_SHADER, 0);
 
 	mc->Run([&] {
+		passBasic.Run(MainDevCtx).End(MainDevCtx);
+
+		renderer->ClearRenderTarget(&fragmentColor);
+		renderer->ClearRenderTarget(&fragmentHead);
+		renderer->ClearRenderTarget(&fragmentDepthAndNext);
+		renderer->ClearRenderTarget(&fragmentDiffuse);
+		renderer->ClearRenderTarget(&fragmentDepth1);
+		renderer->ClearRenderTarget(&fragmentDepth2);
+		renderer->ClearRenderTarget(&fragmentDepth3);
+		renderer->ClearRenderTarget(&fragmentDepth4);
+		renderer->ClearRenderTarget(&fragmentDepth5);
+		renderer->ClearRenderTarget(&tracingResult);
+
 		pass0.Run(MainDevCtx).End(MainDevCtx);
-		//pass1.Run(MainDevCtx).End(MainDevCtx);
+		pass1.Run(MainDevCtx).End(MainDevCtx);
+
+		multiLevelData.GetData().data = { 1, WIDTH / 2, HEIGHT / 2, HEIGHT };
+		pass2.Run(MainDevCtx).End(MainDevCtx);
+
+		multiLevelData.GetData().data = { 2, WIDTH / 4, HEIGHT / 4, HEIGHT / 2 };
+		pass3.Run(MainDevCtx).End(MainDevCtx);
+
+		multiLevelData.GetData().data = { 3, WIDTH / 8, HEIGHT / 8, HEIGHT / 4 };
+		pass4.Run(MainDevCtx).End(MainDevCtx);
+
+		multiLevelData.GetData().data = { 4, WIDTH / 16, HEIGHT / 16, HEIGHT / 8 };
+		pass5.Run(MainDevCtx).End(MainDevCtx);
+
+		passTracing.Run(MainDevCtx).End(MainDevCtx);
+
+		passShow.Run(MainDevCtx).End(MainDevCtx);
+
 		renderer->EndRender();
 	});
 }

@@ -10,11 +10,12 @@ CAMERA_DESC::CAMERA_DESC(float width, float height, DirectX::XMFLOAT3 pos,	Direc
 {}
 
 Camera::Camera(CAMERA_DESC& desc)
-	: m_fov(desc.fov), m_aspect(desc.width / desc.height),
+	: m_fov(desc.fov), m_aspect(desc.width / desc.height), m_width(desc.width), m_height(desc.height),
 	m_lookAt(desc.lookAt), m_near(desc.nearPlane), m_far(desc.farPlane),
 	m_isViewDirty(true), m_isProjDirty(true) {
 	m_buf.GetData().m_pos = desc.position;
-	m_buf.GetData().m_param = { m_near, m_far, desc.width, desc.height };
+	calcParam();
+	calcParam2();
 }
 
 ////////////////////////////////////////////
@@ -82,16 +83,37 @@ void Camera::SetLookAt(XMFLOAT3 lookAt) {
 void Camera::SetFOV(float f) {
 	m_fov = f;
 	m_isProjDirty = true;
+	// 重新计算m_param2
+	calcParam2();
 }
 
-void Camera::SetASPECT(float a) {
-	m_aspect = a;
+void Camera::SetASPECT(float x, float y) {
+	m_aspect = x / y;
+	m_width = x;
+	m_height = y;
 	m_isProjDirty = true;
+	// 重新计算m_param
+	calcParam();
 }
 
 ////////////////////////////////////////////////////////////////
 // private func
 ///////////////////////////////////////////////////////////////
+
+inline void Camera::calcParam() {
+	m_buf.GetData().m_param = { m_near, m_far, m_width, m_height };
+}
+
+inline void Camera::calcParam2() {
+	// m_param2--- near plane size.xy / far plane size.xy
+	float tanHalfFOV2 = 2 * tan(m_fov / 2.0f);
+	m_buf.GetData().m_param2 = {
+		tanHalfFOV2 * m_near * m_aspect,
+		tanHalfFOV2 * m_near,
+		tanHalfFOV2 * m_far * m_aspect,
+		tanHalfFOV2 * m_far
+	};
+}
 
 void Camera::calcProjMatrix() {
 	// 计算投影矩阵
