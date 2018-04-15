@@ -15,6 +15,7 @@ class RasterState;
 class RenderTargetWrapper;
 class DepthTexture;
 class IRenderTarget;
+class IUnorderAccess;
 
 class UnknownObject;
 
@@ -35,6 +36,8 @@ public:
 	DepthTexture* GetMainDS();
 	// 单独提供渲染对象的清空
 	void ClearRenderTarget(IRenderTarget* rt, DirectX::XMFLOAT4 clearColor = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f) );
+	void ClearUAV_UINT(IUnorderAccess* uav, DirectX::XMUINT4 clearValue = DirectX::XMUINT4(0, 0, 0, 0));
+	void ClearUAV_FLOAT(IUnorderAccess* uav, DirectX::XMFLOAT4 clearValue = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f));
 private:
 	DXRenderer();
 

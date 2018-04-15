@@ -11,6 +11,8 @@ RWStructuredBuffer<int>	RWStructuredCounter : register(u0);
 RWTexture2D<uint>	tRWFragmentListHead		      : register(u1);
 RWTexture2D<unorm float4>	tRWFragmentColor		: register(u2);
 RWTexture2D<uint2>	tRWDepthAndLink			        : register(u3);
+RWTexture2D<float4> tRWFragmentNormal : register(u4);
+RWTexture2D<float4> tRWFragmentPos : register(u5);
 
 cbuffer LinkedListData : register(b1) {
 	float4 ScreenWidthHeightStorageSlice;
@@ -30,16 +32,17 @@ int2 GetAddress(int addr) {
 void BuildLinkedList(
   float2 uv, // 屏幕的UV坐标
   float4 color, // 最终输出的颜色值
-  float depth // 当前像素的摄像机空间的深度值
+  float depth, // 当前像素的摄像机空间的深度值
+  float3 csNor,
+  float3 csPos
   ) {
-
-  int2 ScreenSpaceAddress = int2(uv);
   // int nNewFragmentAddress = 0;
   int nNewFragmentAddress = RWStructuredCounter.IncrementCounter();
   // 假如当前超出容量
   if (nNewFragmentAddress >= int(ScreenWidthHeightStorageSlice.z)) return;
 
 	// update head buffer
+  int2 ScreenSpaceAddress = int2(uv);
   uint nOldFragmentAddress = 0;
   InterlockedExchange(tRWFragmentListHead[ScreenSpaceAddress],
     nNewFragmentAddress, nOldFragmentAddress);
@@ -48,9 +51,10 @@ void BuildLinkedList(
   int2 vAddress = GetAddress(nNewFragmentAddress);
   tRWFragmentColor[vAddress] = color;
   tRWDepthAndLink[vAddress] = uint2(uint(
-    depth * 0x0fffffff),
+    (depth / GCameraParam.y) * 4294967295.0f),
     nOldFragmentAddress);
-
+  tRWFragmentNormal[vAddress] = float4(csNor, 0.0f);
+  tRWFragmentPos[vAddress] = float4(csPos, 1.0f);
   return;
 }
 

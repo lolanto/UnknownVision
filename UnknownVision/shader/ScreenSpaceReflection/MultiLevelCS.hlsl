@@ -17,6 +17,7 @@ void main(uint3 GTID : SV_GroupThreadID,
   uint3 GID : SV_GroupID) {
 
   uint2 tuv = GID.xy * 10 + GTID.xy;
+  if (tuv.x >= LevelNumSizeLastSlice.y || tuv.y >= LevelNumSizeLastSlice.z) return;
   uint2 base[4];
   float2 frags[4];
   base[0] = tuv * 2;
@@ -29,16 +30,15 @@ void main(uint3 GTID : SV_GroupThreadID,
   frags[2] = fragmentDepthLastLevel.Load(uint3(base[2], 0));
   frags[3] = fragmentDepthLastLevel.Load(uint3(base[3], 0));
   float d_min = min(min(frags[0].x, frags[1].x), min(frags[2].x, frags[3].x));
-  if (d_min <= 0) return;
+  if (frags[0].x <= 0 && frags[1].x <= 0 && frags[2].x <= 0 && frags[3].x <= 0) return;
   for(uint cur_lay = 0; cur_lay < NUM_LAYER; ++cur_lay) {
     
     float d_max = d_min + epsilon(d_min, uint(LevelNumSizeLastSlice.x));
     float cur_max = 0;
     for(uint i = 0; i < 4; ++i) {
-      while(base[i].y < LevelNumSizeLastSlice.w * NUM_LAYER &&
-        frags[i].x > 0) {
+      while(frags[i].x > 0) {
         // 纳入当前层
-        if (frags[i].y < d_max) {
+        if (frags[i].y <= d_max) {
           cur_max = frags[i].y > cur_max ? frags[i].y : cur_max;
           base[i].y += LevelNumSizeLastSlice.w;
           frags[i] = fragmentDepthLastLevel.Load(uint3(base[i], 0));
@@ -50,11 +50,7 @@ void main(uint3 GTID : SV_GroupThreadID,
 
     fragmentDepthNextLevel[tuv] = float2(d_min, cur_max);
     d_min = min(min(frags[0].x, frags[1].x), min(frags[2].x, frags[3].x));
-    // 该像素周围是空的
-    if (d_min <= 0) {
-      // fragmentDepthNextLevel[tuv] = float2(d_min, 1.0);
-      break;
-    }
+    if (frags[0].x <= 0 && frags[1].x <= 0 && frags[2].x <= 0 && frags[3].x <= 0) break;
     tuv.y += LevelNumSizeLastSlice.z;
   }
 }

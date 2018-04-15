@@ -223,6 +223,18 @@ void DXRenderer::ClearRenderTarget(IRenderTarget* rt, DirectX::XMFLOAT4 clearCol
 	m_devContext->ClearRenderTargetView(rt->GetRTV(), &clearColor.x);
 }
 
+void DXRenderer::ClearUAV_UINT(IUnorderAccess* uav, DirectX::XMUINT4 clearValue) {
+	// 只能应用于UAV格式是uint上，将指定格式的低n位拷贝到view中。
+	// 比如这里的clearValue是32位的4元素数组，而uav是r8_uint，则会将clearValue的低8位拷贝到view中
+	m_devContext->ClearUnorderedAccessViewUint(uav->GetUAV(), &clearValue.x);
+}
+
+void DXRenderer::ClearUAV_FLOAT(IUnorderAccess* uav, DirectX::XMFLOAT4 clearValue) {
+	// 只能应用于UAV格式是浮点数类型上，在拷贝的时候，浮点数会进行类型转换
+	// 若UAV是非浮点数类型，则该操作会报错，同时该命令不会发送给GPU
+	m_devContext->ClearUnorderedAccessViewFloat(uav->GetUAV(), &clearValue.x);
+}
+
 // Set iterate object
 //void DXRenderer::AddIterateObject(IterateObject* itobj) {
 //	m_iterateList.push_back(itobj);

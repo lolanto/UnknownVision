@@ -1,9 +1,10 @@
 #include "../PS_INPUT.hlsli"
 
 #define EPSILON 0.0001f
-#define MAX_STEPS 30
+// #define EPSILON 0.001f
+#define MAX_STEPS 200
 #define NUM_LAYER 6
-#define LEVELS 4
+#define LEVELS 6
 
 Texture2D SSNor : register(t0);
 Texture2D SSPos : register(t1);
@@ -14,6 +15,8 @@ Texture2D<float2> Level1 : register(t4);
 Texture2D<float2> Level2 : register(t5);
 Texture2D<float2> Level3 : register(t6);
 Texture2D<float2> Level4 : register(t7);
+Texture2D<float2> Level5 : register(t8);
+Texture2D<float2> Level6 : register(t9);
 
 RWTexture2D<unorm float4> result : register(u0);
 
@@ -41,11 +44,16 @@ depth: 点在摄像机空间中的深度值
 */
 float3 reproject(float2 sspos, float depth = 1.0f);
 // 输入反射光线，初始化追踪状态
-void setupState(Ray ray, uint2 tuv,inout RayTracingState state);
+void setupState(Ray ray,inout RayTracingState state);
 // 根据全局变量state 获得当前点的屏幕空间坐标
 float2 getCurrSSPos(RayTracingState state);
 // 根据当前MipLevel以及UV坐标，获得深度信息
 float2 getLevelData(uint level, uint2 uv);
+
+float distanceSquared(float2 a, float2 b) {
+  a = a - b;
+  return dot(a, a);
+}
 
 [numthreads(10, 10, 1)]
 void main(uint3 GTID : SV_GroupThreadID,
@@ -63,16 +71,14 @@ void main(uint3 GTID : SV_GroupThreadID,
 
   RayTracingState state;
 
-  setupState(refRay, tuv, state);
+  setupState(refRay, state);
 
   float acceleration_delay = 1;
-
   // star ray marching
   for (int i = 0; i < MAX_STEPS && state.t < 1.0f; ++i) {
     // init
-    int div = int(1 << state.curLevel);
+    float div = int(1 << state.curLevel);
     float2 Pcurr = getCurrSSPos(state);
-
     // 当前level下应该采样的像素位置
     uint2 levelUV = uint2(Pcurr / div);
     // 计算光线和当前像素边界的两个碰撞点
@@ -83,29 +89,24 @@ void main(uint3 GTID : SV_GroupThreadID,
     // 计算当前的光线与像素边界碰撞点的深度值(注意深度值的分布)
     // k的值是摄像机深度的倒数
     float rayEntryDepth = state.k0 + state.dk * t_entry;
-    // 将深度值转换成抛物分布
-    rayEntryDepth = (GCameraParam.y / 
-      (GCameraParam.x - GCameraParam.y)) * (GCameraParam.x * rayEntryDepth - 1);
+    rayEntryDepth = 1.0f / (rayEntryDepth * GCameraParam.y);
 
     float rayExitDepth = state.k0 + state.dk * t_exit;
-    // 将深度值转换成抛物分布
-    rayExitDepth = (GCameraParam.y / 
-      (GCameraParam.x - GCameraParam.y)) * (GCameraParam.x * rayExitDepth - 1);
+    rayExitDepth = 1.0f / (rayExitDepth * GCameraParam.y);
 
     float rayDepthMin = min(rayEntryDepth, rayExitDepth);
     float rayDepthMax = max(rayEntryDepth, rayExitDepth);
     // 采样并判断碰撞结果
     bool collision = false;
-    for (state.layer = state.done ? state.layer : 0;
-      state.layer < NUM_LAYER && !state.done;
+    for (state.layer = 0;
+      state.layer < NUM_LAYER;
       ++state.layer, levelUV.y += GCameraParam.w / div) {
       float2 sceneDepth = getLevelData(state.curLevel, levelUV);
-      sceneDepth += float2(0.00008f, 0.0f);
       if (sceneDepth.x > rayDepthMax) break;
       if (sceneDepth.y < rayDepthMin) continue;
       collision = true;
       float f = clamp((sceneDepth.x - rayDepthMin) / (rayDepthMax - rayDepthMin), 0, 1);
-      if (!state.done && refRay.dir.z > 0)
+      if (refRay.dir.z > 0)
         state.t = max(state.t, t_exit * f + t_entry * (1 - f));
       break;
     }
@@ -116,13 +117,11 @@ void main(uint3 GTID : SV_GroupThreadID,
       break;
     }
     // update
-    if (!state.done) {
-      state.t = collision ? state.t : t_exit + EPSILON;
-      // update current level
-      acceleration_delay = max(0, collision ? 3 : acceleration_delay - 1);
-      int new_level = clamp(state.curLevel + (collision ? -1 : 1), 0, LEVELS);
-      state.curLevel = collision || acceleration_delay == 0 ? new_level : state.curLevel;
-    }
+    state.t = collision ? state.t : t_exit + EPSILON;
+    // update current level
+    acceleration_delay = max(0, collision ? 3 : acceleration_delay - 1);
+    int new_level = clamp(state.curLevel + (collision ? -1 : 1), 0, LEVELS);
+    state.curLevel = collision || acceleration_delay == 0 ? new_level : state.curLevel;
   }
 
   if (state.done) {
@@ -147,17 +146,19 @@ float3 reproject(float2 sspos, float depth) {
   return rePos.xyz;
 }
 
-void setupState(Ray ray, uint2 tuv,inout RayTracingState state) {
-// 将反射光线截断到视锥体内
+void setupState(Ray ray,inout RayTracingState state) {
   float4 H0 = mul(GProjectMatrix, float4(ray.orig, 1.0f));
   state.k0 = 1.0f / H0.w;
-  state.P0 = tuv;
+  state.P0 = ((H0.xy * state.k0) + 1.0f) / 2.0f;
+  state.P0.y = 1.0f - state.P0.y;
+  state.P0 *= GCameraParam.zw;
 
   float2 P1;
   float4 Hclip = mul(GProjectMatrix, float4(ray.orig + ray.dir, 1.0f));
   float2 Pclip = ((Hclip.xy / Hclip.w + 1.0f) / 2.0f);
   Pclip.y = 1.0f - Pclip.y;
   Pclip = Pclip * GCameraParam.zw;
+  Pclip += (distanceSquared(Pclip, state.P0) < 0.000001f) ? float2(0.001f, 0.001f) : float2(0, 0);
   float2 dir_screen = normalize(Pclip - state.P0);
   float2 dest_screen = step(0, dir_screen) * (GCameraParam.zw - uint2(1, 1));
   float2 dist_screen = (dest_screen - state.P0) / dir_screen;
@@ -168,11 +169,15 @@ void setupState(Ray ray, uint2 tuv,inout RayTracingState state) {
   float3 csFar = reproject(P1);
   float3 csFarDir = normalize(csFar);
   float3 n = cross(csFarDir, cross(ray.dir, csFarDir));
-  float len = dot(csFar - ray.orig, n) / dot(ray.dir, n);
+  float dirN = dot(ray.dir, n);
+  dirN += dirN == 0 ? 0.0001f : 0;
+  float len = dot(csFar - ray.orig, n) / dirN;
   float3 csEnd = ray.orig + ray.dir * len;
 
   if (csEnd.z > GCameraParam.y || len < 0)
     csEnd = ray.orig + ray.dir * ((GCameraParam.y - ray.orig.z) / ray.dir.z);
+  if (csEnd.z < GCameraParam.x)
+    csEnd = ray.orig + ray.dir * ((GCameraParam.x - ray.orig.z) / ray.dir.z);
   float4 H1 = mul(GProjectMatrix, float4(csEnd, 1.0f));
   float k1 = 1.0f / H1.w;
   P1 = ((H1 * k1 + 1.0f) / 2.0f);
@@ -210,6 +215,10 @@ float2 getLevelData(uint level, uint2 uv) {
     return Level3.Load(uint3(uv, 0)).xy;
   case 4:
     return Level4.Load(uint3(uv, 0)).xy;
+  case 5:
+    return Level5.Load(uint3(uv, 0)).xy;
+  case 6:
+    return Level6.Load(uint3(uv, 0)).xy;
   }
   return float2(-1, -1);
 }

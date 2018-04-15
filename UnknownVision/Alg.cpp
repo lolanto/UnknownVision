@@ -309,6 +309,13 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 	Canvas fragmentDepthAndNext(WIDTH, HEIGHT * 4, DXGI_FORMAT_R32G32_UINT);
 	fragmentDepthAndNext.SetUARes();
 	fragmentDepthAndNext.Setup(MainDev);
+	Canvas fragmentNor(WIDTH, HEIGHT * 4, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	fragmentNor.SetUARes();
+	fragmentNor.Setup(MainDev);
+	Canvas fragmentPos(WIDTH, HEIGHT * 4, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	fragmentPos.SetUARes();
+	fragmentPos.Setup(MainDev);
+
 	Canvas tracingResult(WIDTH, HEIGHT);
 	tracingResult.SetUARes();
 	tracingResult.Setup(MainDev);
@@ -322,7 +329,7 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 	};
 	ConstantBuffer<LinkedListData> linkedListData;
 	linkedListData.Setup(MainDev);
-	linkedListData.GetData().data = { WIDTH, HEIGHT * 4,  WIDTH * HEIGHT * 4, HEIGHT };
+	linkedListData.GetData().data = { WIDTH, HEIGHT * 6,  WIDTH * HEIGHT * 6, HEIGHT };
 
 	struct MultiLevelData {
 		DirectX::XMFLOAT4 data;
@@ -357,6 +364,14 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 	Canvas fragmentDepth5(WIDTH / 16, (HEIGHT / 16) * 6, DXGI_FORMAT_R32G32_FLOAT);
 	fragmentDepth5.SetUARes();
 	fragmentDepth5.Setup(MainDev);
+
+	Canvas fragmentDepth6(WIDTH / 32, (HEIGHT / 32) * 6, DXGI_FORMAT_R32G32_FLOAT);
+	fragmentDepth6.SetUARes();
+	fragmentDepth6.Setup(MainDev);
+
+	Canvas fragmentDepth7(WIDTH / 64, (HEIGHT / 64) * 6, DXGI_FORMAT_R32G32_FLOAT);
+	fragmentDepth7.SetUARes();
+	fragmentDepth7.Setup(MainDev);
 
 	// Shader
 	// 构建屏幕空间基本信息
@@ -393,6 +408,7 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 		.BindSource(meshList[0].get())
 		.BindSource(&SSNor, true, false)
 		.BindSource(&SSPos, true, false)
+		.BindSource(renderer->GetMainDS(), true, false)
 		.BindSource(&cc, SBT_PIXEL_SHADER, PS_CAMERA_DATA_SLOT)
 		.BindSource(&cc, SBT_VERTEX_SHADER, VS_CAMERA_DATA_SLOT)
 		.BindSource(&basicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
@@ -411,6 +427,8 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 		.BindSourceUA(&fragmentHead, SBT_PIXEL_SHADER, 1)
 		.BindSourceUA(&fragmentColor, SBT_PIXEL_SHADER, 2)
 		.BindSourceUA(&fragmentDepthAndNext, SBT_PIXEL_SHADER, 3)
+		.BindSourceUA(&fragmentNor, SBT_PIXEL_SHADER, 4)
+		.BindSourceUA(&fragmentPos, SBT_PIXEL_SHADER, 5)
 		.BindSource(&linkedListData, SBT_PIXEL_SHADER, 1)
 		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0);
 
@@ -419,7 +437,8 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 		.BindSourceTex(&fragmentColor, SBT_COMPUTE_SHADER, 0)
 		.BindSourceTex(&fragmentHead, SBT_COMPUTE_SHADER, 1)
 		.BindSourceTex(&fragmentDepthAndNext, SBT_COMPUTE_SHADER, 2)
-
+		.BindSourceTex(&fragmentNor, SBT_COMPUTE_SHADER, 3)
+		.BindSourceTex(&fragmentPos, SBT_COMPUTE_SHADER, 4)
 		.BindSourceUA(&fragmentDiffuse, SBT_COMPUTE_SHADER, 0)
 		.BindSourceUA(&fragmentDepth1, SBT_COMPUTE_SHADER, 1)
 		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
@@ -453,6 +472,20 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
 		.BindSource(&multiLevelData, SBT_COMPUTE_SHADER, 1);
 
+	ComputingPass pass6(&FilterCS, { 3, 3, 1 });
+	pass6
+		.BindSourceTex(&fragmentDepth5, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&fragmentDepth6, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&multiLevelData, SBT_COMPUTE_SHADER, 1);
+
+	ComputingPass pass7(&FilterCS, { 2, 2, 1 });
+	pass7
+		.BindSourceTex(&fragmentDepth6, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&fragmentDepth7, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&multiLevelData, SBT_COMPUTE_SHADER, 1);
+
 	ComputingPass passTracing(&TracingCS, { 96, 96, 1 });
 	passTracing
 		.BindSourceTex(&SSNor, SBT_COMPUTE_SHADER, 0)
@@ -463,6 +496,8 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 		.BindSourceTex(&fragmentDepth3, SBT_COMPUTE_SHADER, 5)
 		.BindSourceTex(&fragmentDepth4, SBT_COMPUTE_SHADER, 6)
 		.BindSourceTex(&fragmentDepth5, SBT_COMPUTE_SHADER, 7)
+		.BindSourceTex(&fragmentDepth6, SBT_COMPUTE_SHADER, 8)
+		.BindSourceTex(&fragmentDepth7, SBT_COMPUTE_SHADER, 9)
 		.BindSourceUA(&tracingResult, SBT_COMPUTE_SHADER, 0)
 		.BindSource(&cc, SBT_COMPUTE_SHADER, 0);
 
@@ -472,20 +507,26 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 		.BindSource(renderer->GetMainRT(), true, false)
 		.BindSource(&basicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
 		.BindSourceTex(&tracingResult, SBT_PIXEL_SHADER, 0)
-		.BindSource(&gPointSampler, SBT_PIXEL_SHADER, 0);
-
+		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0);
+	const UINT MaxStorage = WIDTH * HEIGHT * 6;
 	mc->Run([&] {
 		passBasic.Run(MainDevCtx).End(MainDevCtx);
 
+		renderer->ClearRenderTarget(&fragmentNor);
+		renderer->ClearRenderTarget(&fragmentPos);
 		renderer->ClearRenderTarget(&fragmentColor);
-		renderer->ClearRenderTarget(&fragmentHead);
-		renderer->ClearRenderTarget(&fragmentDepthAndNext);
+		renderer->ClearUAV_UINT(&fragmentHead, {MaxStorage, MaxStorage, MaxStorage, MaxStorage});
+		//renderer->ClearRenderTarget(&fragmentHead);
+		renderer->ClearUAV_UINT(&fragmentDepthAndNext, { MaxStorage, MaxStorage, MaxStorage, MaxStorage });
+		//renderer->ClearRenderTarget(&fragmentDepthAndNext);
 		renderer->ClearRenderTarget(&fragmentDiffuse);
 		renderer->ClearRenderTarget(&fragmentDepth1);
 		renderer->ClearRenderTarget(&fragmentDepth2);
 		renderer->ClearRenderTarget(&fragmentDepth3);
 		renderer->ClearRenderTarget(&fragmentDepth4);
 		renderer->ClearRenderTarget(&fragmentDepth5);
+		renderer->ClearRenderTarget(&fragmentDepth6);
+		renderer->ClearRenderTarget(&fragmentDepth7);
 		renderer->ClearRenderTarget(&tracingResult);
 
 		pass0.Run(MainDevCtx).End(MainDevCtx);
@@ -502,6 +543,12 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 
 		multiLevelData.GetData().data = { 4, WIDTH / 16, HEIGHT / 16, HEIGHT / 8 };
 		pass5.Run(MainDevCtx).End(MainDevCtx);
+
+		multiLevelData.GetData().data = { 5, WIDTH / 32, HEIGHT / 32, HEIGHT / 16 };
+		pass6.Run(MainDevCtx).End(MainDevCtx);
+
+		multiLevelData.GetData().data = { 6, WIDTH / 64, HEIGHT / 64, HEIGHT / 32 };
+		pass7.Run(MainDevCtx).End(MainDevCtx);
 
 		passTracing.Run(MainDevCtx).End(MainDevCtx);
 
