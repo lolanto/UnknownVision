@@ -320,6 +320,42 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 	tracingResult.SetUARes();
 	tracingResult.Setup(MainDev);
 
+	Canvas cpyLevel0(WIDTH, HEIGHT);
+	cpyLevel0.SetUARes();
+	cpyLevel0.Setup(MainDev);
+
+	Canvas Level1(WIDTH / 2, HEIGHT / 2);
+	Level1.SetUARes();
+	Level1.Setup(MainDev);
+
+	Canvas cpyLevel1(WIDTH / 2, HEIGHT / 2);
+	cpyLevel1.SetUARes();
+	cpyLevel1.Setup(MainDev);
+
+	Canvas Level2(WIDTH / 4, HEIGHT / 4);
+	Level2.SetUARes();
+	Level2.Setup(MainDev);
+
+	Canvas cpyLevel2(WIDTH / 4, HEIGHT / 4);
+	cpyLevel2.SetUARes();
+	cpyLevel2.Setup(MainDev);
+
+	Canvas Level3(WIDTH / 8, HEIGHT / 8);
+	Level3.SetUARes();
+	Level3.Setup(MainDev);
+
+	Canvas cpyLevel3(WIDTH / 8, HEIGHT / 8);
+	cpyLevel3.SetUARes();
+	cpyLevel3.Setup(MainDev);
+
+	Canvas Level4(WIDTH / 16, HEIGHT / 16);
+	Level4.SetUARes();
+	Level4.Setup(MainDev);
+
+	Canvas cpyLevel4(WIDTH / 16, HEIGHT / 16);
+	cpyLevel4.SetUARes();
+	cpyLevel4.Setup(MainDev);
+
 	// 充当计数器的结构化缓冲区
 	StructuredBuffer<int, 1> structureCounter(false);
 	structureCounter.Setup(MainDev);
@@ -384,6 +420,11 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 	BuildLLVS.Setup(MainDev);
 	PixelShader BuildLLPS("../Debug/BuildLinkedListPS.cso");
 	BuildLLPS.Setup(MainDev);
+	//
+	VertexShader ShowVS("../Debug/ScreenSpaceShowVS.cso");
+	ShowVS.Setup(MainDev);
+	PixelShader ShowPS("../Debug/ScreenSpaceShowPS.cso");
+	ShowPS.Setup(MainDev);
 
 	// 对构建的屏幕信息进行整理
 	ComputeShader LLCS("../Debug/LinkedListArrangeCS.cso");
@@ -396,6 +437,13 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 	// 光线追踪结果
 	ComputeShader TracingCS("../Debug/ScreenSpaceReflectionCS.cso");
 	TracingCS.Setup(MainDev);
+
+	// pull push
+	ComputeShader PullCS("../Debug/PullPhaseCS.cso");
+	PullCS.Setup(MainDev);
+
+	ComputeShader PushCS("../Debug/PushPhaseCS.cso");
+	PushCS.Setup(MainDev);
 
 	// 显示结果
 	VertexShader QuadVS("../Debug/ScreenSpaceReflectionQuadVS.cso");
@@ -501,12 +549,66 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 		.BindSourceUA(&tracingResult, SBT_COMPUTE_SHADER, 0)
 		.BindSource(&cc, SBT_COMPUTE_SHADER, 0);
 
+	ComputingPass pullPass0(&PullCS, { 48, 48, 1 });
+	pullPass0
+		.BindSourceTex(&tracingResult, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&Level1, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pullPass1(&PullCS, { 24, 24, 1 });
+	pullPass1
+		.BindSourceTex(&Level1, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&Level2, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pullPass2(&PullCS, { 12, 12, 1 });
+	pullPass2
+		.BindSourceTex(&Level2, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&Level3, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pullPass3(&PullCS, { 6, 6, 1 });
+	pullPass3
+		.BindSourceTex(&Level3, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&Level4, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pushPass0(&PushCS, { 12, 12, 1 });
+	pushPass0
+		.BindSourceTex(&Level4, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&Level3, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&cpyLevel3, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pushPass1(&PushCS, { 24, 24, 1 });
+	pushPass1
+		.BindSourceTex(&cpyLevel3, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&Level2, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&cpyLevel2, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pushPass2(&PushCS, { 48, 48, 1 });
+	pushPass2
+		.BindSourceTex(&cpyLevel2, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&Level1, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&cpyLevel1, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pushPass3(&PushCS, { 96, 96, 1 });
+	pushPass3
+		.BindSourceTex(&cpyLevel1, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&tracingResult, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&cpyLevel0, SBT_COMPUTE_SHADER, 0);
+
+	ShadingPass passShow2(&ShowVS, &ShowPS);
+	passShow2
+		.BindSource(meshList[0].get())
+		.BindSource(renderer->GetMainRT(), true, false)
+		.BindSource(renderer->GetMainDS(), true, false)
+		.BindSourceTex(&cpyLevel0, SBT_PIXEL_SHADER, 0)
+		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0)
+		.BindSource(&basicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
+		.BindSource(&cc, SBT_VERTEX_SHADER, VS_CAMERA_DATA_SLOT);
+
 	ShadingPass passShow(&QuadVS, &QuadPS);
 	passShow
 		.BindSource(plane.get())
 		.BindSource(renderer->GetMainRT(), true, false)
 		.BindSource(&basicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
-		.BindSourceTex(&tracingResult, SBT_PIXEL_SHADER, 0)
+		.BindSourceTex(&cpyLevel0, SBT_PIXEL_SHADER, 0)
 		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0);
 	const UINT MaxStorage = WIDTH * HEIGHT * 6;
 	mc->Run([&] {
@@ -528,6 +630,16 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 		renderer->ClearRenderTarget(&fragmentDepth6);
 		renderer->ClearRenderTarget(&fragmentDepth7);
 		renderer->ClearRenderTarget(&tracingResult);
+
+		renderer->ClearRenderTarget(&Level1);
+		renderer->ClearRenderTarget(&Level2);
+		renderer->ClearRenderTarget(&Level3);
+		renderer->ClearRenderTarget(&Level4);
+
+		renderer->ClearRenderTarget(&cpyLevel0);
+		renderer->ClearRenderTarget(&cpyLevel1);
+		renderer->ClearRenderTarget(&cpyLevel2);
+		renderer->ClearRenderTarget(&cpyLevel3);
 
 		pass0.Run(MainDevCtx).End(MainDevCtx);
 		pass1.Run(MainDevCtx).End(MainDevCtx);
@@ -552,8 +664,162 @@ void ScreenSpaceRayTracing(DefaultParameters) {
 
 		passTracing.Run(MainDevCtx).End(MainDevCtx);
 
-		passShow.Run(MainDevCtx).End(MainDevCtx);
+		pullPass0.Run(MainDevCtx).End(MainDevCtx);
+		pullPass1.Run(MainDevCtx).End(MainDevCtx);
+		pullPass2.Run(MainDevCtx).End(MainDevCtx);
+		pullPass3.Run(MainDevCtx).End(MainDevCtx);
 
+		pushPass0.Run(MainDevCtx).End(MainDevCtx);
+		pushPass1.Run(MainDevCtx).End(MainDevCtx);
+		pushPass2.Run(MainDevCtx).End(MainDevCtx);
+		pushPass3.Run(MainDevCtx).End(MainDevCtx);
+
+		passShow2.Run(MainDevCtx).End(MainDevCtx);
+
+		renderer->EndRender();
+	});
+}
+
+void PullPush(DefaultParameters) {
+	gPointSampler.Setup(MainDev);
+	// basic shader
+	VertexShader BasicVS("../Debug/ScreenSpaceReflectionQuadVS.cso");
+	BasicVS.Setup(MainDev);
+	PixelShader BasicPS("../Debug/ScreenSpaceReflectionQuadPS.cso");
+	BasicPS.Setup(MainDev);
+	// Shader
+	ComputeShader PullCS("../Debug/PullPhaseCS.cso");
+	PullCS.Setup(MainDev);
+	ComputeShader PushCS("../Debug/PushPhaseCS.cso");
+	PushCS.Setup(MainDev);
+
+	// Based Level
+	CommonTexture RefImg(L"./UnknownRoom/TestImage/test2.bmp");
+	RefImg.Setup(MainDev);
+
+	// Canvas
+	Canvas Level0(WIDTH, HEIGHT);
+	Level0.SetUARes();
+	Level0.Setup(MainDev);
+
+	Canvas cpyLevel0(WIDTH, HEIGHT);
+	cpyLevel0.SetUARes();
+	cpyLevel0.Setup(MainDev);
+
+	Canvas Level1(WIDTH / 2, HEIGHT / 2);
+	Level1.SetUARes();
+	Level1.Setup(MainDev);
+
+	Canvas cpyLevel1(WIDTH / 2, HEIGHT / 2);
+	cpyLevel1.SetUARes();
+	cpyLevel1.Setup(MainDev);
+
+	Canvas Level2(WIDTH / 4, HEIGHT / 4);
+	Level2.SetUARes();
+	Level2.Setup(MainDev);
+
+	Canvas cpyLevel2(WIDTH / 4, HEIGHT / 4);
+	cpyLevel2.SetUARes();
+	cpyLevel2.Setup(MainDev);
+
+	Canvas Level3(WIDTH / 8, HEIGHT / 8);
+	Level3.SetUARes();
+	Level3.Setup(MainDev);
+
+	Canvas cpyLevel3(WIDTH / 8, HEIGHT / 8);
+	cpyLevel3.SetUARes();
+	cpyLevel3.Setup(MainDev);
+
+	Canvas Level4(WIDTH / 16, HEIGHT / 16);
+	Level4.SetUARes();
+	Level4.Setup(MainDev);
+
+	// Mesh
+	std::shared_ptr<Mesh> plane;
+	gMF.Load(BMT_PLANE, plane, 2, 2);
+	plane->Setup(MainDev);
+
+	// pass
+	ShadingPass loadPass(&BasicVS, &BasicPS);
+	loadPass
+		.BindSource(plane.get())
+		.BindSource(&Level0, true, false)
+		.BindSource(&RefImg, SBT_PIXEL_SHADER, 0)
+		.BindSource(&gPointSampler, SBT_PIXEL_SHADER, 0);
+
+	ComputingPass pullPass0(&PullCS, {48, 48, 1});
+	pullPass0
+		.BindSourceTex(&Level0, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&Level1, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pullPass1(&PullCS, { 24, 24, 1 });
+	pullPass1
+		.BindSourceTex(&Level1, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&Level2, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pullPass2(&PullCS, { 12, 12, 1 });
+	pullPass2
+		.BindSourceTex(&Level2, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&Level3, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pullPass3(&PullCS, { 6, 6, 1 });
+	pullPass3
+		.BindSourceTex(&Level3, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&Level4, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pushPass0(&PushCS, { 12, 12, 1 });
+	pushPass0
+		.BindSourceTex(&Level4, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&Level3, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&cpyLevel3, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pushPass1(&PushCS, { 24, 24, 1 });
+	pushPass1
+		.BindSourceTex(&cpyLevel3, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&Level2, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&cpyLevel2, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pushPass2(&PushCS, { 48, 48, 1 });
+	pushPass2
+		.BindSourceTex(&cpyLevel2, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&Level1, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&cpyLevel1, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pushPass3(&PushCS, { 96, 96, 1 });
+	pushPass3
+		.BindSourceTex(&cpyLevel1, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&Level0, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&cpyLevel0, SBT_COMPUTE_SHADER, 0);
+
+	ShadingPass showPass(&BasicVS, &BasicPS);
+	showPass
+		.BindSource(plane.get())
+		.BindSource(renderer->GetMainRT(), true, false)
+		.BindSourceTex(&cpyLevel0, SBT_PIXEL_SHADER, 0)
+		.BindSource(&gPointSampler, SBT_PIXEL_SHADER, 0);
+
+	mc->Run([&] {
+		renderer->ClearRenderTarget(&Level0);
+		renderer->ClearRenderTarget(&Level1);
+		renderer->ClearRenderTarget(&Level2);
+		renderer->ClearRenderTarget(&Level3);
+		renderer->ClearRenderTarget(&Level4);
+
+		renderer->ClearRenderTarget(&cpyLevel0);
+		renderer->ClearRenderTarget(&cpyLevel1);
+		renderer->ClearRenderTarget(&cpyLevel2);
+		renderer->ClearRenderTarget(&cpyLevel3);
+
+		loadPass.Run(MainDevCtx).End(MainDevCtx);
+		pullPass0.Run(MainDevCtx).End(MainDevCtx);
+		pullPass1.Run(MainDevCtx).End(MainDevCtx);
+		pullPass2.Run(MainDevCtx).End(MainDevCtx);
+		pullPass3.Run(MainDevCtx).End(MainDevCtx);
+		pushPass0.Run(MainDevCtx).End(MainDevCtx);
+		pushPass1.Run(MainDevCtx).End(MainDevCtx);
+		pushPass2.Run(MainDevCtx).End(MainDevCtx);
+		pushPass3.Run(MainDevCtx).End(MainDevCtx);
+		showPass.Run(MainDevCtx).End(MainDevCtx);
 		renderer->EndRender();
 	});
 }

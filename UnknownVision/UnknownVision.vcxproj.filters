@@ -205,5 +205,17 @@
     <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionQuadVS.hlsl">
       <Filter>UnknownVision\Shader</Filter>
     </FxCompile>
+    <FxCompile Include="shader\PullPush\PullPhaseCS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\PullPush\PushPhaseCS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceShowPS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceShowVS.hlsl">
+      <Filter>UnknownVision\Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
