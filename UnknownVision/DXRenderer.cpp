@@ -223,6 +223,11 @@ void DXRenderer::ClearRenderTarget(IRenderTarget* rt, DirectX::XMFLOAT4 clearCol
 	m_devContext->ClearRenderTargetView(rt->GetRTV(), &clearColor.x);
 }
 
+void DXRenderer::ClearDepthStencil(IDepthStencil * ds, float depthValue, UINT stencilValue)
+{
+	m_devContext->ClearDepthStencilView(ds->GetDSV(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, depthValue, stencilValue);
+}
+
 void DXRenderer::ClearUAV_UINT(IUnorderAccess* uav, DirectX::XMUINT4 clearValue) {
 	// 只能应用于UAV格式是uint上，将指定格式的低n位拷贝到view中。
 	// 比如这里的clearValue是32位的4元素数组，而uav是r8_uint，则会将clearValue的低8位拷贝到view中

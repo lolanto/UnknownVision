@@ -21,15 +21,10 @@ public:
 	void SetUARes(bool v = true, bool simRW = false);
 private:
 	// 由于DX11.0的UAV支持读写的格式有限，故需要一些转换工作
-	bool formatConverseForUARes();
+	bool formatCheckForUARes();
 protected:
 	virtual void preSetDesc();
 protected:
-	struct {
-		DXGI_FORMAT texFormat;
-		DXGI_FORMAT srvFormat;
-		DXGI_FORMAT rtvFormat;
-	}																									m_uavSubFormat;
 	bool																								m_hasMipmap;
 	UINT																							m_arraySize;
 	bool																								m_isUnorderAccess;

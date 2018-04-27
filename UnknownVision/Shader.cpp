@@ -225,7 +225,9 @@ void VertexShader::Bind(ID3D11DeviceContext* devCtx, ShaderBindTarget, SIZE_T) {
 	devCtx->VSSetShader(m_shader.Get(), NULL, 0);
 }
 
-void VertexShader::Unbind(ID3D11DeviceContext*, ShaderBindTarget, SIZE_T) {}
+void VertexShader::Unbind(ID3D11DeviceContext* devCtx, ShaderBindTarget, SIZE_T) {
+	devCtx->VSSetShader(nullptr, nullptr, 0);
+}
 
 std::vector<ParamIOLayout>* VertexShader::GetInputLayout() {
 	return &m_inputLayout;
@@ -257,7 +259,9 @@ void PixelShader::Bind(ID3D11DeviceContext* devCtx, ShaderBindTarget, SIZE_T) {
 	devCtx->PSSetShader(m_shader.Get(), NULL, 0);
 }
 
-void PixelShader::Unbind(ID3D11DeviceContext* devCtx, ShaderBindTarget, SIZE_T) {}
+void PixelShader::Unbind(ID3D11DeviceContext* devCtx, ShaderBindTarget, SIZE_T) {
+	devCtx->PSSetShader(nullptr, nullptr, 0);
+}
 
 std::vector<ParamIOLayout>* PixelShader::GetOutputLayout() { return &m_outputLayout; }
 

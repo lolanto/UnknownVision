@@ -111,6 +111,11 @@ void Mesh::Bind(ID3D11DeviceContext* devCtx, ShaderBindTarget sbt, SIZE_T slot) 
 }
 
 void Mesh::Unbind(ID3D11DeviceContext* devCtx, ShaderBindTarget sbt, SIZE_T slot) {
+	static ID3D11Buffer* nullBuffer[] = { nullptr, nullptr, nullptr, nullptr };
+	static UINT nullUint[] = { 0, 0, 0, 0 };
+	devCtx->IASetVertexBuffers(0, 4, nullBuffer, nullUint, nullUint);
+	devCtx->IASetIndexBuffer(nullptr, DXGI_FORMAT_R32_UINT, 0);
+	devCtx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 	return;
 }
 

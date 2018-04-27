@@ -29,7 +29,8 @@ void main() {
 		return;
 	}
 
-	ScreenSpaceRayTracing(&DXRenderer::GetInstance(), &mc);
+	MyALG(&DXRenderer::GetInstance(), &mc);
+	//ScreenSpaceRayTracing(&DXRenderer::GetInstance(), &mc);
 	
 	CoUninitialize();
 	system("pause");

@@ -43,6 +43,7 @@ class Camera;
 class Mesh;
 class Light;
 class RasterState;
+class BlendState;
 
 template<typename T>
 struct BindingData {
@@ -94,10 +95,16 @@ public:
 	ShadingPass& BindSource(IRenderTarget*, bool beforeClear, bool afterClear);
 	ShadingPass& BindSource(IDepthStencil*, bool beforeClear, bool afterClear);
 	ShadingPass& BindSource(Mesh*, ShaderBindTarget sbt = SBT_UNKNOWN, SIZE_T slot = -1);
-	ShadingPass& BindSource(RasterState* rs = nullptr, D3D11_VIEWPORT* vs = nullptr);
+	ShadingPass& BindSource(RasterState* rs = nullptr, D3D11_VIEWPORT* vs = nullptr, UINT numOfvp = 1);
+
+	ShadingPass& BindSource(BlendState* bs);
 
 	ShadingPass& Run(ID3D11DeviceContext*);
 	ShadingPass& End(ID3D11DeviceContext*);
+
+	// submit Special Draw call without any vertex data
+	ShadingPass& SpecialDrawCall(UINT numOfElement);
+
 private:
 	std::vector<ID3D11RenderTargetView*>						m_rtvs;
 	std::vector<ClearScheme>											m_rtvsClearSchemes;
@@ -105,12 +112,17 @@ private:
 	IDepthStencil*																m_ds;
 	ClearScheme																m_dsClearScheme;
 
-	// 模型绑定信息，不显式绑定则不允许执行该pass
+	// 模型绑定信息，不显式绑定可能使该pass无法执行
 	BindingData<Mesh>													m_meshBindingData;
+	// 绑定一个特殊的draw call
+	UINT																			m_specialDrawCall;
 	// 设置光栅状态，不显式绑定则调用渲染器默认光栅设置
 	BindingData	<RasterState>											m_rasterStateData;
 	// 设置view port状态
 	D3D11_VIEWPORT*														m_viewport;
+	UINT																			m_numOfViewport;
+	// 设置混合状态，不显示绑定则不调用
+	BindingData <BlendState>											m_blendStateData;
 
 	VertexShader*																m_vs;
 	PixelShader*																	m_ps;

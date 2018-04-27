@@ -15,14 +15,14 @@ void Canvas::preSetDesc() {
 	ZeroMemory(&m_rtvDesc, sizeof(m_rtvDesc));
 	ZeroMemory(&m_srvDesc, sizeof(m_srvDesc));
 
-	if (m_isUnorderAccess && m_simultaneouslyRW) assert(formatConverseForUARes());
+	if (m_isUnorderAccess && m_simultaneouslyRW) assert(formatCheckForUARes());
 
 	// Create texture
 	m_texDesc.ArraySize = m_arraySize;
 	m_texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 	if (m_isUnorderAccess) m_texDesc.BindFlags |= D3D11_BIND_UNORDERED_ACCESS;
 	m_texDesc.CPUAccessFlags = 0;
-	m_texDesc.Format = m_isUnorderAccess && m_simultaneouslyRW ? m_uavSubFormat.texFormat : format;
+	m_texDesc.Format = format;
 	m_texDesc.Height = height;
 	m_texDesc.Width = width;
 	m_texDesc.MipLevels = m_hasMipmap ? 0 : 1;
@@ -32,7 +32,7 @@ void Canvas::preSetDesc() {
 	m_texDesc.Usage = D3D11_USAGE_DEFAULT;
 
 	// create render target
-	m_rtvDesc.Format = m_isUnorderAccess && m_simultaneouslyRW ? m_uavSubFormat.rtvFormat : m_texDesc.Format;
+	m_rtvDesc.Format = m_texDesc.Format;
 	if (m_arraySize > 1) {
 		m_rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
 		m_rtvDesc.Texture2DArray.ArraySize = m_arraySize;
@@ -45,7 +45,7 @@ void Canvas::preSetDesc() {
 	}
 
 	// create shader resource
-	m_srvDesc.Format = m_isUnorderAccess && m_simultaneouslyRW ? m_uavSubFormat.srvFormat : m_texDesc.Format;
+	m_srvDesc.Format = m_texDesc.Format;
 	if (m_arraySize > 1) {
 		m_srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
 		m_srvDesc.Texture2DArray.ArraySize = m_arraySize;
@@ -62,7 +62,7 @@ void Canvas::preSetDesc() {
 	// create unorder access target if need
 	if (m_isUnorderAccess) {
 		ZeroMemory(&m_uavDesc, sizeof(m_uavDesc));
-		m_uavDesc.Format = m_isUnorderAccess && m_simultaneouslyRW ? DXGI_FORMAT_R32_UINT : m_texDesc.Format;
+		m_uavDesc.Format = m_texDesc.Format;
 		if (m_arraySize > 1) {
 			m_uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2DARRAY;
 			m_uavDesc.Texture2DArray.ArraySize = m_arraySize;
@@ -122,14 +122,14 @@ void Canvas::SetUARes(bool ua, bool simRW) { m_isUnorderAccess = ua; m_simultane
 /////////////////////////////////////
 // private function
 /////////////////////////////////////
-bool Canvas::formatConverseForUARes() {
+bool Canvas::formatCheckForUARes() {
 	switch (format) {
-	case DXGI_FORMAT_R8G8B8A8_UNORM:
-		m_uavSubFormat.rtvFormat = format;
-		m_uavSubFormat.srvFormat = format;
-		m_uavSubFormat.texFormat = DXGI_FORMAT_R8G8B8A8_TYPELESS;
+	case DXGI_FORMAT_R32_FLOAT:
+	case DXGI_FORMAT_R32_SINT:
+	case DXGI_FORMAT_R32_UINT:
 		return true;
-		break;
+	default:
+		return false;
 	}
 	return false;
 }

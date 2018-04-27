@@ -823,3 +823,521 @@ void PullPush(DefaultParameters) {
 		renderer->EndRender();
 	});
 }
+
+void MyALG(DefaultParameters) {
+	// 创建camera
+	CAMERA_DESC camDesc(WIDTH, HEIGHT);
+	camDesc.fov = 0.79;
+	camDesc.lookAt = DirectX::XMFLOAT3();
+	camDesc.position = DirectX::XMFLOAT3(0.0f, 5.0f, -3.0f);
+	Camera cc(camDesc);
+	cc.Setup(MainDev);
+	// 添加摄像机控制器
+	OrbitController obController(&cc);
+	CameraControllerSetting(obController);
+	gLinearSampler.Setup(MainDev);
+// 预先需要每个三角形的ID图
+// 渲染场景中所有面的空间信息位置信息
+	VertexShader UpdatePosVS("../Debug/MyALGUpdatePosVS.cso");
+	UpdatePosVS.Setup(MainDev);
+	PixelShader UpdatePosPS("../Debug/MyALGUpdatePosPS.cso");
+	UpdatePosPS.Setup(MainDev);
+// 构建屏幕空间信息G-Buffer
+	VertexShader SSDataVS("../Debug/MyALGSSDataVS.cso");
+	SSDataVS.Setup(MainDev);
+	PixelShader SSDataPS("../Debug/MyALGSSDataPS.cso");
+	SSDataPS.Setup(MainDev);
+// 利用管线对反射样本点进行聚类
+	VertexShader ClusterRefVS("../Debug/MyALGArrangeClusterCoreVS.cso");
+	ClusterRefVS.Setup(MainDev);
+	PixelShader ClusterRefPS("../Debug/MyALGArrangeClusterCorePS.cso");
+	ClusterRefPS.Setup(MainDev);
+// 将管线结果进行平均化
+	ComputeShader ClusterAverageCS("../Debug/MyALGAverageClusterCoreCS.cso");
+	ClusterAverageCS.Setup(MainDev);
+// 从屏幕空间中选择点作为反射参考点
+	ComputeShader RefPntCS("../Debug/MyALGRefPoint2CS.cso");
+	RefPntCS.Setup(MainDev);
+// 构建阴影图——将场景中的所有点映射到反射参考点的空间中
+	ComputeShader ConstructShadowMapCS("../Debug/MyALGCstShadowMap2CS.cso");
+	ConstructShadowMapCS.Setup(MainDev);
+// 利用管线构造阴影图
+	VertexShader PPConstructShadowMapVS("../Debug/MyALGCstShadowMapVS.cso");
+	PPConstructShadowMapVS.Setup(MainDev);
+	GeometryShader PPConstructShadowMapGS("../Debug/MyALGCstShadowMapGS.cso");
+	PPConstructShadowMapGS.Setup(MainDev);
+	PixelShader PPConstructShadowMapPS("../Debug/MyALGCstShadowMapPS.cso");
+	PPConstructShadowMapPS.Setup(MainDev);
+// 利用管线构造阴影图2
+	VertexShader PPConstructShadowMap2VS("../Debug/MyALGCstShadowMap2VS.cso");
+	PPConstructShadowMap2VS.Setup(MainDev);
+	GeometryShader PPConstructShadowMap2GS("../Debug/MyALGCstShadowMap2GS.cso");
+	PPConstructShadowMap2GS.Setup(MainDev);
+	PixelShader PPConstructShadowMap2PS("../Debug/MyALGCstShadowMap2PS.cso");
+	PPConstructShadowMap2PS.Setup(MainDev);
+// 利用管线构造阴影图(仅包含Diffuse)
+	VertexShader PPShowShadowMapVS("../Debug/MyALGShowShadowMap2VS.cso");
+	PPShowShadowMapVS.Setup(MainDev);
+	GeometryShader PPShowShadowMapGS("../Debug/MyALGShowShadowMap2GS.cso");
+	PPShowShadowMapGS.Setup(MainDev);
+	PixelShader PPShowShadowMapPS("../Debug/MyALGShowShadowMap2PS.cso");
+	PPShowShadowMapPS.Setup(MainDev);
+// 展示某个反射采样点的视角所见内容
+	VertexShader ShowRefViewVS("../Debug/MyALGShowRefPntViewVS.cso");
+	ShowRefViewVS.Setup(MainDev);
+	PixelShader ShowRefViewPs("../Debug/MyALGShowRefPntViewPS.cso");
+	ShowRefViewPs.Setup(MainDev);
+// 计算当前视口每个像素点参考的反射点
+	ComputeShader CalculateAscripitionCS("../Debug/MyALGCalAscriptionCS.cso");
+	CalculateAscripitionCS.Setup(MainDev);
+// 对反射结果进行采样计算
+	ComputeShader SampleReflectionCS("../Debug/MyALGSampleReflectionCS.cso");
+	SampleReflectionCS.Setup(MainDev);
+// 展示场景点化的结果
+	ComputeShader ShowPointsCS("../Debug/MyALGShowPointsCS.cso");
+	ShowPointsCS.Setup(MainDev);
+// 展示否幅图片的边缘检测结果
+	ComputeShader ShowEdgeDetect("../Debug/MyALGEdgeDetect.cso");
+	ShowEdgeDetect.Setup(MainDev);
+// 计算当前像素点应该采样哪个反射位置
+	ComputeShader ShowAscriptionCS("../Debug/MyALGShowAscriptionCS.cso");
+	ShowAscriptionCS.Setup(MainDev);
+// 构建阴影图——将场景中的所有点映射到反射参考点的空间中
+	ComputeShader ShowShadowMapCS("../Debug/MyALGShowShadowMapCS.cso");
+	ShowShadowMapCS.Setup(MainDev);
+// 展示后处理结果
+	VertexShader ShowPostProcessVS("../Debug/MyALGShowPostProcessVS.cso");
+	ShowPostProcessVS.Setup(MainDev);
+	PixelShader ShowPostProcessPS("../Debug/MyALGShowPostProcessPS.cso");
+	ShowPostProcessPS.Setup(MainDev);
+
+	std::vector<std::shared_ptr<Mesh>> meshList;
+	meshList = gMF.Load("./UnknownRoom/UnknownRoom.obj");
+	for (auto& iter : meshList) iter->Setup(MainDev);
+
+	std::shared_ptr<Mesh> plane;
+	gMF.Load(BMT_PLANE, plane, 2.0f, 2.0f);
+	plane->Setup(MainDev);
+
+	Model BasicModel;
+	BasicModel.Setup(MainDev);
+
+	CommonTexture BasicColor(L"./UnknownRoom/BC.png");
+	BasicColor.Setup(MainDev);
+
+	const float ScePntNum = 150;
+	const int ScePntNumInt = 150;
+	// Raster state
+	RasterState noCullingRS(D3D11_CULL_NONE);
+	noCullingRS.Setup(MainDev);
+
+	D3D11_VIEWPORT GeoViewPort;
+	GeoViewPort.Height = ScePntNum;
+	GeoViewPort.Width = ScePntNum;
+	GeoViewPort.MinDepth = 0.0f;
+	GeoViewPort.MaxDepth = 1.0f;
+	GeoViewPort.TopLeftX = GeoViewPort.TopLeftY = 0;
+// Canvas
+// 记录采样的点，包括点的位置，法线，正副切线
+	Canvas ScePntPos(ScePntNum, ScePntNum, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ScePntPos.SetUARes();
+	ScePntPos.Setup(MainDev);
+	Canvas ScePntNor(ScePntNum, ScePntNum, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ScePntNor.SetUARes();
+	ScePntNor.Setup(MainDev);
+	Canvas ScePntDiffuse(ScePntNum, ScePntNum, DXGI_FORMAT_R8G8B8A8_UNORM);
+	ScePntDiffuse.SetUARes();
+	ScePntDiffuse.Setup(MainDev);
+
+	ConstantBuffer<DirectX::XMFLOAT4> initPntData;
+	initPntData.GetData().x = ScePntNum;
+	initPntData.GetData().y = ScePntNum;
+	initPntData.Setup(MainDev);
+
+	struct ScePntStruct {
+		DirectX::XMFLOAT4 vertPos;
+		DirectX::XMFLOAT4 vertNor;
+	};
+
+// 记录当前视口下每个像素点的位置以及法线
+	Canvas SSWPos(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	SSWPos.Setup(MainDev);
+	Canvas SSWNor(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	SSWNor.Setup(MainDev);
+
+	const int RefPntNum = 10;
+
+	struct RefEleData
+	{
+		DirectX::XMFLOAT4 wPos;
+		DirectX::XMFLOAT4 wRef;
+		DirectX::XMFLOAT4X4 refMatrix;
+	};
+
+	StructuredBuffer<RefEleData, RefPntNum * RefPntNum> RefViewMatrixs(false);
+	RefViewMatrixs.Setup(MainDev);
+
+	ConstantBuffer<DirectX::XMFLOAT4> refPntData;
+	refPntData.GetData().x = WIDTH;
+	refPntData.GetData().y = HEIGHT;
+	refPntData.GetData().z = RefPntNum;
+	refPntData.GetData().w = RefPntNum;
+	refPntData.Setup(MainDev);
+
+// 利用渲染管线将反射样本点进行聚类
+	D3D11_BLEND_DESC ClusterBlendDesc;
+	ZeroMemory(&ClusterBlendDesc, sizeof(ClusterBlendDesc));
+	ClusterBlendDesc.AlphaToCoverageEnable = FALSE;
+	ClusterBlendDesc.IndependentBlendEnable = TRUE;
+	ClusterBlendDesc.RenderTarget[0].BlendEnable = ClusterBlendDesc.RenderTarget[1].BlendEnable = TRUE;
+	// src.rgb * (1, 1, 1) + dest.rgb * (1, 1, 1)
+	ClusterBlendDesc.RenderTarget[0].SrcBlend = ClusterBlendDesc.RenderTarget[1].SrcBlend = D3D11_BLEND_ONE;
+	ClusterBlendDesc.RenderTarget[0].DestBlend = ClusterBlendDesc.RenderTarget[1].DestBlend = D3D11_BLEND_ONE;
+	ClusterBlendDesc.RenderTarget[0].BlendOp = ClusterBlendDesc.RenderTarget[1].BlendOp = D3D11_BLEND_OP_ADD;
+	// src.a * 1 + desc.a * 1
+	ClusterBlendDesc.RenderTarget[0].SrcBlendAlpha = ClusterBlendDesc.RenderTarget[1].SrcBlendAlpha = D3D11_BLEND_ONE;
+	ClusterBlendDesc.RenderTarget[0].DestBlendAlpha = ClusterBlendDesc.RenderTarget[1].DestBlendAlpha = D3D11_BLEND_ONE;
+	ClusterBlendDesc.RenderTarget[0].BlendOpAlpha = ClusterBlendDesc.RenderTarget[1].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+
+	ClusterBlendDesc.RenderTarget[0].RenderTargetWriteMask = ClusterBlendDesc.RenderTarget[1].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	BlendState ClusterBlendState(ClusterBlendDesc);
+	ClusterBlendState.Setup(MainDev);
+
+	Canvas ClusterResultPos(RefPntNum, RefPntNum, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ClusterResultPos.SetUARes();
+	ClusterResultPos.Setup(MainDev);
+	Canvas ClusterResultNor(RefPntNum, RefPntNum, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ClusterResultNor.SetUARes();
+	ClusterResultNor.Setup(MainDev);
+
+	D3D11_VIEWPORT ClusterViewPort;
+	ClusterViewPort.Height = RefPntNum;
+	ClusterViewPort.Width = RefPntNum;
+	ClusterViewPort.MaxDepth = 1.0f;
+	ClusterViewPort.MinDepth = 0.0f;
+	ClusterViewPort.TopLeftX = ClusterViewPort.TopLeftY = 0;
+
+// 记录当前构建的每个反射位置的阴影图
+	const int SubShadowMapSize = 32;
+	const int ShadowMapSize = SubShadowMapSize * RefPntNum;
+	Canvas ShadowMapDiffuse(ShadowMapSize, ShadowMapSize, DXGI_FORMAT_R8G8B8A8_UNORM);
+	ShadowMapDiffuse.SetUARes();
+	ShadowMapDiffuse.Setup(MainDev);
+	Canvas ShadowMapTexPos(ShadowMapSize, ShadowMapSize, DXGI_FORMAT_R32G32_UINT);
+	ShadowMapTexPos.SetUARes();
+	ShadowMapTexPos.Setup(MainDev);
+	Canvas ShadowMapDepth(ShadowMapSize, ShadowMapSize, DXGI_FORMAT_R32_UINT);
+	ShadowMapDepth.SetUARes(true, true);
+	ShadowMapDepth.Setup(MainDev);
+	struct CstShadowMapData {
+		DirectX::XMFLOAT4 exData;
+		DirectX::XMFLOAT4 shadowMapSize;
+	};
+
+	DepthTexture ShadowMapDepth2(ShadowMapSize, ShadowMapSize);
+	ShadowMapDepth2.Setup(MainDev);
+	Canvas ShadowMapPos(ShadowMapSize, ShadowMapSize, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ShadowMapPos.Setup(MainDev);
+	Canvas ShadowMapNor(ShadowMapSize, ShadowMapSize, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ShadowMapNor.Setup(MainDev);
+
+	ConstantBuffer<CstShadowMapData> cstShadowMapData;
+	cstShadowMapData.GetData().exData = DirectX::XMFLOAT4(RefPntNum, RefPntNum, RefPntNum * RefPntNum, 0);
+	cstShadowMapData.GetData().shadowMapSize = DirectX::XMFLOAT4(SubShadowMapSize, SubShadowMapSize, ShadowMapSize, ShadowMapSize);
+	cstShadowMapData.Setup(MainDev);
+
+	D3D11_VIEWPORT ShadowMapViewPort;
+	ShadowMapViewPort.Height = ShadowMapViewPort.Width = ShadowMapSize;
+	ShadowMapViewPort.MaxDepth = 1.0f;
+	ShadowMapViewPort.MinDepth = 0.0f;
+	ShadowMapViewPort.TopLeftX = ShadowMapViewPort.TopLeftY = 0;
+
+	ConstantBuffer<DirectX::XMFLOAT4X4> ProjectMatrixData;
+	DirectX::XMFLOAT4X4 shadowMapProjMatrix;
+	DirectX::XMStoreFloat4x4(&shadowMapProjMatrix , DirectX::XMMatrixPerspectiveFovLH(1.57f, 1, 0.5f, 50.0f));
+	ProjectMatrixData.GetData() = shadowMapProjMatrix;
+	ProjectMatrixData.Setup(MainDev);
+
+	D3D11_VIEWPORT ShadowMapViewPortssss[RefPntNum * RefPntNum];
+	
+	for (DirectX::XMUINT2 iter = { 0, 0 }; iter.y < RefPntNum; ++iter.y) {
+		for (iter.x = 0; iter.x < RefPntNum; ++iter.x) {
+			UINT index = iter.x + iter.y * RefPntNum;
+			ShadowMapViewPortssss[index].Height = ShadowMapViewPortssss[index].Width = SubShadowMapSize;
+			ShadowMapViewPortssss[index].MaxDepth = 1.0f;
+			ShadowMapViewPortssss[index].MinDepth = 0.0f;
+			ShadowMapViewPortssss[index].TopLeftX = iter.x * SubShadowMapSize;
+			ShadowMapViewPortssss[index].TopLeftY = iter.y * SubShadowMapSize;
+		}
+	}
+	D3D11_VIEWPORT* ShadowMapViewPortPointer = nullptr;
+	ConstantBuffer<DirectX::XMUINT4> InstanceData;
+	InstanceData.GetData().x = 0;
+	InstanceData.Setup(MainDev);
+
+// 记录当前场景点化的结果
+	Canvas DepthTexture(WIDTH, HEIGHT, DXGI_FORMAT_R32_FLOAT);
+	DepthTexture.SetUARes(true, true);
+	DepthTexture.Setup(MainDev);
+
+	Canvas PointsResult(WIDTH, HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM);
+	PointsResult.SetUARes();
+	PointsResult.Setup(MainDev);
+
+// 记录当前视点下每个像素应该采样哪个反射点
+	Canvas AscriptionMap(WIDTH, HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM);
+	AscriptionMap.SetUARes();
+	AscriptionMap.Setup(MainDev);
+	Canvas AscriptionData(WIDTH, HEIGHT, DXGI_FORMAT_R32_UINT);
+	AscriptionData.SetUARes();
+	AscriptionData.Setup(MainDev);
+
+// 记录当前视点下每个像素的反射结果
+	Canvas ReflectionResultPos(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ReflectionResultPos.SetUARes();
+	ReflectionResultPos.Setup(MainDev);
+
+// 记录某幅图的描边结果
+	Canvas EdgeDetectResult(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	EdgeDetectResult.SetUARes();
+	EdgeDetectResult.Setup(MainDev);
+
+// pass
+	ShadingPass updatePosPass(&UpdatePosVS, &UpdatePosPS);
+	updatePosPass
+		.BindSource(&noCullingRS, &GeoViewPort)
+		.BindSource(meshList[0].get())
+		.BindSource(&ScePntPos, true, false)
+		.BindSource(&ScePntNor, true, false)
+		.BindSource(&ScePntDiffuse, true, false)
+		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0)
+		.BindSourceTex(&BasicColor, SBT_PIXEL_SHADER, 0)
+		.BindSource(&BasicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
+		.BindSource(&cc, SBT_VERTEX_SHADER, VS_CAMERA_DATA_SLOT);
+
+	ShadingPass ssDataPass(&SSDataVS, &SSDataPS);
+	ssDataPass
+		.BindSource(&SSWPos, true, false)
+		.BindSource(&SSWNor, true, false)
+		.BindSource(renderer->GetMainDS(), true, false)
+		.BindSource(meshList[0].get())
+		.BindSource(&BasicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
+		.BindSource(&cc, SBT_VERTEX_SHADER, VS_CAMERA_DATA_SLOT);
+
+	ComputingPass refPntPass(&RefPntCS, { 1, 1, 1 });
+	refPntPass
+		.BindSourceTex(&SSWPos, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&SSWNor, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&RefViewMatrixs, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&refPntData, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 1);
+
+	ShadingPass PPClusterRefPass(&ClusterRefVS, &ClusterRefPS);
+	PPClusterRefPass
+		.SpecialDrawCall(WIDTH * HEIGHT)
+		.BindSource(&ClusterBlendState)
+		.BindSource(nullptr, &ClusterViewPort)
+		.BindSource(&ClusterResultPos, true, false)
+		.BindSource(&ClusterResultNor, true, false)
+		.BindSourceTex(&SSWPos, SBT_VERTEX_SHADER, 0)
+		.BindSourceTex(&SSWNor, SBT_VERTEX_SHADER, 1)
+		.BindSource(&refPntData, SBT_VERTEX_SHADER, 0);
+
+	ComputingPass ClusterAveragePass(&ClusterAverageCS, { RefPntNum / 10, RefPntNum / 10, 1 });
+	ClusterAveragePass
+		.BindSourceTex(&ClusterResultPos, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&ClusterResultNor, SBT_COMPUTE_SHADER, 1)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&refPntData, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&RefViewMatrixs, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass cstShadowMapPass(&ConstructShadowMapCS, { ScePntNum / 10, ScePntNum / 10, 1 });
+	cstShadowMapPass
+		.BindSourceBuf(&RefViewMatrixs, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&ScePntPos, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&ShadowMapTexPos, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&ShadowMapDepth, SBT_COMPUTE_SHADER, 1)
+		.BindSource(&cstShadowMapData, SBT_COMPUTE_SHADER, 0);
+
+	ShadingPass PPCstShadowMapPass(&PPConstructShadowMapVS, &PPConstructShadowMapPS, &PPConstructShadowMapGS);
+	PPCstShadowMapPass
+		.BindSource(nullptr, &ShadowMapViewPort)
+		.SpecialDrawCall(ScePntNumInt * ScePntNumInt)
+		.BindSource(&ShadowMapDepth2, true, false)
+		.BindSource(&ShadowMapPos, true, false)
+		.BindSource(&ShadowMapNor, true, false)
+		.BindSource(&ShadowMapDiffuse, true, false)
+		.BindSourceTex(&ScePntPos, SBT_VERTEX_SHADER, 0)
+		.BindSourceTex(&ScePntNor, SBT_VERTEX_SHADER, 1)
+		.BindSourceTex(&ScePntDiffuse, SBT_VERTEX_SHADER, 2)
+		.BindSource(&initPntData, SBT_VERTEX_SHADER, 0)
+		.BindSourceBuf(&RefViewMatrixs, SBT_GEOMETRY_SHADER, 0)
+		.BindSource(&cstShadowMapData, SBT_GEOMETRY_SHADER, 0);
+
+	ShadingPass PPCstShadowMapPass2(&PPConstructShadowMap2VS, &PPConstructShadowMap2PS, &PPConstructShadowMap2GS);
+	PPCstShadowMapPass2
+		.BindSource(meshList[0].get())
+		.BindSource(&ShadowMapPos, false, false)
+		.BindSource(&ShadowMapNor, false, false)
+		.BindSource(&ShadowMapDepth2, false, false)
+		.BindSource(&BasicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
+		.BindSourceBuf(&RefViewMatrixs, SBT_GEOMETRY_SHADER, 0)
+		.BindSource(&ProjectMatrixData, SBT_GEOMETRY_SHADER, 0)
+		.BindSource(&refPntData, SBT_GEOMETRY_SHADER, 1);
+
+	ShadingPass PPShowShadowMap(&PPShowShadowMapVS, &PPShowShadowMapPS, &PPShowShadowMapGS);
+	PPShowShadowMap
+		.BindSource(meshList[0].get())
+		.BindSource(&ShadowMapDiffuse, false, false)
+		.BindSource(&ShadowMapDepth2, false, false)
+		.BindSource(&BasicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
+		.BindSourceBuf(&RefViewMatrixs, SBT_GEOMETRY_SHADER, 0)
+		.BindSource(&ProjectMatrixData, SBT_GEOMETRY_SHADER, 0)
+		.BindSource(&refPntData, SBT_GEOMETRY_SHADER, 1)
+		.BindSource(&BasicColor, SBT_PIXEL_SHADER, 0)
+		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0);
+
+	ComputingPass calculateAscriptionPass(&CalculateAscripitionCS, { WIDTH / 10, HEIGHT / 10, 1 });
+	calculateAscriptionPass
+		.BindSourceBuf(&RefViewMatrixs, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&SSWPos, SBT_COMPUTE_SHADER, 1)
+		.BindSourceTex(&SSWNor, SBT_COMPUTE_SHADER, 2)
+		.BindSourceUA(&AscriptionData, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&refPntData, SBT_COMPUTE_SHADER, 1);
+
+	ComputingPass reflectionResultPass(&SampleReflectionCS, { WIDTH / 10, HEIGHT / 10, 1 });
+	reflectionResultPass
+		.BindSourceTex(&AscriptionData, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&ShadowMapDiffuse, SBT_COMPUTE_SHADER, 1)
+		.BindSourceTex(&SSWPos, SBT_COMPUTE_SHADER, 2)
+		.BindSourceTex(&SSWNor, SBT_COMPUTE_SHADER, 3)
+		.BindSourceTex(&ScePntPos, SBT_COMPUTE_SHADER, 4)
+		.BindSourceTex(&ScePntNor, SBT_COMPUTE_SHADER, 5)
+		.BindSourceBuf(&RefViewMatrixs, SBT_COMPUTE_SHADER, 6)
+		.BindSourceTex(&ShadowMapPos, SBT_COMPUTE_SHADER, 7)
+		.BindSourceTex(&ShadowMapNor, SBT_COMPUTE_SHADER, 8)
+		.BindSourceUA(&ReflectionResultPos, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cstShadowMapData, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 1)
+		.BindSource(&ProjectMatrixData, SBT_COMPUTE_SHADER, 2);
+
+	ShadingPass showRefPntViewPass(&ShowRefViewVS, &ShowRefViewPs);
+	showRefPntViewPass
+		.BindSource(meshList[0].get())
+		.BindSource(renderer->GetMainDS(), true, false)
+		.BindSource(renderer->GetMainRT(), true ,false)
+		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0)
+		.BindSourceBuf(&RefViewMatrixs, SBT_VERTEX_SHADER, 0)
+		.BindSource(&ProjectMatrixData, SBT_VERTEX_SHADER, 0)
+		.BindSource(&BasicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
+		.BindSourceTex(&BasicColor, SBT_PIXEL_SHADER, 0);
+
+	ComputingPass showShadowMapPass(&ShowShadowMapCS, { ScePntNum / 10, ScePntNum / 10, 1 });
+	showShadowMapPass
+		.BindSourceBuf(&RefViewMatrixs, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&ScePntPos, SBT_COMPUTE_SHADER, 1)
+		.BindSourceTex(&BasicColor, SBT_COMPUTE_SHADER, 2)
+		.BindSourceUA(&ShadowMapDiffuse, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&ShadowMapDepth, SBT_COMPUTE_SHADER, 1)
+		.BindSource(&cstShadowMapData, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&initPntData, SBT_COMPUTE_SHADER, 1);
+
+	ComputingPass showEdgeDetectPass(&ShowEdgeDetect, { WIDTH / 10, HEIGHT / 10, 1 });
+	showEdgeDetectPass
+		.BindSourceTex(&AscriptionMap, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&EdgeDetectResult, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass showPointsPass(&ShowPointsCS, { ScePntNum / 10, ScePntNum / 10, 1 });
+	showPointsPass
+		.BindSourceTex(&ScePntPos, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&BasicColor, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&DepthTexture, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&PointsResult, SBT_COMPUTE_SHADER, 1)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&initPntData, SBT_COMPUTE_SHADER, 1);
+
+	ComputingPass showAscriptionPass(&ShowAscriptionCS, { WIDTH / 10, HEIGHT / 10, 1 });
+	showAscriptionPass
+		.BindSourceBuf(&RefViewMatrixs, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&SSWPos, SBT_COMPUTE_SHADER, 1)
+		.BindSourceTex(&SSWNor, SBT_COMPUTE_SHADER, 2)
+		.BindSourceUA(&AscriptionMap, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&refPntData, SBT_COMPUTE_SHADER, 1);
+
+	// 展示后处理结果
+	ShadingPass showPostProcessPass(&ShowPostProcessVS, &ShowPostProcessPS);
+	showPostProcessPass
+		.BindSource(plane.get())
+		.BindSource(renderer->GetMainRT(), true, false)
+		.BindSourceTex(&ReflectionResultPos, SBT_PIXEL_SHADER, 0)
+		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0);
+
+	mc->Run([&] {
+		// 初始化场景中的点
+		//updatePosPass.Run(MainDevCtx).End(MainDevCtx);
+		// 渲染当前视口信息G-buffer
+		ssDataPass.Run(MainDevCtx).End(MainDevCtx);
+		// 计算当前反射样本点的聚类
+		PPClusterRefPass.Run(MainDevCtx).End(MainDevCtx);
+		// 对当前反射样本点聚类进行平均，求出聚类核心信息
+		ClusterAveragePass.Run(MainDevCtx).End(MainDevCtx);
+		// 计算当前反射采样点
+		//refPntPass.Run(MainDevCtx).End(MainDevCtx);
+		// 计算当前视口下每个采样点的归属
+		renderer->ClearRenderTarget(&AscriptionMap);
+		renderer->ClearRenderTarget(&AscriptionData);
+		showAscriptionPass.Run(MainDevCtx).End(MainDevCtx);
+		showEdgeDetectPass.Run(MainDevCtx).End(MainDevCtx);
+
+		calculateAscriptionPass.Run(MainDevCtx).End(MainDevCtx);
+
+		// 构造反射图
+		//renderer->ClearUAV_UINT(&ShadowMapDepth, { UINT_MAX, UINT_MAX, UINT_MAX, UINT_MAX });
+		//renderer->ClearRenderTarget(&ShadowMapDiffuse);
+		//renderer->ClearRenderTarget(&ShadowMapTexPos);
+		// 展示构造的反射图
+		//cstShadowMapPass.Run(MainDevCtx).End(MainDevCtx);
+		//showShadowMapPass.Run(MainDevCtx).End(MainDevCtx);
+
+		//PPCstShadowMapPass.Run(MainDevCtx).End(MainDevCtx);
+		
+		// 利用管线构造阴影图
+		renderer->ClearRenderTarget(&ShadowMapPos);
+		renderer->ClearRenderTarget(&ShadowMapNor);
+		renderer->ClearDepthStencil(&ShadowMapDepth2);
+		for (UINT i = 0; i < 10; ++i) {
+			InstanceData.GetData().x = i;
+			ShadowMapViewPortPointer = ShadowMapViewPortssss + i * 10;
+			PPCstShadowMapPass2.BindSource(nullptr, ShadowMapViewPortPointer, 10).BindSource(&InstanceData, SBT_GEOMETRY_SHADER, 2);
+			PPCstShadowMapPass2.Run(MainDevCtx).End(MainDevCtx);
+		}
+
+		// 利用管线展示阴影图
+		//renderer->ClearRenderTarget(&ShadowMapDiffuse);
+		//renderer->ClearDepthStencil(&ShadowMapDepth2);
+		//for (UINT i = 0; i < 10; ++i) {
+		//	InstanceData.GetData().x = i;
+		//	ShadowMapViewPortPointer = ShadowMapViewPortssss + i * 10;
+		//	PPShowShadowMap.BindSource(nullptr, ShadowMapViewPortPointer, 10).BindSource(&InstanceData, SBT_GEOMETRY_SHADER, 2);
+		//	PPShowShadowMap.Run(MainDevCtx).End(MainDevCtx);
+		//}
+
+		// 展示场景点化结果
+		//renderer->ClearRenderTarget(&DepthTexture, { FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX });
+		//renderer->ClearRenderTarget(&PointsResult, { 0, 0, 0, 0 });
+		//showPointsPass.Run(MainDevCtx).End(MainDevCtx);
+
+		// 计算当前的反射结果
+		renderer->ClearRenderTarget(&ReflectionResultPos);
+		reflectionResultPass.Run(MainDevCtx).End(MainDevCtx);
+
+		showPostProcessPass.Run(MainDevCtx).End(MainDevCtx);
+
+		showRefPntViewPass.Run(MainDevCtx).End(MainDevCtx);
+
+		renderer->EndRender();
+	});
+}

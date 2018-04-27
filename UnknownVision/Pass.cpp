@@ -99,7 +99,7 @@ BasePass& BasePass::End(ID3D11DeviceContext* devCtx) {
 
 ShadingPass::ShadingPass(VertexShader* vs, PixelShader* ps, GeometryShader* gs)
 	:m_vs(vs), m_ps(ps), m_gs(gs),
-	m_ds(nullptr), m_viewport(nullptr){}
+	m_ds(nullptr), m_viewport(nullptr), m_specialDrawCall(0){}
 
 ShadingPass& ShadingPass::BindSource(IRenderTarget * rt, bool beforeClear, bool afterClear)
 {
@@ -123,14 +123,21 @@ ShadingPass& ShadingPass::BindSource(Mesh * res, ShaderBindTarget sbt, SIZE_T sl
 	return *this;
 }
 
-ShadingPass& ShadingPass::BindSource(RasterState * rs, D3D11_VIEWPORT* vp)
+ShadingPass& ShadingPass::BindSource(RasterState * rs, D3D11_VIEWPORT* vp, UINT numOfvp)
 {
 	if (rs) {
 		m_rasterStateData.resPointer = rs;
 	}
 	if (vp) {
 		m_viewport = vp;
+		m_numOfViewport = numOfvp;
 	}
+	return *this;
+}
+
+ShadingPass & ShadingPass::BindSource(BlendState * bs)
+{
+	m_blendStateData.resPointer = bs;
 	return *this;
 }
 
@@ -148,8 +155,8 @@ ShadingPass& ShadingPass::Run(ID3D11DeviceContext* devCtx) {
 		MLOG(LW, __FUNCTION__, LL, "expect vertex/pixel shader!");
 		return *this;
 	}
-	if (m_meshBindingData.resPointer == nullptr) {
-		MLOG(LW, __FUNCTION__, LL, "No mesh binding!");
+	if (m_meshBindingData.resPointer == nullptr && !m_specialDrawCall) {
+		MLOG(LW, __FUNCTION__, LL, "There are no draw call!");
 		return *this;
 	}
 	static float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -179,7 +186,7 @@ ShadingPass& ShadingPass::Run(ID3D11DeviceContext* devCtx) {
 
 	// Set View Port
 	if (m_viewport) {
-		devCtx->RSSetViewports(1, m_viewport);
+		devCtx->RSSetViewports(m_numOfViewport, m_viewport);
 	}
 	else {
 		devCtx->RSSetViewports(1, &Def_ViewPort);
@@ -213,8 +220,14 @@ ShadingPass& ShadingPass::Run(ID3D11DeviceContext* devCtx) {
 		);
 	}
 
+	// Set blend state
+	if (m_blendStateData.resPointer) {
+		m_blendStateData.resPointer->Bind(devCtx);
+	}
+
 	// bind mesh and submit draw call
-	m_meshBindingData.resPointer->Bind(devCtx, m_meshBindingData.bindTarget, m_meshBindingData.slot);
+	if (m_specialDrawCall) devCtx->Draw(m_specialDrawCall, 0);
+	else m_meshBindingData.resPointer->Bind(devCtx, m_meshBindingData.bindTarget, m_meshBindingData.slot);
 
 	return *this;
 }
@@ -223,7 +236,7 @@ ShadingPass& ShadingPass::End(ID3D11DeviceContext* devCtx) {
 	if (m_vs == nullptr || m_ps == nullptr) {
 		return *this;
 	}
-	if (m_meshBindingData.resPointer == nullptr) {
+	if (m_meshBindingData.resPointer == nullptr && !m_specialDrawCall) {
 		return *this;
 	}
 	static float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -256,9 +269,20 @@ ShadingPass& ShadingPass::End(ID3D11DeviceContext* devCtx) {
 	UINT nullInitValue[1] = { 0 };
 	devCtx->OMSetRenderTargetsAndUnorderedAccessViews(0, nullptr, nullptr, 0, 1, nullUAV, nullInitValue);
 
-	// unbind mesh and submit draw call
-	m_meshBindingData.resPointer->Unbind(devCtx, m_meshBindingData.bindTarget, m_meshBindingData.slot);
+	// Unbind Blend State
+	if (m_blendStateData.resPointer) {
+		m_blendStateData.resPointer->Unbind(devCtx);
+	}
 
+	// unbind mesh
+	if (!m_specialDrawCall) m_meshBindingData.resPointer->Unbind(devCtx, m_meshBindingData.bindTarget, m_meshBindingData.slot);
+
+	return *this;
+}
+
+ShadingPass & ShadingPass::SpecialDrawCall(UINT numOfEle)
+{
+	m_specialDrawCall = numOfEle;
 	return *this;
 }
 
