@@ -3,7 +3,10 @@
 struct RefEleData {
   float4 wPos;
   float4 wRef;
+  float4 vRef;
+  float4 wNor;
   float4x4 refMatrix;
+  float4x4 refProjMatrix;
 };
 
 StructuredBuffer<RefEleData> RefViewData : register(t0);

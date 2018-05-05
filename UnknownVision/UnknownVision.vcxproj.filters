@@ -325,5 +325,11 @@
     <FxCompile Include="shader\MyAlg\MyALGEdgeDetect.hlsl">
       <Filter>UnknownVision\Shader\MyALG</Filter>
     </FxCompile>
+    <FxCompile Include="shader\MyAlg\MyALGArrangeClusterCoreCS2.hlsl">
+      <Filter>UnknownVision\Shader\MyALG</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\MyAlg\MyALGNormalizeAscriptionCS.hlsl">
+      <Filter>UnknownVision\Shader\MyALG</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

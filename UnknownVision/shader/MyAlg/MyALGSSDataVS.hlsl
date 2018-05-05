@@ -5,6 +5,7 @@ struct VSOutput {
   float4 pos : SV_POSITION;
   float4 wPos : TEXCOORD0;
   float4 wNor : TEXCOORD1;
+  float2 uv : TEXCOORD2;
 };
 
 VSOutput main(a2v i) {
@@ -13,5 +14,6 @@ VSOutput main(a2v i) {
   o.wNor = mul(GModelMatrix, float4(i.normal, 0.0f));
   o.pos = mul(GProjectMatrix,
     mul(GViewMatrix, o.wPos));
+  o.uv = i.texcoord;
   return o;
 }

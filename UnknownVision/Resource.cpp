@@ -95,12 +95,13 @@ void IBuffer::Unbind(UnbindParams) {
 
 void IUnorderAccess::Bind(BindParams)
 {
+	static UINT initialCount = 0;
 	switch (sbt)
 	{
 	case SBT_PIXEL_SHADER:
 		break;
 	case SBT_COMPUTE_SHADER:
-		devCtx->CSSetUnorderedAccessViews(slot, 1, m_uav.GetAddressOf(), NULL);
+		devCtx->CSSetUnorderedAccessViews(slot, 1, m_uav.GetAddressOf(), &initialCount);
 		break;
 	default:
 		MLOG(LW, __FUNCTION__, LL, "Bind unorder access resource failed!");

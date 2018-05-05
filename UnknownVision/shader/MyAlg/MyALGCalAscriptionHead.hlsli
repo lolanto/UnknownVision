@@ -1,7 +1,10 @@
 struct RefEleData {
   float4 wPos;
   float4 wRef;
+  float4 vRef;
+  float4 wNor;
   float4x4 refMatrix;
+  float4x4 refProjMatrix;
 };
 
 // 输入像素点属性，判断该像素点应该从哪个反射样本点采样
@@ -10,6 +13,7 @@ uint CalculateAscription(
   uint numRefPerRow,
   float3 curWorldPos,
   float3 curWorldRef,
+  float3 curWorldNor,
   StructuredBuffer<RefEleData> RefData) {
 
   float minDis = 100000.0f;
@@ -21,9 +25,10 @@ uint CalculateAscription(
       uint id = curPnt.x + curPnt.y * numRefPerRow;
       float3 refPos = RefData[id].wPos.xyz;
       float3 refDir = RefData[id].wRef.xyz;
-      float curDis = 0.2 * length(curWorldPos - refPos)
-        // + 0.6 * acos(dot(curWorldRef, refDir));
-        + 0.8 * length(curWorldRef - refDir);
+      float3 refNor = normalize(RefData[id].wNor.xyz);
+      float factor = -dot(curWorldNor, refNor);
+      float curDis = 0.1f * length(curWorldPos - refPos)
+        + 0.9f * 5.0f * (factor + 1.0f);
       if (curDis < minDis) {
         minRef = id;
         minDis = curDis;

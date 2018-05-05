@@ -836,6 +836,7 @@ void MyALG(DefaultParameters) {
 	OrbitController obController(&cc);
 	CameraControllerSetting(obController);
 	gLinearSampler.Setup(MainDev);
+	gPointSampler.Setup(MainDev);
 // 预先需要每个三角形的ID图
 // 渲染场景中所有面的空间信息位置信息
 	VertexShader UpdatePosVS("../Debug/MyALGUpdatePosVS.cso");
@@ -847,6 +848,11 @@ void MyALG(DefaultParameters) {
 	SSDataVS.Setup(MainDev);
 	PixelShader SSDataPS("../Debug/MyALGSSDataPS.cso");
 	SSDataPS.Setup(MainDev);
+// 处理屏幕下的ID信息
+	ComputeShader ClusterArrangeCS2("../Debug/MyALGArrangeClusterCoreCS2.cso");
+	ClusterArrangeCS2.Setup(MainDev);
+	ComputeShader NormalizeAscriptionCS("../Debug/MyALGNormalizeAscriptionCS.cso");
+	NormalizeAscriptionCS.Setup(MainDev);
 // 利用管线对反射样本点进行聚类
 	VertexShader ClusterRefVS("../Debug/MyALGArrangeClusterCoreVS.cso");
 	ClusterRefVS.Setup(MainDev);
@@ -925,6 +931,9 @@ void MyALG(DefaultParameters) {
 	CommonTexture BasicColor(L"./UnknownRoom/BC.png");
 	BasicColor.Setup(MainDev);
 
+	CommonTexture IDTex(L"./UnknownRoom/ID.png");
+	IDTex.Setup(MainDev);
+
 	const float ScePntNum = 150;
 	const int ScePntNumInt = 150;
 	// Raster state
@@ -964,6 +973,9 @@ void MyALG(DefaultParameters) {
 	SSWPos.Setup(MainDev);
 	Canvas SSWNor(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
 	SSWNor.Setup(MainDev);
+	Canvas SSID(WIDTH, HEIGHT, DXGI_FORMAT_R32_UINT);
+	SSID.SetUARes();
+	SSID.Setup(MainDev);
 
 	const int RefPntNum = 10;
 
@@ -971,7 +983,10 @@ void MyALG(DefaultParameters) {
 	{
 		DirectX::XMFLOAT4 wPos;
 		DirectX::XMFLOAT4 wRef;
+		DirectX::XMFLOAT4 vRef;
+		DirectX::XMFLOAT4 wNor;
 		DirectX::XMFLOAT4X4 refMatrix;
+		DirectX::XMFLOAT4X4 refProjMatrix;
 	};
 
 	StructuredBuffer<RefEleData, RefPntNum * RefPntNum> RefViewMatrixs(false);
@@ -1019,7 +1034,7 @@ void MyALG(DefaultParameters) {
 	ClusterViewPort.TopLeftX = ClusterViewPort.TopLeftY = 0;
 
 // 记录当前构建的每个反射位置的阴影图
-	const int SubShadowMapSize = 32;
+	const int SubShadowMapSize = 128;
 	const int ShadowMapSize = SubShadowMapSize * RefPntNum;
 	Canvas ShadowMapDiffuse(ShadowMapSize, ShadowMapSize, DXGI_FORMAT_R8G8B8A8_UNORM);
 	ShadowMapDiffuse.SetUARes();
@@ -1053,10 +1068,40 @@ void MyALG(DefaultParameters) {
 	ShadowMapViewPort.MinDepth = 0.0f;
 	ShadowMapViewPort.TopLeftX = ShadowMapViewPort.TopLeftY = 0;
 
-	ConstantBuffer<DirectX::XMFLOAT4X4> ProjectMatrixData;
-	DirectX::XMFLOAT4X4 shadowMapProjMatrix;
-	DirectX::XMStoreFloat4x4(&shadowMapProjMatrix , DirectX::XMMatrixPerspectiveFovLH(1.57f, 1, 0.5f, 50.0f));
-	ProjectMatrixData.GetData() = shadowMapProjMatrix;
+	struct ProjMatrixData {
+		DirectX::XMFLOAT4 PerProjSettingData;
+		DirectX::XMFLOAT4X4 PerProjMatrix;
+		DirectX::XMFLOAT4X4 PerProjMatrixInv;
+		DirectX::XMFLOAT4 OrtProjSettingData;
+		DirectX::XMFLOAT4X4 OrtProjMatrix;
+		DirectX::XMFLOAT4X4 OrtProjMatrixInv;
+	};
+
+	ConstantBuffer<ProjMatrixData> ProjectMatrixData;
+	DirectX::XMFLOAT4X4 SMProjMatrix;
+	DirectX::XMFLOAT4X4 SMProjMatrixInv;
+	DirectX::XMMATRIX tempProjMatrix;
+
+	DirectX::XMFLOAT4 SMPerProjMatrixSetting = { 0.24f, 1.0f, 0.05f, 50.0f };
+	tempProjMatrix = DirectX::XMMatrixPerspectiveFovLH(SMPerProjMatrixSetting.x, SMPerProjMatrixSetting.y,
+		SMPerProjMatrixSetting.z, SMPerProjMatrixSetting.w);
+	DirectX::XMStoreFloat4x4(&SMProjMatrix, tempProjMatrix);
+	DirectX::XMStoreFloat4x4(&SMProjMatrixInv, DirectX::XMMatrixInverse(nullptr, tempProjMatrix));
+
+	ProjectMatrixData.GetData().PerProjMatrix = SMProjMatrix;
+	ProjectMatrixData.GetData().PerProjMatrixInv = SMProjMatrixInv;
+	ProjectMatrixData.GetData().PerProjSettingData = SMPerProjMatrixSetting;
+
+	DirectX::XMFLOAT4 SMOrtProjMatrixSetting = { 5.0f, 5.0f, 0.05f, 50.0f };
+	tempProjMatrix = DirectX::XMMatrixOrthographicLH(SMOrtProjMatrixSetting.x, SMOrtProjMatrixSetting.y,
+		SMOrtProjMatrixSetting.z, SMOrtProjMatrixSetting.w);
+	DirectX::XMStoreFloat4x4(&SMProjMatrix, tempProjMatrix);
+	DirectX::XMStoreFloat4x4(&SMProjMatrixInv, DirectX::XMMatrixInverse(nullptr, tempProjMatrix));
+
+	ProjectMatrixData.GetData().OrtProjMatrix = SMProjMatrix;
+	ProjectMatrixData.GetData().OrtProjMatrixInv = SMProjMatrixInv;
+	ProjectMatrixData.GetData().OrtProjSettingData = SMOrtProjMatrixSetting;
+
 	ProjectMatrixData.Setup(MainDev);
 
 	D3D11_VIEWPORT ShadowMapViewPortssss[RefPntNum * RefPntNum];
@@ -1103,6 +1148,17 @@ void MyALG(DefaultParameters) {
 	EdgeDetectResult.SetUARes();
 	EdgeDetectResult.Setup(MainDev);
 
+// 当前屏幕的分块(行/列)个数
+	const UINT ScreenTiles = 5; // 屏幕被分割成行列个K个，总共K x K个区域
+	const UINT TileMaxSubTile = 36; // 每个区域最大的面数量
+	Canvas TileIDIndex(ScreenTiles * ScreenTiles * TileMaxSubTile, 1, DXGI_FORMAT_R32_UINT);
+	TileIDIndex.SetUARes(true, true);
+	TileIDIndex.Setup(MainDev);
+
+	// 充当计数器的结构化缓冲区
+	StructuredBuffer<int, 1> structureCounter(false);
+	structureCounter.Setup(MainDev);
+
 // pass
 	ShadingPass updatePosPass(&UpdatePosVS, &UpdatePosPS);
 	updatePosPass
@@ -1120,10 +1176,13 @@ void MyALG(DefaultParameters) {
 	ssDataPass
 		.BindSource(&SSWPos, true, false)
 		.BindSource(&SSWNor, true, false)
+		.BindSource(&SSID, false, false)
 		.BindSource(renderer->GetMainDS(), true, false)
 		.BindSource(meshList[0].get())
 		.BindSource(&BasicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
-		.BindSource(&cc, SBT_VERTEX_SHADER, VS_CAMERA_DATA_SLOT);
+		.BindSource(&cc, SBT_VERTEX_SHADER, VS_CAMERA_DATA_SLOT)
+		.BindSourceTex(&IDTex, SBT_PIXEL_SHADER, 0)
+		.BindSource(&gPointSampler, SBT_PIXEL_SHADER, 0);
 
 	ComputingPass refPntPass(&RefPntCS, { 1, 1, 1 });
 	refPntPass
@@ -1142,6 +1201,8 @@ void MyALG(DefaultParameters) {
 		.BindSource(&ClusterResultNor, true, false)
 		.BindSourceTex(&SSWPos, SBT_VERTEX_SHADER, 0)
 		.BindSourceTex(&SSWNor, SBT_VERTEX_SHADER, 1)
+		.BindSourceTex(&SSID, SBT_VERTEX_SHADER, 2)
+		.BindSourceTex(&TileIDIndex, SBT_VERTEX_SHADER, 3)
 		.BindSource(&refPntData, SBT_VERTEX_SHADER, 0);
 
 	ComputingPass ClusterAveragePass(&ClusterAverageCS, { RefPntNum / 10, RefPntNum / 10, 1 });
@@ -1184,7 +1245,8 @@ void MyALG(DefaultParameters) {
 		.BindSource(&BasicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
 		.BindSourceBuf(&RefViewMatrixs, SBT_GEOMETRY_SHADER, 0)
 		.BindSource(&ProjectMatrixData, SBT_GEOMETRY_SHADER, 0)
-		.BindSource(&refPntData, SBT_GEOMETRY_SHADER, 1);
+		.BindSource(&refPntData, SBT_GEOMETRY_SHADER, 1)
+		.BindSource(&cc, SBT_GEOMETRY_SHADER, 3);
 
 	ShadingPass PPShowShadowMap(&PPShowShadowMapVS, &PPShowShadowMapPS, &PPShowShadowMapGS);
 	PPShowShadowMap
@@ -1195,6 +1257,7 @@ void MyALG(DefaultParameters) {
 		.BindSourceBuf(&RefViewMatrixs, SBT_GEOMETRY_SHADER, 0)
 		.BindSource(&ProjectMatrixData, SBT_GEOMETRY_SHADER, 0)
 		.BindSource(&refPntData, SBT_GEOMETRY_SHADER, 1)
+		.BindSource(&cc, SBT_GEOMETRY_SHADER, 3)
 		.BindSource(&BasicColor, SBT_PIXEL_SHADER, 0)
 		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0);
 
@@ -1203,6 +1266,8 @@ void MyALG(DefaultParameters) {
 		.BindSourceBuf(&RefViewMatrixs, SBT_COMPUTE_SHADER, 0)
 		.BindSourceTex(&SSWPos, SBT_COMPUTE_SHADER, 1)
 		.BindSourceTex(&SSWNor, SBT_COMPUTE_SHADER, 2)
+		.BindSourceTex(&SSID, SBT_COMPUTE_SHADER, 3)
+		.BindSourceTex(&TileIDIndex, SBT_COMPUTE_SHADER, 4)
 		.BindSourceUA(&AscriptionData, SBT_COMPUTE_SHADER, 0)
 		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
 		.BindSource(&refPntData, SBT_COMPUTE_SHADER, 1);
@@ -1218,10 +1283,21 @@ void MyALG(DefaultParameters) {
 		.BindSourceBuf(&RefViewMatrixs, SBT_COMPUTE_SHADER, 6)
 		.BindSourceTex(&ShadowMapPos, SBT_COMPUTE_SHADER, 7)
 		.BindSourceTex(&ShadowMapNor, SBT_COMPUTE_SHADER, 8)
+		.BindSourceTex(&ShadowMapDepth2, SBT_COMPUTE_SHADER, 9)
 		.BindSourceUA(&ReflectionResultPos, SBT_COMPUTE_SHADER, 0)
 		.BindSource(&cstShadowMapData, SBT_COMPUTE_SHADER, 0)
 		.BindSource(&cc, SBT_COMPUTE_SHADER, 1)
 		.BindSource(&ProjectMatrixData, SBT_COMPUTE_SHADER, 2);
+
+	ComputingPass clusterCoreArrangePass(&ClusterArrangeCS2, { WIDTH / 10, HEIGHT / 10, 1 });
+	clusterCoreArrangePass
+		.BindSourceTex(&SSID, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&TileIDIndex, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass normalizeAscriptionPass(&NormalizeAscriptionCS, { ScreenTiles * ScreenTiles * TileMaxSubTile / 10, 1, 1 });
+	normalizeAscriptionPass
+		.BindSourceUA(&TileIDIndex, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&structureCounter, SBT_COMPUTE_SHADER, 1);
 
 	ShadingPass showRefPntViewPass(&ShowRefViewVS, &ShowRefViewPs);
 	showRefPntViewPass
@@ -1232,6 +1308,7 @@ void MyALG(DefaultParameters) {
 		.BindSourceBuf(&RefViewMatrixs, SBT_VERTEX_SHADER, 0)
 		.BindSource(&ProjectMatrixData, SBT_VERTEX_SHADER, 0)
 		.BindSource(&BasicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
+		.BindSource(&cc, SBT_VERTEX_SHADER, 2)
 		.BindSourceTex(&BasicColor, SBT_PIXEL_SHADER, 0);
 
 	ComputingPass showShadowMapPass(&ShowShadowMapCS, { ScePntNum / 10, ScePntNum / 10, 1 });
@@ -1263,6 +1340,8 @@ void MyALG(DefaultParameters) {
 		.BindSourceBuf(&RefViewMatrixs, SBT_COMPUTE_SHADER, 0)
 		.BindSourceTex(&SSWPos, SBT_COMPUTE_SHADER, 1)
 		.BindSourceTex(&SSWNor, SBT_COMPUTE_SHADER, 2)
+		.BindSourceTex(&SSID, SBT_COMPUTE_SHADER, 3)
+		.BindSourceTex(&TileIDIndex, SBT_COMPUTE_SHADER, 4)
 		.BindSourceUA(&AscriptionMap, SBT_COMPUTE_SHADER, 0)
 		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
 		.BindSource(&refPntData, SBT_COMPUTE_SHADER, 1);
@@ -1279,7 +1358,13 @@ void MyALG(DefaultParameters) {
 		// 初始化场景中的点
 		//updatePosPass.Run(MainDevCtx).End(MainDevCtx);
 		// 渲染当前视口信息G-buffer
+		renderer->ClearUAV_UINT(&SSID, { UINT_MAX, UINT_MAX, UINT_MAX, UINT_MAX });
 		ssDataPass.Run(MainDevCtx).End(MainDevCtx);
+
+		// 计算分块情况
+		renderer->ClearUAV_UINT(&TileIDIndex);
+		clusterCoreArrangePass.Run(MainDevCtx).End(MainDevCtx);
+		normalizeAscriptionPass.Run(MainDevCtx).End(MainDevCtx);
 		// 计算当前反射样本点的聚类
 		PPClusterRefPass.Run(MainDevCtx).End(MainDevCtx);
 		// 对当前反射样本点聚类进行平均，求出聚类核心信息
@@ -1336,7 +1421,7 @@ void MyALG(DefaultParameters) {
 
 		showPostProcessPass.Run(MainDevCtx).End(MainDevCtx);
 
-		showRefPntViewPass.Run(MainDevCtx).End(MainDevCtx);
+		//showRefPntViewPass.Run(MainDevCtx).End(MainDevCtx);
 
 		renderer->EndRender();
 	});

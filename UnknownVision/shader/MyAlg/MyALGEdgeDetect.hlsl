@@ -24,5 +24,5 @@ void main(uint3 GTID : SV_GroupThreadID,
   ref -= Input[tuv] * 8;
 
   if (dot(ref, ref) > 0.01f) Output[tuv] = float4(0, 0, 0, 0);
-  else Output[tuv] = Input[tuv];
+  else Output[tuv] = float4(1, 1, 1, 1);
 }

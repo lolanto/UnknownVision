@@ -1,14 +1,23 @@
 #pragma once
 #include "UnknownObject.h"
 #include <DirectXMath.h>
+#include <map>
 
 
-#define ITERATE_BINDING_DATA(devCtx, bd) for (auto& iter : bd) { \
+#define ITERATE_BINDING_DATA_VECTOR(devCtx, bd) for (auto& iter : bd) { \
 	iter.resPointer->Bind(devCtx, iter.bindTarget, iter.slot); \
 } \
 
-#define ITERATE_UNBINDING_DATA(devCtx, bd) for (auto& iter : bd) { \
+#define ITERATE_UNBINDING_DATA_VECTOR(devCtx, bd) for (auto& iter : bd) { \
 	iter.resPointer->Unbind(devCtx, iter.bindTarget, iter.slot); \
+} \
+
+#define ITERATE_BINDING_DATA_MAP(devCtx, bd) for (auto& iter : bd) { \
+	iter.second.resPointer->Bind(devCtx, iter.second.bindTarget, iter.second.slot); \
+} \
+
+#define ITERATE_UNBINDING_DATA_MAP(devCtx, bd) for(auto& iter: bd) { \
+	iter.second.resPointer->Unbind(devCtx, iter.second.bindTarget, iter.second.slot); \
 } \
 
 // Ã¿¸öäÖÈ¾passµÄ¹Ç¼Ü
@@ -77,7 +86,8 @@ public:
 	virtual BasePass& Run(ID3D11DeviceContext*);
 	virtual BasePass& End(ID3D11DeviceContext*);
 protected:
-	std::vector<BindingData<IConstantBuffer>>					m_bdOfConstBuffer;
+	//std::vector<BindingData<IConstantBuffer>>					m_bdOfConstBuffer;
+	std::map<UINT, BindingData<IConstantBuffer>>			m_bdOfConstBuffer;
 	std::vector<BindingData<ITexture>>								m_bdOfTexture;
 	std::vector<BindingData<IBuffer>>									m_bdOfBuffer;
 	std::vector<BindingData<ISamplerState>>						m_bdOfSamplerState;

@@ -3,6 +3,8 @@ struct GSInput {
   uint viewPortIndex : SV_ViewportArrayIndex;
   float4 wPos : TEXCOORD0;
   float4 wNor : TEXCOORD1;
+  float4 tNor : TEXCOORD2;
+  float4 tPos : TEXCOORD3;
 };
 
 struct PSOutput {
@@ -11,6 +13,7 @@ struct PSOutput {
 };
 
 PSOutput main(GSInput i) {
+  if (dot(i.wPos.xyz - i.tPos.xyz, i.tNor.xyz) < 0) discard;
   PSOutput o;
   o.wPos = i.wPos;
   o.wNor = i.wNor;

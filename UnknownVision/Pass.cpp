@@ -23,8 +23,9 @@ BasePass& BasePass::BindSource(IConstantBuffer * res, ShaderBindTarget sbt, SIZE
 	bd.bindTarget = sbt;
 	bd.resPointer = res;
 	bd.slot = slot;
-	m_bdOfConstBuffer.push_back(bd);
-
+	//m_bdOfConstBuffer.push_back(bd);
+	UINT key = UINT(sbt) * 100 + UINT(slot);
+	m_bdOfConstBuffer[key] = bd;
 	return *this;
 }
 
@@ -70,25 +71,25 @@ BasePass& BasePass::BindSource(IUnorderAccess* res, ShaderBindTarget sbt, SIZE_T
 
 BasePass& BasePass::Run(ID3D11DeviceContext* devCtx) {
 	// binding resources
-	ITERATE_BINDING_DATA(devCtx, m_bdOfBuffer);
-	ITERATE_BINDING_DATA(devCtx, m_bdOfConstBuffer);
-	ITERATE_BINDING_DATA(devCtx, m_bdOfSamplerState);
-	ITERATE_BINDING_DATA(devCtx, m_bdOfTexture);
-	ITERATE_BINDING_DATA(devCtx, m_bdOfUnorderAccess);
-	ITERATE_BINDING_DATA(devCtx, m_bdOfUnknownObject);
+	ITERATE_BINDING_DATA_VECTOR(devCtx, m_bdOfBuffer);
+	ITERATE_BINDING_DATA_MAP(devCtx, m_bdOfConstBuffer);
+	ITERATE_BINDING_DATA_VECTOR(devCtx, m_bdOfSamplerState);
+	ITERATE_BINDING_DATA_VECTOR(devCtx, m_bdOfTexture);
+	ITERATE_BINDING_DATA_VECTOR(devCtx, m_bdOfUnorderAccess);
+	ITERATE_BINDING_DATA_VECTOR(devCtx, m_bdOfUnknownObject);
 
 	return *this;
 }
 
 BasePass& BasePass::End(ID3D11DeviceContext* devCtx) {
 	// Unbind resource
-	ITERATE_UNBINDING_DATA(devCtx, m_bdOfBuffer);
-	ITERATE_UNBINDING_DATA(devCtx, m_bdOfConstBuffer);
-	ITERATE_UNBINDING_DATA(devCtx, m_bdOfSamplerState);
-	ITERATE_UNBINDING_DATA(devCtx, m_bdOfTexture);
-	ITERATE_UNBINDING_DATA(devCtx, m_bdOfUnorderAccess);
+	ITERATE_UNBINDING_DATA_VECTOR(devCtx, m_bdOfBuffer);
+	ITERATE_UNBINDING_DATA_MAP(devCtx, m_bdOfConstBuffer);
+	ITERATE_UNBINDING_DATA_VECTOR(devCtx, m_bdOfSamplerState);
+	ITERATE_UNBINDING_DATA_VECTOR(devCtx, m_bdOfTexture);
+	ITERATE_UNBINDING_DATA_VECTOR(devCtx, m_bdOfUnorderAccess);
 
-	ITERATE_UNBINDING_DATA(devCtx, m_bdOfUnknownObject);
+	ITERATE_UNBINDING_DATA_VECTOR(devCtx, m_bdOfUnknownObject);
 
 	return *this;
 }

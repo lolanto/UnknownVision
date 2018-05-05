@@ -1,9 +1,12 @@
 #include "./MyALGShadowMapHead.hlsli"
 // 展示当前场景中选取的反射点在当前反射策略下所见的内容
-struct RefEleData{
+struct RefEleData {
   float4 wPos;
   float4 wRef;
+  float4 vRef;
+  float4 wNor;
   float4x4 refMatrix;
+  float4x4 refProjMatrix;
 };
 
 StructuredBuffer<RefEleData> RefViewMatrixs : register(t0);

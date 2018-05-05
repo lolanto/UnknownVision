@@ -1,10 +1,13 @@
 #include "./MyALGShadowMapHead.hlsli"
 
 // 从场景点中选一个点，放入到各个shadow map中进行比较
-struct RefEleData{
+struct RefEleData {
   float4 wPos;
   float4 wRef;
+  float4 vRef;
+  float4 wNor;
   float4x4 refMatrix;
+  float4x4 refProjMatrix;
 };
 
 StructuredBuffer<RefEleData> RefViewMatrixs : register(t0);

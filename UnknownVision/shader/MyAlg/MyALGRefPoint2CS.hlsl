@@ -2,10 +2,13 @@
 Texture2D<float4> SSWPos : register(t0);
 Texture2D<float4> SSWNor : register(t1);
 
-struct RefEleData{
+struct RefEleData {
   float4 wPos;
   float4 wRef;
+  float4 vRef;
+  float4 wNor;
   float4x4 refMatrix;
+  float4x4 refProjMatrix;
 };
 
 RWStructuredBuffer<RefEleData> RefViewMatrixs : register(u0);
