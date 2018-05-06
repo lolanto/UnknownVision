@@ -49,8 +49,8 @@ void main(uint3 GTID : SV_GroupThreadID,
 
   int2 ScreenSize = GCameraParam.zw;
   uint faceID = SSID[tuv];
-  // if (faceID == uint(0xffffff)) {
-  if (faceID > 10000000) {
+  if (faceID == 0xffffffffu) {
+  // if (faceID > 10000000) {
     AsciptionMap[tuv] = float4(0.5f, 0.5f, 0.5f, 1.0f);
   }
   // 当前所在的块

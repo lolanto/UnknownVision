@@ -10,8 +10,8 @@ void main(uint3 GTID : SV_GroupThreadID,
   SSID.GetDimensions(ScreenSize.x, ScreenSize.y);
   // 当前的面ID
   uint id = SSID[tuv];
-  // if (id == uint(0xffffff)) return;
-  if (id > 10000000) return;
+  if (id == 0xffffffffu) return;
+  // if (id > 10000000) return;
   // 当前所在的块
   uint2 tile = tuv / (ScreenSize / uint2(5, 5));
   uint2 slot = uint2((tile.x + tile.y * 5) * 36 + id, 0);

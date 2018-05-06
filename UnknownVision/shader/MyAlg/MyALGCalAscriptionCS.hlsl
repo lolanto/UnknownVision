@@ -49,8 +49,7 @@ void main(uint3 GTID : SV_GroupThreadID,
 
   int2 ScreenSize = GCameraParam.zw;
   uint faceID = SSID[tuv];
-  // if (faceID == uint(0xffffff)) {
-  if (faceID > 10000000) {
+  if (faceID == 0xffffffffu) {
     AscriptionData[tuv] = uint(0xffffff);
     return;
   }

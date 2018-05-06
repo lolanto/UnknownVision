@@ -61,8 +61,7 @@ VSOutput main(uint VID : SV_VertexID) {
   o.WNor = curWNor;
 
   uint faceID = SSID[tuv];
-  // if (faceID == uint(0xffffff)) {
-  if (faceID > 10000000) {
+  if (faceID == 0xffffffffu) {
     o.pos = float4(0, 0, -1.5f, 1.0f); // discard this point!
     return o;
   }
@@ -71,9 +70,14 @@ VSOutput main(uint VID : SV_VertexID) {
   uint2 slot = uint2((tile.x + tile.y * 5) * 36 + faceID, 0);
 
   uint ascription = SSIndex[slot];
-  uint2 minIter = uint2(ascription % 10, ascription / 10);
-  minIter.y = 9 - minIter.y;
-  o.pos = float4(0.2f * minIter - 0.9f, 0.5f, 1.0f);
+  // ascription = 23;
+  uint2 minIter = uint2(ascription % RefPntData.z + 10e-4, ascription / RefPntData.z);
+  minIter.y = RefPntData.w - 1 - minIter.y;
+  const float2 interval = 1.0f / RefPntData.zw;
+  const float2 b = interval - 1.0f;
+  const float2 a = (2.0f - interval * 2.0f) / (RefPntData.zw - 1.0f);
+  // 与refPntData.zw相关
+  o.pos = float4(a * minIter + b, 0.5f, 1.0f);
 
   return o;
 }

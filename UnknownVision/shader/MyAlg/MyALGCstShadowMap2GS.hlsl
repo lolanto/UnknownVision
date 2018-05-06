@@ -49,6 +49,9 @@ struct VSInput {
   float4 pos : SV_POSITION;
   float4 wPos : TEXCOORD0;
   float4 wNor : TEXCOORD1;
+  float4 wTan : TEXCOORD2;
+  float4 wBin : TEXCOORD3;
+  float2 uv : TEXCOORD4;
 };
 
 struct GSOutput {
@@ -58,6 +61,9 @@ struct GSOutput {
   float4 wNor : TEXCOORD1;
   float4 tNor : TEXCOORD2;
   float4 tPos : TEXCOORD3;
+  float4 wTan : TEXCOORD4;
+  float4 wBin : TEXCOORD5;
+  float4 uvDuv : TEXCOORD6;
 };
 
 [maxvertexcount(30)]
@@ -67,6 +73,14 @@ void main(
 
   uint2 iter = uint2(0, InstanceData.x);
   const uint2 bound = uint2(RefPntData.zw);
+  // 0 --> (1 + 2) / 2
+  float2 hUV = (input[1].uv + input[2].uv) / 2;
+  float3 hPos = (input[1].wPos.xyz + input[2].wPos.xyz) / 2;
+  float2 duv = hUV - input[0].uv;
+  float3 dPos = hPos - input[0].wPos.xyz;
+  float2 UXY = float2(dot(dPos, input[0].wTan.xyz), dot(dPos, input[0].wBin.xyz));
+  float2 proUV = duv / UXY;
+
   for(; iter.x < bound.x; ++iter.x) {
     uint refIndex = iter.x + iter.y * bound.x;
     float4x4 viewMatrix = RefViewMatrixs[refIndex].refMatrix;
@@ -80,6 +94,9 @@ void main(
       o.pos = input[i].pos;
       o.wPos = input[i].wPos;
       o.wNor = input[i].wNor;
+      o.wTan = input[i].wTan;
+      o.wBin = input[i].wBin;
+      o.uvDuv = float4(input[i].uv, proUV);
       o.pos = mul(viewMatrix, o.pos);
       // o.pos.xy += vRef.xy * o.pos.z;
       o.pos = mul(PerProjMatrix, o.pos);

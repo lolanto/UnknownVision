@@ -21,6 +21,10 @@ StructuredBuffer<RefEleData> RefViewData : register(t6);
 Texture2D<float4> ShadowMapPos : register(t7);
 Texture2D<float4> ShadowMapNor : register(t8);
 Texture2D ShadowMapDepth : register(t9);
+Texture2D<float4> ShadowMapTan : register(t10);
+Texture2D<float4> ShadowMapBin : register(t11);
+Texture2D<float4> ShadowMapUV : register(t12);
+
 
 RWTexture2D<float4> RefResPos : register(u0);
 
@@ -77,8 +81,8 @@ void main(uint3 GTID : SV_GroupThreadID,
 
   // 当前点所属的反射样本点ID
   uint ascripPnt = AscriptionData[tuv].x;
-  // if (ascripPnt == uint(0xffffff)) return;
-  if (ascripPnt > 10000000) return;
+  if (ascripPnt == 0xffffffffu) return;
+  // if (ascripPnt > 10000000) return;
 
   // 求出当前反射样本点的下标
   float2 RefPntIdx2 = float2(ascripPnt % ShadowMapData.x,
@@ -241,9 +245,16 @@ void main(uint3 GTID : SV_GroupThreadID,
 
   float3 refPos = ShadowMapPos[texPos].xyz;
   float3 refNor = ShadowMapNor[texPos].xyz;
+  float4 refUV = ShadowMapUV[texPos];
 
   float t = dot(refPos - pntPos, refNor) / dot(pntRef, refNor);
-  RefResPos[tuv] = float4(pntPos + t * pntRef, 1.0f);
+  float3 tPos = pntPos + t * pntRef;
+  float3 dPos = tPos - refPos;
+  float2 xUV = float2(dot(dPos, ShadowMapTan[texPos].xyz),
+    dot(dPos, ShadowMapBin[texPos].xyz));
+  xUV = xUV * refUV.zw + refUV.xy;
+  // RefResPos[tuv] = float4(pntPos + t * pntRef, 1.0f);
+  RefResPos[tuv] = float4(xUV, 0.0f ,1.0f);
 
   // RefResPos[tuv] = ShadowMapDiffuse[texPos];
 }

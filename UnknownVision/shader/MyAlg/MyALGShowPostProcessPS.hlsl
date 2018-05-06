@@ -1,5 +1,7 @@
 Texture2D basicColor : register(t0);
+Texture2D mapData : register(t1);
 SamplerState linearSampler : register(s0);
+SamplerState pointSampler : register(s1);
 
 struct VSOutput {
   float4 pos : SV_POSITION;
@@ -35,10 +37,11 @@ bool SimpleEdgeTest(uint2 cTexPos, Texture2D target) {
 }
 
 float4 main(VSOutput i) : SV_Target {
-  uint2 texSize;
-  basicColor.GetDimensions(texSize.x, texSize.y);
-  if (SimpleEdgeTest(uint2(texSize * i.uv), basicColor))
-    return float4(0, 0, 0, 1);
-  else return basicColor.Sample(linearSampler, i.uv);
-  // return basicColor.Sample(linearSampler, i.uv);
+  // uint2 texSize;
+  // mapData.GetDimensions(texSize.x, texSize.y);
+  // if (SimpleEdgeTest(uint2(texSize * i.uv), mapData))
+  //   return float4(0, 0, 0, 1);
+  // else return mapData.Sample(linearSampler, i.uv);
+  // return mapData.Sample(linearSampler, i.uv);
+  return basicColor.Sample(linearSampler, mapData.Sample(pointSampler, i.uv).xy);
 }

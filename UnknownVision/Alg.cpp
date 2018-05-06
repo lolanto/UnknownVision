@@ -977,7 +977,8 @@ void MyALG(DefaultParameters) {
 	SSID.SetUARes();
 	SSID.Setup(MainDev);
 
-	const int RefPntNum = 10;
+	const int RefPntNumX = 10;
+	const int RefPntNumY = 15;
 
 	struct RefEleData
 	{
@@ -989,14 +990,14 @@ void MyALG(DefaultParameters) {
 		DirectX::XMFLOAT4X4 refProjMatrix;
 	};
 
-	StructuredBuffer<RefEleData, RefPntNum * RefPntNum> RefViewMatrixs(false);
+	StructuredBuffer<RefEleData, RefPntNumX * RefPntNumY> RefViewMatrixs(false);
 	RefViewMatrixs.Setup(MainDev);
 
 	ConstantBuffer<DirectX::XMFLOAT4> refPntData;
 	refPntData.GetData().x = WIDTH;
 	refPntData.GetData().y = HEIGHT;
-	refPntData.GetData().z = RefPntNum;
-	refPntData.GetData().w = RefPntNum;
+	refPntData.GetData().z = RefPntNumX;
+	refPntData.GetData().w = RefPntNumY;
 	refPntData.Setup(MainDev);
 
 // 利用渲染管线将反射样本点进行聚类
@@ -1019,30 +1020,31 @@ void MyALG(DefaultParameters) {
 	BlendState ClusterBlendState(ClusterBlendDesc);
 	ClusterBlendState.Setup(MainDev);
 
-	Canvas ClusterResultPos(RefPntNum, RefPntNum, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	Canvas ClusterResultPos(RefPntNumX, RefPntNumY, DXGI_FORMAT_R32G32B32A32_FLOAT);
 	ClusterResultPos.SetUARes();
 	ClusterResultPos.Setup(MainDev);
-	Canvas ClusterResultNor(RefPntNum, RefPntNum, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	Canvas ClusterResultNor(RefPntNumX, RefPntNumY, DXGI_FORMAT_R32G32B32A32_FLOAT);
 	ClusterResultNor.SetUARes();
 	ClusterResultNor.Setup(MainDev);
 
 	D3D11_VIEWPORT ClusterViewPort;
-	ClusterViewPort.Height = RefPntNum;
-	ClusterViewPort.Width = RefPntNum;
+	ClusterViewPort.Height = RefPntNumY;
+	ClusterViewPort.Width = RefPntNumX;
 	ClusterViewPort.MaxDepth = 1.0f;
 	ClusterViewPort.MinDepth = 0.0f;
 	ClusterViewPort.TopLeftX = ClusterViewPort.TopLeftY = 0;
 
 // 记录当前构建的每个反射位置的阴影图
 	const int SubShadowMapSize = 128;
-	const int ShadowMapSize = SubShadowMapSize * RefPntNum;
-	Canvas ShadowMapDiffuse(ShadowMapSize, ShadowMapSize, DXGI_FORMAT_R8G8B8A8_UNORM);
+	const int ShadowMapSizeX = SubShadowMapSize * RefPntNumX;
+	const int ShadowMapSizeY = SubShadowMapSize * RefPntNumY;
+	Canvas ShadowMapDiffuse(ShadowMapSizeX, ShadowMapSizeY, DXGI_FORMAT_R8G8B8A8_UNORM);
 	ShadowMapDiffuse.SetUARes();
 	ShadowMapDiffuse.Setup(MainDev);
-	Canvas ShadowMapTexPos(ShadowMapSize, ShadowMapSize, DXGI_FORMAT_R32G32_UINT);
+	Canvas ShadowMapTexPos(ShadowMapSizeX, ShadowMapSizeY, DXGI_FORMAT_R32G32_UINT);
 	ShadowMapTexPos.SetUARes();
 	ShadowMapTexPos.Setup(MainDev);
-	Canvas ShadowMapDepth(ShadowMapSize, ShadowMapSize, DXGI_FORMAT_R32_UINT);
+	Canvas ShadowMapDepth(ShadowMapSizeX, ShadowMapSizeY, DXGI_FORMAT_R32_UINT);
 	ShadowMapDepth.SetUARes(true, true);
 	ShadowMapDepth.Setup(MainDev);
 	struct CstShadowMapData {
@@ -1050,20 +1052,27 @@ void MyALG(DefaultParameters) {
 		DirectX::XMFLOAT4 shadowMapSize;
 	};
 
-	DepthTexture ShadowMapDepth2(ShadowMapSize, ShadowMapSize);
+	DepthTexture ShadowMapDepth2(ShadowMapSizeX, ShadowMapSizeY);
 	ShadowMapDepth2.Setup(MainDev);
-	Canvas ShadowMapPos(ShadowMapSize, ShadowMapSize, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	Canvas ShadowMapPos(ShadowMapSizeX, ShadowMapSizeY, DXGI_FORMAT_R32G32B32A32_FLOAT);
 	ShadowMapPos.Setup(MainDev);
-	Canvas ShadowMapNor(ShadowMapSize, ShadowMapSize, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	Canvas ShadowMapNor(ShadowMapSizeX, ShadowMapSizeY, DXGI_FORMAT_R32G32B32A32_FLOAT);
 	ShadowMapNor.Setup(MainDev);
+	Canvas ShadowMapTan(ShadowMapSizeX, ShadowMapSizeY, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ShadowMapTan.Setup(MainDev);
+	Canvas ShadowMapBin(ShadowMapSizeX, ShadowMapSizeY, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ShadowMapBin.Setup(MainDev);
+	Canvas ShadowMapUV(ShadowMapSizeX, ShadowMapSizeY, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ShadowMapUV.Setup(MainDev);
 
 	ConstantBuffer<CstShadowMapData> cstShadowMapData;
-	cstShadowMapData.GetData().exData = DirectX::XMFLOAT4(RefPntNum, RefPntNum, RefPntNum * RefPntNum, 0);
-	cstShadowMapData.GetData().shadowMapSize = DirectX::XMFLOAT4(SubShadowMapSize, SubShadowMapSize, ShadowMapSize, ShadowMapSize);
+	cstShadowMapData.GetData().exData = DirectX::XMFLOAT4(RefPntNumX, RefPntNumY, RefPntNumX * RefPntNumY, 0);
+	cstShadowMapData.GetData().shadowMapSize = DirectX::XMFLOAT4(SubShadowMapSize, SubShadowMapSize, ShadowMapSizeX, ShadowMapSizeY);
 	cstShadowMapData.Setup(MainDev);
 
 	D3D11_VIEWPORT ShadowMapViewPort;
-	ShadowMapViewPort.Height = ShadowMapViewPort.Width = ShadowMapSize;
+	ShadowMapViewPort.Width = ShadowMapSizeX;
+	ShadowMapViewPort.Height = ShadowMapSizeY;
 	ShadowMapViewPort.MaxDepth = 1.0f;
 	ShadowMapViewPort.MinDepth = 0.0f;
 	ShadowMapViewPort.TopLeftX = ShadowMapViewPort.TopLeftY = 0;
@@ -1104,11 +1113,11 @@ void MyALG(DefaultParameters) {
 
 	ProjectMatrixData.Setup(MainDev);
 
-	D3D11_VIEWPORT ShadowMapViewPortssss[RefPntNum * RefPntNum];
+	D3D11_VIEWPORT ShadowMapViewPortssss[RefPntNumX * RefPntNumY];
 	
-	for (DirectX::XMUINT2 iter = { 0, 0 }; iter.y < RefPntNum; ++iter.y) {
-		for (iter.x = 0; iter.x < RefPntNum; ++iter.x) {
-			UINT index = iter.x + iter.y * RefPntNum;
+	for (DirectX::XMUINT2 iter = { 0, 0 }; iter.y < RefPntNumY; ++iter.y) {
+		for (iter.x = 0; iter.x < RefPntNumX; ++iter.x) {
+			UINT index = iter.x + iter.y * RefPntNumX;
 			ShadowMapViewPortssss[index].Height = ShadowMapViewPortssss[index].Width = SubShadowMapSize;
 			ShadowMapViewPortssss[index].MaxDepth = 1.0f;
 			ShadowMapViewPortssss[index].MinDepth = 0.0f;
@@ -1205,7 +1214,7 @@ void MyALG(DefaultParameters) {
 		.BindSourceTex(&TileIDIndex, SBT_VERTEX_SHADER, 3)
 		.BindSource(&refPntData, SBT_VERTEX_SHADER, 0);
 
-	ComputingPass ClusterAveragePass(&ClusterAverageCS, { RefPntNum / 10, RefPntNum / 10, 1 });
+	ComputingPass ClusterAveragePass(&ClusterAverageCS, { ceil(float(RefPntNumX) / 10.0f), ceil(float(RefPntNumY) / 10.0f), 1 });
 	ClusterAveragePass
 		.BindSourceTex(&ClusterResultPos, SBT_COMPUTE_SHADER, 0)
 		.BindSourceTex(&ClusterResultNor, SBT_COMPUTE_SHADER, 1)
@@ -1241,6 +1250,9 @@ void MyALG(DefaultParameters) {
 		.BindSource(meshList[0].get())
 		.BindSource(&ShadowMapPos, false, false)
 		.BindSource(&ShadowMapNor, false, false)
+		.BindSource(&ShadowMapTan, false, false)
+		.BindSource(&ShadowMapBin, false, false)
+		.BindSource(&ShadowMapUV, false, false)
 		.BindSource(&ShadowMapDepth2, false, false)
 		.BindSource(&BasicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
 		.BindSourceBuf(&RefViewMatrixs, SBT_GEOMETRY_SHADER, 0)
@@ -1284,6 +1296,9 @@ void MyALG(DefaultParameters) {
 		.BindSourceTex(&ShadowMapPos, SBT_COMPUTE_SHADER, 7)
 		.BindSourceTex(&ShadowMapNor, SBT_COMPUTE_SHADER, 8)
 		.BindSourceTex(&ShadowMapDepth2, SBT_COMPUTE_SHADER, 9)
+		.BindSourceTex(&ShadowMapTan, SBT_COMPUTE_SHADER, 10)
+		.BindSourceTex(&ShadowMapBin, SBT_COMPUTE_SHADER, 11)
+		.BindSourceTex(&ShadowMapUV, SBT_COMPUTE_SHADER, 12)
 		.BindSourceUA(&ReflectionResultPos, SBT_COMPUTE_SHADER, 0)
 		.BindSource(&cstShadowMapData, SBT_COMPUTE_SHADER, 0)
 		.BindSource(&cc, SBT_COMPUTE_SHADER, 1)
@@ -1351,8 +1366,10 @@ void MyALG(DefaultParameters) {
 	showPostProcessPass
 		.BindSource(plane.get())
 		.BindSource(renderer->GetMainRT(), true, false)
-		.BindSourceTex(&ReflectionResultPos, SBT_PIXEL_SHADER, 0)
-		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0);
+		.BindSourceTex(&BasicColor, SBT_PIXEL_SHADER, 0)
+		.BindSourceTex(&ReflectionResultPos, SBT_PIXEL_SHADER, 1)
+		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0)
+		.BindSource(&gPointSampler, SBT_PIXEL_SHADER, 1);
 
 	mc->Run([&] {
 		// 初始化场景中的点
@@ -1392,8 +1409,11 @@ void MyALG(DefaultParameters) {
 		// 利用管线构造阴影图
 		renderer->ClearRenderTarget(&ShadowMapPos);
 		renderer->ClearRenderTarget(&ShadowMapNor);
+		renderer->ClearRenderTarget(&ShadowMapTan);
+		renderer->ClearRenderTarget(&ShadowMapBin);
+		renderer->ClearRenderTarget(&ShadowMapUV);
 		renderer->ClearDepthStencil(&ShadowMapDepth2);
-		for (UINT i = 0; i < 10; ++i) {
+		for (UINT i = 0; i < RefPntNumY; ++i) {
 			InstanceData.GetData().x = i;
 			ShadowMapViewPortPointer = ShadowMapViewPortssss + i * 10;
 			PPCstShadowMapPass2.BindSource(nullptr, ShadowMapViewPortPointer, 10).BindSource(&InstanceData, SBT_GEOMETRY_SHADER, 2);

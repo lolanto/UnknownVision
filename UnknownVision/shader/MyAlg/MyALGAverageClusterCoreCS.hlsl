@@ -37,6 +37,8 @@ RWStructuredBuffer<RefEleData> RefViewData : register(u0);
 void main(uint3 GTID: SV_GroupThreadID,
   uint2 GID: SV_GroupID) {
   uint2 tuv = GID.xy * 10 + GTID.xy;
+  // keep in bound
+  if (any(tuv >= RefPntData.zw)) return;
   float4 CluPos = ClusterResultPos[tuv];
   float3 worldPos = CluPos.xyz / CluPos.w;
 
