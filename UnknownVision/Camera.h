@@ -2,10 +2,13 @@
 #include <DirectXMath.h>
 #include <memory>
 #include <wrl.h>
-#include "UnknownObject.h"
+#include "Buffer.h"
 
 typedef unsigned int UINT;
 typedef unsigned char byte;
+
+#define VS_CAMERA_DATA_SLOT 2
+#define PS_CAMERA_DATA_SLOT 0
 
 class CameraController;
 
@@ -46,8 +49,8 @@ public:
 
 public:
 	bool Setup(ID3D11Device*);
-	void Bind(ID3D11DeviceContext*);
-	void Unbind(ID3D11DeviceContext*);
+	void Bind(ID3D11DeviceContext*, ShaderBindTarget, SIZE_T);
+	void Unbind(ID3D11DeviceContext*, ShaderBindTarget, SIZE_T);
 
 	DirectX::XMFLOAT3 GetPosition() const;
 	DirectX::XMFLOAT3 GetLookAt() const;
@@ -66,11 +69,14 @@ public:
 	void SetPosition(DirectX::XMFLOAT3);
 	void SetLookAt(DirectX::XMFLOAT3);
 	void SetFOV(float);
-	void SetASPECT(float);
+	void SetASPECT(float, float);
 
 private:
 	void calcProjMatrix();
 	void calcViewMatrix();
+
+	void calcParam();
+	void calcParam2();
 private:
 
 	// 影响到view矩阵的参数发生更改
@@ -82,29 +88,26 @@ private:
 
 	struct CameraDataStruct {
 		DirectX::XMFLOAT4X4										m_viewMatrix;
+		DirectX::XMFLOAT4X4										m_viewMatrixInv;
 		DirectX::XMFLOAT4X4										m_projMatrix;
 		DirectX::XMFLOAT4X4										m_projMatrixInv;
 		DirectX::XMFLOAT3											m_pos;
 		float temp;
+		// m_param---near plane / far plane / screen width / screen height
 		DirectX::XMFLOAT4											m_param;
-	}																			m_cameraDataStruct,
+		DirectX::XMFLOAT4											m_param2;
+	}																			/*m_cameraDataStruct,*/
 																				m_cameraPrevData;
 
-	std::shared_ptr<byte>											m_vpMatrixdata;
-
 	DirectX::XMFLOAT3												m_lookAt;
-
+	float																		m_width;
+	float																		m_height;
 	float																		m_fov;
 	float																		m_aspect;
 	float																		m_near;
 	float																		m_far;
 
-	// Camera const buffer
-	Microsoft::WRL::ComPtr<ID3D11Buffer>				m_ccbuf;
-	// buffer bind slot
-	UINT																	m_VSSlot;
-	UINT																	m_PSSlot;
-	bool																		m_hasSetup;
+	ConstantBuffer<CameraDataStruct>					m_buf;
 };
 
 

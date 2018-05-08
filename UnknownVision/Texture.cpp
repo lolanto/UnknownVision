@@ -6,12 +6,17 @@
 using DirectX::Image;
 using DirectX::ScratchImage;
 
-void editDescritionStructure(const Image* img,
-	D3D11_TEXTURE2D_DESC& tex2dDesc,
-	D3D11_SUBRESOURCE_DATA& tex2dSubData,
-	D3D11_SHADER_RESOURCE_VIEW_DESC& tex2dSRVDesc) {
+bool editDescritionStructure(const ScratchImage* mainData,
+	ID3D11Device* dev,
+	Microsoft::WRL::ComPtr<ID3D11Texture2D>& tex2d,
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>& srv) {
+	
+	D3D11_TEXTURE2D_DESC tex2dDesc;
+	D3D11_SHADER_RESOURCE_VIEW_DESC tex2dSRVDesc;
 	ZeroMemory(&tex2dDesc, sizeof(tex2dDesc));
-	ZeroMemory(&tex2dSubData, sizeof(tex2dSubData));
+
+	auto img = mainData->GetImages();
+	auto metaData = mainData->GetMetadata();
 	// set texture2d desc
 	tex2dDesc.ArraySize = 1;
 	tex2dDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
@@ -19,23 +24,37 @@ void editDescritionStructure(const Image* img,
 	tex2dDesc.Format = img->format;
 	tex2dDesc.Height = img->height;
 	tex2dDesc.Width = img->width;
-	// 不使用mipmap
-	tex2dDesc.MipLevels = 1;
-	tex2dDesc.MiscFlags = 0;
+	// 使用全套mipmap
+	tex2dDesc.MipLevels = metaData.mipLevels;
 	// 不使用多重采样抗锯齿
 	tex2dDesc.SampleDesc.Count = 1;
 	tex2dDesc.SampleDesc.Quality = 0;
 	tex2dDesc.Usage = D3D11_USAGE_DEFAULT;
+
+	std::vector<D3D11_SUBRESOURCE_DATA> subData;
 	// set texture2d subresource data
-	tex2dSubData.pSysMem = img->pixels;
-	tex2dSubData.SysMemPitch = img->rowPitch;
-	tex2dSubData.SysMemSlicePitch = img->slicePitch;
+	for (short i = 0; i < metaData.mipLevels; ++i) {
+		auto mipImage = mainData->GetImage(i, 0, 0);
+		D3D11_SUBRESOURCE_DATA ele;
+		ele.pSysMem = mipImage->pixels;
+		ele.SysMemPitch = mipImage->rowPitch;
+		ele.SysMemSlicePitch = mipImage->slicePitch;
+		subData.push_back(ele);
+	}
 
 	// create shader resource view
 	tex2dSRVDesc.Format = img->format;
 	tex2dSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	tex2dSRVDesc.Texture2D.MipLevels = -1;
 	tex2dSRVDesc.Texture2D.MostDetailedMip = 0;
+
+	if (FAILED(dev->CreateTexture2D(&tex2dDesc, &subData[0], tex2d.ReleaseAndGetAddressOf()))) {
+		return false;
+	}
+	if (FAILED(dev->CreateShaderResourceView(tex2d.Get(), &tex2dSRVDesc, srv.ReleaseAndGetAddressOf()))) {
+		return false;
+	}
+	return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -56,27 +75,14 @@ bool CommonTexture::Setup(ID3D11Device* dev) {
 		MLOG(LL, funcTag, LE, "load image file failed!");
 		return false;
 	}
-	const Image* img = image.get()->GetImages();
+
 	// Create texture2d
-	D3D11_TEXTURE2D_DESC desc;
-	D3D11_SUBRESOURCE_DATA subData;
-	D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
-	editDescritionStructure(img, desc, subData, SRVDesc);
-
-	if (FAILED(dev->CreateTexture2D(&desc, &subData, m_tex2d.ReleaseAndGetAddressOf()))) {
-		MLOG(LL, funcTag, LW, "Create texture2d failed!");
+	if (!editDescritionStructure(image.get(), dev, m_tex2d, m_srv_tex)) {
+		MLOG(LW, __FUNCTION__, LL, " create texture2d failed!");
 		return false;
 	}
-
-	if (FAILED(dev->CreateShaderResourceView(m_tex2d.Get(), &SRVDesc, m_shaderResource.ReleaseAndGetAddressOf()))) {
-		MLOG(LL, funcTag, LW, "Create shader resource failed!");
-		return false;
-	}
-
 	return true;
 }
-
-ID3D11ShaderResourceView** CommonTexture::GetSRV() { return m_shaderResource.GetAddressOf(); }
 
 /////////////////////////
 // private Function
@@ -99,127 +105,199 @@ bool HDRTexture::Setup(ID3D11Device* dev) {
 		return false;
 	}
 
-	const Image* img = image->GetImages();
 	//Create texture2d
-	D3D11_TEXTURE2D_DESC desc;
-	D3D11_SUBRESOURCE_DATA subData;
-	D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
-
-	editDescritionStructure(img, desc, subData, SRVDesc);
-	if (dev->CreateTexture2D(&desc, &subData, m_tex2d.ReleaseAndGetAddressOf())) {
-		MLOG(LL, funcTag, LE, "create texture2d failed!");
-		return false;
-	}
-	if (dev->CreateShaderResourceView(m_tex2d.Get(), &SRVDesc, m_shaderResource.ReleaseAndGetAddressOf())) {
-		MLOG(LL, funcTag, LE, "create texture2d shader resource view failed!");
+	// Create texture2d
+	if (!editDescritionStructure(image.get(), dev, m_tex2d, m_srv_tex)) {
+		MLOG(LW, __FUNCTION__, LL, " create texture2d failed!");
 		return false;
 	}
 	return true;
 }
 
-ID3D11ShaderResourceView** HDRTexture::GetSRV() { return m_shaderResource.GetAddressOf(); }
-
 /////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////   InternalTexture   ///////////////////////////////////
+///////////////////////////////////   DDSTexture   //////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
-InternalTexture::InternalTexture(ID3D11ShaderResourceView* srv) {
-	m_shaderResource.Attach(srv);
-}
 
-bool InternalTexture::Setup(ID3D11Device* dev) {
+DDSTexture::DDSTexture(const wchar_t* file) : m_source(file) {}
+
+bool DDSTexture::Setup(ID3D11Device* dev) {
+	// load image file!
+	auto image = std::make_shared<ScratchImage>();
+	if (!TextureFactory::GetInstance().LoadDDSTextureFromFile(m_source, image)) {
+		MLOG(LW, __FUNCTION__, LL, " Load dds file failed!");
+		return false;
+	}
+
+	// Create Texture 2d
+	// Create texture2d
+	if (!editDescritionStructure(image.get(), dev, m_tex2d, m_srv_tex)) {
+		MLOG(LW, __FUNCTION__, LL, " create texture2d failed!");
+		return false;
+	}
 	return true;
 }
 
-ID3D11ShaderResourceView** InternalTexture::GetSRV() { return m_shaderResource.GetAddressOf(); }
+/////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////   DDSTextureArray  /////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+
+//DDSTextureArray::DDSTextureArray(const wchar_t* path) {
+//	m_sources.push_back(path);
+//}
+
+bool DDSTextureArray::Setup(ID3D11Device* dev) {
+	std::vector<std::shared_ptr<ScratchImage>> images;
+	for (auto iter : m_sources) {
+		auto eleImage = std::make_shared<ScratchImage>();
+		if (!TextureFactory::GetInstance().LoadDDSTextureFromFile(iter, eleImage)) {
+			MLOG(LW, __FUNCTION__, LL, " Load dds file failed!");
+			return false;
+		}
+		images.push_back(eleImage);
+	}
+	D3D11_TEXTURE2D_DESC tex2dDesc;
+	ZeroMemory(&tex2dDesc, sizeof(tex2dDesc));
+	auto tmpMetaData = images[0]->GetMetadata();
+	tex2dDesc.ArraySize = m_sources.size();
+	tex2dDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	tex2dDesc.CPUAccessFlags = 0;
+	tex2dDesc.Format = tmpMetaData.format;
+	tex2dDesc.Height = tmpMetaData.height;
+	tex2dDesc.Width = tmpMetaData.width;
+	// 不使用Mipmap
+	tex2dDesc.MipLevels = 1;
+	tex2dDesc.MiscFlags = 0;
+	// 不使用multisample
+	tex2dDesc.SampleDesc.Count = 1;
+	tex2dDesc.SampleDesc.Quality = 0;
+
+	tex2dDesc.Usage = D3D11_USAGE_DEFAULT;
+	
+	std::vector<D3D11_SUBRESOURCE_DATA> subDatas;
+	for (auto iter : images) {
+		auto img = iter->GetImages();
+		D3D11_SUBRESOURCE_DATA ele;
+		ele.pSysMem = img->pixels;
+		ele.SysMemPitch = img->rowPitch;
+		ele.SysMemSlicePitch = img->slicePitch;
+		subDatas.push_back(ele);
+	}
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+	srvDesc.Format = tmpMetaData.format;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+	srvDesc.Texture2DArray.ArraySize = m_sources.size();
+	srvDesc.Texture2DArray.FirstArraySlice = 0;
+	srvDesc.Texture2DArray.MipLevels = 1;
+	srvDesc.Texture2DArray.MostDetailedMip = 0;
+
+	if (FAILED(dev->CreateTexture2D(&tex2dDesc, &subDatas[0], m_tex2d.ReleaseAndGetAddressOf()))) {
+		MLOG(LE, __FUNCTION__, LL, " create texture2d failed!");
+		return false;
+	}
+	if (FAILED(dev->CreateShaderResourceView(m_tex2d.Get(), &srvDesc, m_srv_tex.ReleaseAndGetAddressOf()))) {
+		MLOG(LE, __FUNCTION__, LL, "create shader resource view failed!");
+		return false;
+	}
+	return true;
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////   QuadDepthTexture   //////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
-DepthTexture::DepthTexture(float width, float height, UINT arraySize,
+DepthTexture::DepthTexture(float width, float height, bool hasMipmap, UINT arraySize,
 	DXGI_FORMAT bufFormat, DXGI_FORMAT depFormat, DXGI_FORMAT resFormat)
 	: width(width), height(height), 
 	bufFormat(bufFormat), depFormat(depFormat), resFormat(resFormat),
-	m_cubemap(false), m_mipmap(false), m_arraySize(arraySize) {}
+	hasMipMap(hasMipMap), m_arraySize(arraySize) {}
+
+void DepthTexture::preSetDesc() {
+	ZeroMemory(&m_texDesc, sizeof(m_texDesc));
+	ZeroMemory(&m_dsDesc, sizeof(m_dsDesc));
+	ZeroMemory(&m_rsvDesc, sizeof(m_rsvDesc));
+
+	m_texDesc.ArraySize = m_arraySize;
+	m_texDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+	m_texDesc.CPUAccessFlags = 0;
+	m_texDesc.Format = bufFormat;
+	m_texDesc.Height = height;
+	m_texDesc.Width = width;
+	m_texDesc.MipLevels = hasMipMap ? 0 : 1;
+	m_texDesc.SampleDesc.Count = 1;
+	m_texDesc.SampleDesc.Quality = 0;
+	m_texDesc.Usage = D3D11_USAGE_DEFAULT;
+
+	m_dsDesc.Format = depFormat;
+	if (m_arraySize > 1) {
+		m_dsDesc.Texture2DArray.ArraySize = m_arraySize;
+		m_dsDesc.Texture2DArray.FirstArraySlice = 0;
+		m_dsDesc.Texture2DArray.MipSlice = 0;
+		m_dsDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+	}
+	else {
+		m_dsDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+		m_dsDesc.Texture2D.MipSlice = 0;
+	}
+
+	m_rsvDesc.Format = resFormat;
+	m_rsvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	if (m_arraySize > 1) {
+		m_rsvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+		m_rsvDesc.Texture2DArray.ArraySize = m_arraySize;
+		m_rsvDesc.Texture2DArray.FirstArraySlice = 0;
+		m_rsvDesc.Texture2DArray.MipLevels = hasMipMap ? -1 : 1;
+		m_rsvDesc.Texture2DArray.MostDetailedMip = 0;
+	}
+	else {
+		m_rsvDesc.Texture2D.MipLevels = hasMipMap ? -1 : 1;
+		m_rsvDesc.Texture2D.MostDetailedMip = 0;
+	}
+}
 
 bool DepthTexture::Setup(ID3D11Device* dev) {
-	const static char* funcTag = "QuadDepthTexture::Setup: ";
-	if (width != height && m_cubemap) {
-		MLOG(LL, funcTag, LE, "width and height is not equal, can not gen cube map!");
-		return false;
-	}
-	D3D11_TEXTURE2D_DESC texDesc;
-	D3D11_DEPTH_STENCIL_VIEW_DESC dsDesc;
-	D3D11_SHADER_RESOURCE_VIEW_DESC rsvDesc;
-	ZeroMemory(&texDesc, sizeof(texDesc));
-	ZeroMemory(&dsDesc, sizeof(dsDesc));
-	ZeroMemory(&rsvDesc, sizeof(rsvDesc));
-
-	texDesc.ArraySize = m_arraySize;
-	texDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
-	texDesc.CPUAccessFlags = 0;
-	texDesc.Format = bufFormat;
-	texDesc.Height = height;
-	texDesc.Width = width;
-	texDesc.MipLevels = m_mipmap ? 0 : 1;
-	texDesc.MiscFlags = m_cubemap ? D3D11_RESOURCE_MISC_TEXTURECUBE : 0;
-	texDesc.SampleDesc.Count = 1;
-	texDesc.SampleDesc.Quality = 0;
-	texDesc.Usage = D3D11_USAGE_DEFAULT;
-
-	if (FAILED(dev->CreateTexture2D(&texDesc, NULL, m_texture.ReleaseAndGetAddressOf()))) {
-		MLOG(LL, funcTag, LW, "Create depth texture failed!");
+	preSetDesc();
+	if (FAILED(dev->CreateTexture2D(&m_texDesc, NULL, m_texture.ReleaseAndGetAddressOf()))) {
+		MLOG(LL, __FUNCTION__, LW, "Create depth texture failed!");
 		return false;
 	}
 
-	dsDesc.Format = depFormat;
-	if (m_arraySize > 1) {
-		dsDesc.Texture2DArray.ArraySize = m_arraySize;
-		dsDesc.Texture2DArray.FirstArraySlice = 0;
-		dsDesc.Texture2DArray.MipSlice = 0;
-		dsDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
-	}
-	else {
-		dsDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-		dsDesc.Texture2D.MipSlice = 0;
-	}
-
-	if (FAILED(dev->CreateDepthStencilView(m_texture.Get(), &dsDesc, m_depStenView.ReleaseAndGetAddressOf()))) {
-		MLOG(LL, funcTag, LW, "Create depth view failed!");
+	if (FAILED(dev->CreateDepthStencilView(m_texture.Get(), &m_dsDesc, m_dsv.ReleaseAndGetAddressOf()))) {
+		MLOG(LL, __FUNCTION__, LW, "Create depth view failed!");
 		return false;
 	}
 
-	rsvDesc.Format = resFormat;
-	rsvDesc.ViewDimension = m_cubemap ? D3D11_SRV_DIMENSION_TEXTURECUBE : D3D11_SRV_DIMENSION_TEXTURE2D;
-	if (m_cubemap) {
-		rsvDesc.TextureCube.MipLevels = m_mipmap ? -1 : 1;
-		rsvDesc.TextureCube.MostDetailedMip = 0;
-	}
-	else if (m_arraySize > 1) {
-		rsvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
-		rsvDesc.Texture2DArray.ArraySize = m_arraySize;
-		rsvDesc.Texture2DArray.FirstArraySlice = 0;
-		rsvDesc.Texture2DArray.MipLevels = m_mipmap ? -1 : 1;
-		rsvDesc.Texture2DArray.MostDetailedMip = 0;
-	}
-	else {
-		rsvDesc.Texture2D.MipLevels = m_mipmap ? -1 : 1;
-		rsvDesc.Texture2D.MostDetailedMip = 0;
-	}
-	
-	if (FAILED(dev->CreateShaderResourceView(m_texture.Get(), &rsvDesc, m_shaderResource.ReleaseAndGetAddressOf()))) {
-		MLOG(LL, funcTag, LW, "Create depth shader resource failed!");
+	if (FAILED(dev->CreateShaderResourceView(m_texture.Get(), &m_rsvDesc, m_srv_tex.ReleaseAndGetAddressOf()))) {
+		MLOG(LL, __FUNCTION__, LW, "Create depth shader resource failed!");
 		return false;
 	}
 
 	return true;
 }
 
-void DepthTexture::SetCubeMap() { m_cubemap = true; m_arraySize = 6; }
-void DepthTexture::SetMipMap() { m_mipmap = true; }
+/////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////   CubeMapDepthTexture   //////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
 
-ID3D11DepthStencilView* DepthTexture::GetDSV() { return m_depStenView.Get(); }
-ID3D11ShaderResourceView** DepthTexture::GetSRV() { return m_shaderResource.GetAddressOf(); }
+CubeMapDepthTexture::CubeMapDepthTexture(float size, bool hasMipMap, 
+	DXGI_FORMAT bufFormat, DXGI_FORMAT depFormat, DXGI_FORMAT resFormat)
+	: DepthTexture(size, size, hasMipMap, 6, bufFormat, depFormat,resFormat) {}
+
+bool CubeMapDepthTexture::Setup(ID3D11Device * dev)
+{
+	preSetDesc();
+	return DepthTexture::Setup(dev);
+}
+
+void CubeMapDepthTexture::preSetDesc()
+{
+	DepthTexture::preSetDesc();
+	m_texDesc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
+	m_rsvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+	m_rsvDesc.TextureCube.MipLevels = hasMipMap ? -1 : 1;
+	m_rsvDesc.TextureCube.MostDetailedMip = 0;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////   TextureFactory   /////////////////////////////////////////
@@ -269,6 +347,14 @@ bool TextureFactory::LoadCommonTextureFromFile(const wchar_t* file, std::shared_
 
 bool TextureFactory::LoadHDRTextureFromFile(const wchar_t* file, std::shared_ptr<ScratchImage>& image) {
 	if (FAILED(DirectX::LoadFromHDRFile(file, NULL, *image))) {
+		return false;
+	}
+	return true;
+}
+
+bool TextureFactory::LoadDDSTextureFromFile(const wchar_t * file, std::shared_ptr<DirectX::ScratchImage>& image)
+{
+	if (FAILED(DirectX::LoadFromDDSFile(file, DirectX::DDS_FLAGS_NONE, nullptr, *image))) {
 		return false;
 	}
 	return true;

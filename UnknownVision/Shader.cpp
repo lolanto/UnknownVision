@@ -56,204 +56,6 @@ void shaderFactoryFunc(string& filePath, Microsoft::WRL::ComPtr<ID3DBlob>& blob,
 	}
 }
 
-///////////////////
-// IShader Static Function
-///////////////////
-void IShader::ShaderFactory(string& filePath, Microsoft::WRL::ComPtr<ID3DBlob>& blob, LPCSTR target) {
-	string fileType = filePath.substr(filePath.rfind("."));
-	if (!fileType.compare(".hlsl")) {
-		// type is cso
-		if (!compileFromFile(filePath, blob, target)) {
-			MLOG(LL, "VertexShader::VertexShader: compile shader from file failed!");
-			abort();
-		}
-	}
-	else if (!fileType.compare(".cso")) {
-		// type is hlsl
-		if (!readByteCodeFromFile(filePath, blob)) {
-			MLOG(LL, "VertexShader::VertexShader: read byte code from file failed!");
-			abort();
-		}
-	}
-	else {
-		MLOG(LL, "VertexShader::VertexShader: invalid filePath!");
-		abort();
-	}
-}
-
-
-/////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////   ShaderAnalyser   //////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////
-
-ShaderAnalyser::ShaderAnalyser(IShader* s) : m_target(s) {}
-
-///////////////////
-// public function
-///////////////////
-void ShaderAnalyser::Analyse(std::vector<ShaderConstBufDesc>& analyseResult) {
-	using namespace std;
-	HRESULT hr;
-	if (!m_target) cout << "ShaderAnalyser::Analyse: Invalid Shader!" << endl;
-	cout << "Start Shader Analyse!" << endl;
-	hr = D3DReflect(m_target->GetByteCode(), m_target->GetByteCodeSize(), 
-		IID_ID3D11ShaderReflection, (void**)m_reflection.ReleaseAndGetAddressOf());
-	if (FAILED(hr)) {
-		cout << "Create Reflect failed! Stop analysing!" << endl;
-		return;
-	}
-	hr = m_reflection->GetDesc(&m_shaderDesc);
-	if (FAILED(hr)) {
-		cout << "Get Shader description failed!" << endl;
-		return;
-	}
-	cout << "This shader has " << m_shaderDesc.ConstantBuffers << " constant buffers" << endl;
-	cout << "This shader has " << m_shaderDesc.BoundResources << " resources" << endl;
-	cout << "Start Analysing the constant buffer" << endl;
-	for (auto i = 0; i < m_shaderDesc.ConstantBuffers; ++i) {
-		ShaderConstBufDesc scbd;
-		analyseConstantBuffer(i, scbd);
-		analyseResult.push_back(scbd);
-	}
-}
-
-///////////////////
-// private function
-///////////////////
-void ShaderAnalyser::analyseConstantBuffer(UINT index, ShaderConstBufDesc& scbd) {
-	using namespace std;
-	HRESULT hr;
-	ID3D11ShaderReflectionConstantBuffer* tmpCBPtr = NULL;
-	ID3D11ShaderReflectionVariable* tmpVarPtr = NULL;
-	D3D11_SHADER_BUFFER_DESC shaderBufDesc;
-
-	tmpCBPtr = m_reflection->GetConstantBufferByIndex(index);
-	if (!tmpCBPtr) {
-		cout << "ShaderAnalyser::analyseConstantBuffer: Invalid index!" << endl;
-		return;
-	}
-	cout << "Analysing Constant Buffer " << index << endl;
-	hr = tmpCBPtr->GetDesc(&shaderBufDesc);
-	if (FAILED(hr)) {
-		cout << "Can not get constant buffer description!" << endl;
-		return;
-	}
-	D3D11_SHADER_INPUT_BIND_DESC bindDesc;
-	m_reflection->GetResourceBindingDescByName(shaderBufDesc.Name, &bindDesc);
-	cout << "Constant buffer name: " << shaderBufDesc.Name << endl
-		<< "Variables: " << shaderBufDesc.Variables << endl
-		<< "Size in byte: " << shaderBufDesc.Size << endl
-		<< "Binding slot: " << bindDesc.BindPoint << endl;
-	scbd.size = shaderBufDesc.Size;
-	scbd.slot = bindDesc.BindPoint;
-	cout << "Start Analysing Variables in this Constant Buffer!" << endl;
-	for (auto i = 0; i < shaderBufDesc.Variables; ++i) {
-		tmpVarPtr = tmpCBPtr->GetVariableByIndex(i);
-		if (!tmpVarPtr) {
-			cout << "Invalid variable index!" << endl;
-			continue;
-		}
-		ShaderConstBufVarDesc scbvd;
-		analyseCBVariable(i, tmpVarPtr, scbvd);
-		scbd.variables.push_back(scbvd);
-		tmpVarPtr = NULL;
-	}
-}
-
-void ShaderAnalyser::analyseCBVariable(UINT index, ID3D11ShaderReflectionVariable*& ref, ShaderConstBufVarDesc& scbvd) {
-	using namespace std;
-	HRESULT hr;
-	D3D11_SHADER_VARIABLE_DESC varDesc;
-	D3D11_SHADER_TYPE_DESC shaderTypeDesc;
-	hr = ref->GetDesc(&varDesc);
-	if (FAILED(hr)) {
-		cout << "ShaderAnalyser::analyseCBVariable: Can not get Variable description!" << endl;
-		return;
-	}
-	// 暂时没有分析variable为struct的状况
-	ref->GetType()->GetDesc(&shaderTypeDesc);
-	cout << "Variable Name: " << varDesc.Name << endl
-		<< "StartOffset: " << varDesc.StartOffset << endl
-		<< "Size: " << varDesc.Size << endl;
-	scbvd.name = varDesc.Name;
-	scbvd.offset = varDesc.StartOffset;
-	scbvd.size = varDesc.Size;
-	scbvd.varClass = shaderTypeDesc.Class;
-	scbvd.varType = shaderTypeDesc.Type;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////   VertexShader   ////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////
-
-VertexShader::VertexShader(string filePath) {
-	IShader::ShaderFactory(filePath, m_codeBlob, "vs_5_0");
-}
-
-///////////////////
-// public function
-///////////////////
-
-bool VertexShader::Setup(ID3D11Device* dev, ID3D11DeviceContext* devCtx) {
-	HRESULT hr = dev->CreateVertexShader(m_codeBlob.Get()->GetBufferPointer(), m_codeBlob.Get()->GetBufferSize(), 
-		NULL, m_shader.ReleaseAndGetAddressOf());
-	if (FAILED(hr)) {
-		MLOG(LL, "VertexShader::Setup: failed to create vertex shader!");
-		return false;
-	}
-	return true;
-}
-
-void VertexShader::Bind(ID3D11Device* dev, ID3D11DeviceContext* devCtx) {
-	devCtx->VSSetShader(m_shader.Get(), NULL, 0);
-}
-
-void VertexShader::Unbind(ID3D11Device* dev, ID3D11DeviceContext* devCtx) {
-	return;
-}
-
-LPVOID VertexShader::GetByteCode() {
-	return m_codeBlob->GetBufferPointer();
-}
-
-size_t VertexShader::GetByteCodeSize() {
-	return m_codeBlob->GetBufferSize();
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////   PixelShader   //////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////
-
-PixelShader::PixelShader(string filePath) {
-	IShader::ShaderFactory(filePath, m_codeBlob, "ps_5_0");
-}
-
-bool PixelShader::Setup(ID3D11Device* dev, ID3D11DeviceContext* devCtx) {
-	HRESULT hr = dev->CreatePixelShader(m_codeBlob.Get()->GetBufferPointer(), m_codeBlob.Get()->GetBufferSize(),
-		NULL, m_shader.ReleaseAndGetAddressOf());
-	if (FAILED(hr)) {
-		MLOG(LL, "PixelShader::Setup: failed to create pixel shader!");
-		return false;
-	}
-	return true;
-}
-
-void PixelShader::Bind(ID3D11Device* dev, ID3D11DeviceContext* devCtx) {
-	devCtx->PSSetShader(m_shader.Get(), NULL, 0);
-}
-
-void PixelShader::Unbind(ID3D11Device* dev, ID3D11DeviceContext* devCtx) {
-	//devCtx->PSSetShader(NULL, NULL, 0);
-}
-
-LPVOID PixelShader::GetByteCode() {
-	return m_codeBlob->GetBufferPointer();
-}
-
-size_t PixelShader::GetByteCodeSize() {
-	return m_codeBlob->GetBufferSize();
-}
-
 void analyseVariable(BufferVariableDesc& desc, ID3D11ShaderReflectionVariable*& ref) {
 	D3D11_SHADER_VARIABLE_DESC svd;
 	if (FAILED(ref->GetDesc(&svd))) {
@@ -401,7 +203,7 @@ ConstBufferDesc* ShaderObject::GetShaderCBuffer(UINT c) {
 ///////////////////////////////////   VertexShader1   ///////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
-VertexShader1::VertexShader1(string filePath) {
+VertexShader::VertexShader(string filePath) {
 	shaderFactoryFunc(filePath, m_codeBlob, "vs_5_0");
 	// analyse shader
 	analyseShader(m_codeBlob.Get()->GetBufferPointer(), m_codeBlob.Get()->GetBufferSize(), m_desc);
@@ -410,7 +212,7 @@ VertexShader1::VertexShader1(string filePath) {
 		m_codeBlob.Get()->GetBufferSize(), m_inputLayout);
 }
 
-bool VertexShader1::Setup(ID3D11Device* dev) {
+bool VertexShader::Setup(ID3D11Device* dev) {
 	if (FAILED(dev->CreateVertexShader(m_codeBlob->GetBufferPointer(),
 		m_codeBlob->GetBufferSize(), NULL, m_shader.ReleaseAndGetAddressOf()))) {
 		MLOG(LE, "VertexShader::Setup: Create Vertex Shader Failed!");
@@ -419,15 +221,15 @@ bool VertexShader1::Setup(ID3D11Device* dev) {
 	return true;
 }
 
-void VertexShader1::Bind(ID3D11DeviceContext* devCtx) {
+void VertexShader::Bind(ID3D11DeviceContext* devCtx, ShaderBindTarget, SIZE_T) {
 	devCtx->VSSetShader(m_shader.Get(), NULL, 0);
 }
 
-void VertexShader1::Unbind(ID3D11DeviceContext* devCtx) {
-	devCtx->VSSetShader(NULL, NULL, 0);
+void VertexShader::Unbind(ID3D11DeviceContext* devCtx, ShaderBindTarget, SIZE_T) {
+	devCtx->VSSetShader(nullptr, nullptr, 0);
 }
 
-std::vector<ParamIOLayout>* VertexShader1::GetInputLayout() {
+std::vector<ParamIOLayout>* VertexShader::GetInputLayout() {
 	return &m_inputLayout;
 }
 
@@ -435,7 +237,7 @@ std::vector<ParamIOLayout>* VertexShader1::GetInputLayout() {
 ///////////////////////////////////   PixelShader1   /////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
-PixelShader1::PixelShader1(string filePath) {
+PixelShader::PixelShader(string filePath) {
 	shaderFactoryFunc(filePath, m_codeBlob, "ps_5_0");
 	// analyse shader
 	analyseShader(m_codeBlob.Get()->GetBufferPointer(), m_codeBlob.Get()->GetBufferSize(), m_desc);
@@ -444,7 +246,7 @@ PixelShader1::PixelShader1(string filePath) {
 		m_codeBlob.Get()->GetBufferSize(), m_outputLayout);
 }
 
-bool PixelShader1::Setup(ID3D11Device* dev) {
+bool PixelShader::Setup(ID3D11Device* dev) {
 	if (FAILED(dev->CreatePixelShader(m_codeBlob->GetBufferPointer(),
 		m_codeBlob->GetBufferSize(), NULL, m_shader.ReleaseAndGetAddressOf()))) {
 		MLOG(LE, "PixelShader::Setup: Create Pixel shader failed!");
@@ -453,22 +255,22 @@ bool PixelShader1::Setup(ID3D11Device* dev) {
 	return true;
 }
 
-void PixelShader1::Bind(ID3D11DeviceContext* devCtx) {
+void PixelShader::Bind(ID3D11DeviceContext* devCtx, ShaderBindTarget, SIZE_T) {
 	devCtx->PSSetShader(m_shader.Get(), NULL, 0);
 }
 
-void PixelShader1::Unbind(ID3D11DeviceContext* devCtx) {
-	devCtx->PSSetShader(NULL, NULL, 0);
+void PixelShader::Unbind(ID3D11DeviceContext* devCtx, ShaderBindTarget, SIZE_T) {
+	devCtx->PSSetShader(nullptr, nullptr, 0);
 }
 
-std::vector<ParamIOLayout>* PixelShader1::GetOutputLayout() { return &m_outputLayout; }
+std::vector<ParamIOLayout>* PixelShader::GetOutputLayout() { return &m_outputLayout; }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////   GeometryShader   /////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
-GeometryShader1::GeometryShader1(string filePath) {
+GeometryShader::GeometryShader(string filePath) {
 	shaderFactoryFunc(filePath, m_codeBlob, "gs_5_0");
 	// analyse shader
 	analyseShader(m_codeBlob->GetBufferPointer(), m_codeBlob->GetBufferSize(), m_desc);
@@ -476,7 +278,7 @@ GeometryShader1::GeometryShader1(string filePath) {
 	// analyse shader output
 }
 
-bool GeometryShader1::Setup(ID3D11Device* dev) {
+bool GeometryShader::Setup(ID3D11Device* dev) {
 	if (FAILED(dev->CreateGeometryShader(m_codeBlob->GetBufferPointer(),
 		m_codeBlob->GetBufferSize(), NULL, m_shader.ReleaseAndGetAddressOf()))) {
 		MLOG(LE, "GeometryShader::Setup Create Geometry shader failed!");
@@ -485,11 +287,11 @@ bool GeometryShader1::Setup(ID3D11Device* dev) {
 	return true;
 }
 
-void GeometryShader1::Bind(ID3D11DeviceContext* devCtx) {
+void GeometryShader::Bind(ID3D11DeviceContext* devCtx, ShaderBindTarget, SIZE_T) {
 	devCtx->GSSetShader(m_shader.Get(), NULL, 0);
 }
 
-void GeometryShader1::Unbind(ID3D11DeviceContext* devCtx) {
+void GeometryShader::Unbind(ID3D11DeviceContext* devCtx, ShaderBindTarget, SIZE_T) {
 	devCtx->GSSetShader(NULL, NULL, 0);
 }
 
@@ -497,13 +299,13 @@ void GeometryShader1::Unbind(ID3D11DeviceContext* devCtx) {
 ///////////////////////////////////   Compute Shader   /////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
-ComputeShader1::ComputeShader1(string filePath) {
+ComputeShader::ComputeShader(string filePath) {
 	shaderFactoryFunc(filePath, m_codeBlob, "cs_5_0");
 	analyseShader(m_codeBlob->GetBufferPointer(), m_codeBlob->GetBufferSize(), m_desc);
 	// No output
 }
 
-bool ComputeShader1::Setup(ID3D11Device* dev) {
+bool ComputeShader::Setup(ID3D11Device* dev) {
 	if (FAILED(dev->CreateComputeShader(m_codeBlob->GetBufferPointer(),
 		m_codeBlob->GetBufferSize(), NULL, m_shader.ReleaseAndGetAddressOf()))) {
 		MLOG(LE, "ComputeShader::Setup Create Compute shader failed!");
@@ -512,10 +314,10 @@ bool ComputeShader1::Setup(ID3D11Device* dev) {
 	return true;
 }
 
-void ComputeShader1::Bind(ID3D11DeviceContext* devCtx) {
+void ComputeShader::Bind(ID3D11DeviceContext* devCtx, ShaderBindTarget, SIZE_T) {
 	devCtx->CSSetShader(m_shader.Get(), NULL, 0);
 }
 
-void ComputeShader1::Unbind(ID3D11DeviceContext* devCtx) {
+void ComputeShader::Unbind(ID3D11DeviceContext* devCtx, ShaderBindTarget, SIZE_T) {
 	devCtx->CSSetShader(NULL, NULL, 0);
 }

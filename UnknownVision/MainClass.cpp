@@ -52,7 +52,9 @@ HRESULT MainClass::CreateDesktopWindow(float width, float height) {
 	return S_OK;
 }
 
-std::function<void(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)> MainClass::UserFunc;
+// 赋予空函数，以免在不设置时出错
+std::function<void(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)>
+	MainClass::UserFunc = [](HWND, UINT, WPARAM, LPARAM) {};
 
 LRESULT CALLBACK MainClass::StaticWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {

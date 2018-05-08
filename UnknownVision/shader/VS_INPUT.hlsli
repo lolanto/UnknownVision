@@ -14,6 +14,7 @@ cbuffer TransformMatrix : register(b1) {
 
 cbuffer ViewMatrix : register(b2) {
 	matrix GViewMatrix;
+	matrix GViewMatrixInv;
 	matrix GProjectMatrix;
 	matrix GProjectMatrixInv;
 	float4 GEyePos;

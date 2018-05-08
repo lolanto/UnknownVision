@@ -42,24 +42,21 @@ public:
 	// Setup vertex buffer and index buffer
 	bool Setup(ID3D11Device*);
 	// bind vertex/index buffer and draw call
-	void Bind(ID3D11DeviceContext*);
-	void Unbind(ID3D11DeviceContext*);
-
-	void SetModel(Model*);
+	void Bind(ID3D11DeviceContext*, ShaderBindTarget, SIZE_T);
+	void Unbind(ID3D11DeviceContext*, ShaderBindTarget, SIZE_T);
 
 private:
-	std::vector<DirectX::XMFLOAT3>							m_position;
-	std::vector<DirectX::XMFLOAT3>							m_normal;
-	std::vector<DirectX::XMFLOAT3>							m_tangent;
-	std::vector<DirectX::XMFLOAT2>							m_texcoord;
+	std::vector<DirectX::XMFLOAT3>						m_position;
+	std::vector<DirectX::XMFLOAT3>						m_normal;
+	std::vector<DirectX::XMFLOAT3>						m_tangent;
+	std::vector<DirectX::XMFLOAT2>						m_texcoord;
 	std::vector<UINT>												m_index;
 
-	Microsoft::WRL::ComPtr<ID3D11Buffer>				m_bufPosition;
-	Microsoft::WRL::ComPtr<ID3D11Buffer>				m_bufNormal;
-	Microsoft::WRL::ComPtr<ID3D11Buffer>				m_bufTangent;
-	Microsoft::WRL::ComPtr<ID3D11Buffer>				m_bufTexcoord;
-	Microsoft::WRL::ComPtr<ID3D11Buffer>				m_bufIndex;
-	Model*																	m_model;
+	Microsoft::WRL::ComPtr<ID3D11Buffer>			m_bufPosition;
+	Microsoft::WRL::ComPtr<ID3D11Buffer>			m_bufNormal;
+	Microsoft::WRL::ComPtr<ID3D11Buffer>			m_bufTangent;
+	Microsoft::WRL::ComPtr<ID3D11Buffer>			m_bufTexcoord;
+	Microsoft::WRL::ComPtr<ID3D11Buffer>			m_bufIndex;
 	std::string																m_name;
 	bool																		m_hasSetup;
 };
@@ -67,13 +64,18 @@ private:
 class MeshFactory {
 public:
 	std::vector<std::shared_ptr<Mesh>>& Load(const char* path);
-	void Load(BasicMeshType type, std::shared_ptr<Mesh>&, float width = 1, float height = 1);
+	/*
+	for plane: a: width, b: height
+	for cubic: a: width, b: height, c: depth
+	*/
+	void Load(BasicMeshType type, std::shared_ptr<Mesh>&, float a = 1, float b = 1, float c = 1);
 private:
 	Mesh* createPlane(float width, float height);
+	Mesh* createCubic(float width, float height, float depth);
 
 	void processNode(aiNode*, const aiScene*);
 	Mesh* processMesh(aiMesh*, const aiScene*);
 
 private:
-	std::vector<std::shared_ptr<Mesh>>						m_tempMesh;
+	std::vector<std::shared_ptr<Mesh>>					m_tempMesh;
 };

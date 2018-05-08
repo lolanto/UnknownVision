@@ -1,5 +1,4 @@
 #include "Camera.h"
-#include "RendererProxy.h"
 #include "InfoLog.h"
 
 using DirectX::XMFLOAT4X4;
@@ -11,15 +10,12 @@ CAMERA_DESC::CAMERA_DESC(float width, float height, DirectX::XMFLOAT3 pos,	Direc
 {}
 
 Camera::Camera(CAMERA_DESC& desc)
-	: m_fov(desc.fov), m_aspect(desc.width / desc.height),
+	: m_fov(desc.fov), m_aspect(desc.width / desc.height), m_width(desc.width), m_height(desc.height),
 	m_lookAt(desc.lookAt), m_near(desc.nearPlane), m_far(desc.farPlane),
-	m_isViewDirty(true), m_isProjDirty(true), m_hasSetup(false), m_VSSlot(2), m_PSSlot(0) {
-	m_cameraDataStruct.m_pos = desc.position;
-	m_cameraDataStruct.m_param = { m_near, m_far, desc.width, desc.height };
-	m_vpMatrixdata = std::shared_ptr<byte>(new byte[sizeof(m_cameraDataStruct)]);
-	// 设置m_param
-	memcpy_s(m_vpMatrixdata.get() + offsetof(CameraDataStruct, m_param), sizeof(m_cameraDataStruct.m_param),
-		&m_cameraDataStruct.m_param, sizeof(m_cameraDataStruct.m_param));
+	m_isViewDirty(true), m_isProjDirty(true) {
+	m_buf.GetData().m_pos = desc.position;
+	calcParam();
+	calcParam2();
 }
 
 ////////////////////////////////////////////
@@ -27,70 +23,36 @@ Camera::Camera(CAMERA_DESC& desc)
 ///////////////////////////////////////////
 
 bool Camera::Setup(ID3D11Device* dev) {
-	if (m_hasSetup) return true;
 	// calculate data
 	calcProjMatrix();
 	calcViewMatrix();
-	// create buffers
-	D3D11_BUFFER_DESC desc;
-	D3D11_SUBRESOURCE_DATA subData;
-	HRESULT hr;
-	ZeroMemory(&desc, sizeof(desc));
-	ZeroMemory(&subData, sizeof(subData));
-	desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-
-	desc.ByteWidth = sizeof(m_cameraDataStruct);
-	desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	desc.MiscFlags = 0;
-	desc.StructureByteStride = 0;
-	desc.Usage = D3D11_USAGE_DYNAMIC;
-
-	subData.pSysMem = m_vpMatrixdata.get();
-	subData.SysMemPitch = 0;
-	subData.SysMemSlicePitch = 0;
-
-	hr = dev->CreateBuffer(&desc, &subData, m_ccbuf.ReleaseAndGetAddressOf());
-	if (FAILED(hr)) {
-		MLOG(LL, "Camera::Setup: create buffer failed!");
-		return false;
-	}
-	m_hasSetup = true;
+	m_buf.Setup(dev);
 	return true;
 }
 
-void Camera::Bind(ID3D11DeviceContext* devCtx) {
-	// check if need to update buffer data
-	if (m_isViewDirty || m_isProjDirty) {
-		// 矩阵信息需要更新，备份当前信息
-		m_cameraPrevData = m_cameraDataStruct;
-		if (m_isViewDirty) calcViewMatrix();
-		if (m_isProjDirty) calcProjMatrix();
-		// map buffer
-		D3D11_MAPPED_SUBRESOURCE ms;
-		if (devCtx->Map(m_ccbuf.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &ms)) {
-			MLOG(LL, "Camera::Bind: map buffer failed!");
-			return;
-		}
-		memcpy_s(ms.pData, sizeof(m_cameraDataStruct),
-			m_vpMatrixdata.get(), sizeof(m_cameraDataStruct));
-		devCtx->Unmap(m_ccbuf.Get(), 0);
+void Camera::Bind(ID3D11DeviceContext* devCtx, ShaderBindTarget sbt, SIZE_T slot) {
+	// update data;
+	if (m_isProjDirty) {
+		calcProjMatrix();
+		m_isProjDirty = false;
+	}
+	if (m_isViewDirty) {
+		calcViewMatrix();
+		m_isViewDirty = false;
 	}
 	// bind buffer to shader
-	devCtx->VSSetConstantBuffers(m_VSSlot, 1, m_ccbuf.GetAddressOf());
-	devCtx->PSSetConstantBuffers(m_PSSlot, 1, m_ccbuf.GetAddressOf());
+	m_buf.Bind(devCtx, sbt, slot);
 }
 
-void Camera::Unbind(ID3D11DeviceContext* devCtx) {
-	ID3D11Buffer* tmpBuf[] = { NULL };
-	devCtx->VSSetConstantBuffers(m_VSSlot, 1, tmpBuf);
-	devCtx->PSSetConstantBuffers(m_PSSlot, 1, tmpBuf);
+void Camera::Unbind(ID3D11DeviceContext* devCtx, ShaderBindTarget sbt, SIZE_T slot) {
+	m_buf.Unbind(devCtx, sbt, slot);
 }
 
 ////////////////////////////////////////////////////////////////
 // public func
 ///////////////////////////////////////////////////////////////
 
-XMFLOAT3 Camera::GetPosition() const { return m_cameraDataStruct.m_pos; }
+XMFLOAT3 Camera::GetPosition() const { return m_buf.ReadData().m_pos; }
 
 XMFLOAT3 Camera::GetLookAt() const { return m_lookAt; }
 
@@ -102,14 +64,14 @@ float Camera::GetNear() const { return m_near; }
 
 float Camera::GetFar() const { return m_far; }
 
-XMFLOAT4X4 Camera::GetViewMat() const { return m_cameraDataStruct.m_viewMatrix; }
-XMFLOAT4X4 Camera::GetProMat() const { return m_cameraDataStruct.m_projMatrix; }
+XMFLOAT4X4 Camera::GetViewMat() const { return m_buf.ReadData().m_viewMatrix; }
+XMFLOAT4X4 Camera::GetProMat() const { return m_buf.ReadData().m_projMatrix; }
 
 XMFLOAT4X4 Camera::GetPrevViewMat() const { return m_cameraPrevData.m_viewMatrix; }
 XMFLOAT4X4 Camera::GetPrevProjMat() const { return m_cameraPrevData.m_projMatrix; }
 
 void Camera::SetPosition(XMFLOAT3 pos) {
-	m_cameraDataStruct.m_pos = pos;
+	m_buf.GetData().m_pos = pos;
 	m_isViewDirty = true;
 }
 
@@ -121,30 +83,45 @@ void Camera::SetLookAt(XMFLOAT3 lookAt) {
 void Camera::SetFOV(float f) {
 	m_fov = f;
 	m_isProjDirty = true;
+	// 重新计算m_param2
+	calcParam2();
 }
 
-void Camera::SetASPECT(float a) {
-	m_aspect = a;
+void Camera::SetASPECT(float x, float y) {
+	m_aspect = x / y;
+	m_width = x;
+	m_height = y;
 	m_isProjDirty = true;
+	// 重新计算m_param
+	calcParam();
 }
 
 ////////////////////////////////////////////////////////////////
 // private func
 ///////////////////////////////////////////////////////////////
 
+inline void Camera::calcParam() {
+	m_buf.GetData().m_param = { m_near, m_far, m_width, m_height };
+}
+
+inline void Camera::calcParam2() {
+	// m_param2--- near plane size.xy / far plane size.xy
+	float tanHalfFOV2 = 2 * tan(m_fov / 2.0f);
+	m_buf.GetData().m_param2 = {
+		tanHalfFOV2 * m_near * m_aspect,
+		tanHalfFOV2 * m_near,
+		tanHalfFOV2 * m_far * m_aspect,
+		tanHalfFOV2 * m_far
+	};
+}
+
 void Camera::calcProjMatrix() {
 	// 计算投影矩阵
 	DirectX::XMMATRIX proMat = DirectX::XMMatrixPerspectiveFovLH(m_fov, m_aspect, m_near, m_far);
 	// 存储逆矩阵
-	DirectX::XMStoreFloat4x4(&m_cameraDataStruct.m_projMatrix, proMat);
+	DirectX::XMStoreFloat4x4(&m_buf.GetData().m_projMatrix, proMat);
 	// 计算投影矩阵的逆矩阵
-	DirectX::XMStoreFloat4x4(&m_cameraDataStruct.m_projMatrixInv, DirectX::XMMatrixInverse(NULL, proMat));
-
-	memcpy_s(m_vpMatrixdata.get() + offsetof(CameraDataStruct, m_projMatrix), sizeof(m_cameraDataStruct.m_projMatrix),
-		&m_cameraDataStruct.m_projMatrix, sizeof(m_cameraDataStruct.m_projMatrix));
-	memcpy_s(m_vpMatrixdata.get() + offsetof(CameraDataStruct, m_projMatrixInv), sizeof(m_cameraDataStruct.m_projMatrixInv),
-		&m_cameraDataStruct.m_projMatrixInv, sizeof(m_cameraDataStruct.m_projMatrixInv));
-	m_isProjDirty = false;
+	DirectX::XMStoreFloat4x4(&m_buf.GetData().m_projMatrixInv, DirectX::XMMatrixInverse(nullptr, proMat));
 }
 
 void Camera::calcViewMatrix() {
@@ -153,17 +130,15 @@ void Camera::calcViewMatrix() {
 	static XMFLOAT3 tup = XMFLOAT3(0.0f, 1.0f, 0.0);
 	static XMVECTOR up = DirectX::XMLoadFloat3(&tup);
 
-	eyePos = DirectX::XMLoadFloat3(&m_cameraDataStruct.m_pos);
+	eyePos = DirectX::XMLoadFloat3(&m_buf.ReadData().m_pos);
 	lookAt = DirectX::XMLoadFloat3(&m_lookAt);
 
-	DirectX::XMStoreFloat4x4(&m_cameraDataStruct.m_viewMatrix,
-		DirectX::XMMatrixLookAtLH(eyePos, lookAt, up)
-	);
-	memcpy_s(m_vpMatrixdata.get(), sizeof(m_cameraDataStruct.m_viewMatrix),
-		&m_cameraDataStruct.m_viewMatrix, sizeof(m_cameraDataStruct.m_viewMatrix));
-	memcpy_s(m_vpMatrixdata.get() + offsetof(CameraDataStruct, m_pos), sizeof(m_cameraDataStruct.m_pos),
-		&m_cameraDataStruct.m_pos, sizeof(m_cameraDataStruct.m_pos));
-	m_isViewDirty = false;
+	DirectX::XMMATRIX viewMat = DirectX::XMMatrixLookAtLH(eyePos, lookAt, up);
+
+	// 计算摄像机空间变换矩阵world->view
+	DirectX::XMStoreFloat4x4(&m_buf.GetData().m_viewMatrix,viewMat);
+	// 计算摄像机空间变换逆矩阵view->world
+	DirectX::XMStoreFloat4x4(&m_buf.GetData().m_viewMatrixInv, DirectX::XMMatrixInverse(nullptr, viewMat));
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

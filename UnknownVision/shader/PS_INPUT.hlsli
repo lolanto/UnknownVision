@@ -3,10 +3,17 @@
 
 cbuffer CameraData : register(b0) {
 	matrix GViewMatrix;
+  matrix GViewMatrixInv;
 	matrix GProjectMatrix;
 	matrix GProjectMatrixInv;
 	float4 GEyePos;
-	float4 GCameraParam; // x: n, y: f, z: width, w: height
+  // x: n, y: f, z: width, w: height
+	float4 GCameraParam;
+  /* 
+  xy: nearPlaneSize.xy
+  zw: farPlaneSize.xy
+  */
+  float4 GCameraParam2;
 }
 
 #endif

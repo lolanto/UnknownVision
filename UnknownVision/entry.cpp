@@ -1,4 +1,5 @@
 #include <windowsx.h>
+#include <DirectXMath.h>
 #include "MainClass.h"
 #include "InfoLog.h"
 
@@ -7,9 +8,6 @@
 
 using std::cout;
 using std::endl;
-
-const float WIDTH = 1280.0f;
-const float HEIGHT = 960.0f;
 
 const float CUBE_MAP_SIZE = 1280.0f;
 
@@ -24,15 +22,16 @@ void main() {
 		system("pause");
 		return;
 	}
-	DXRenderer renderer = DXRenderer::GetInstance();
-	if (!renderer.InitSys(mc.GetWindowHandle(), WIDTH, HEIGHT)) {
+	if (!DXRenderer::GetInstance().InitSys(mc.GetWindowHandle(), WIDTH, HEIGHT)) {
 		// ‰÷»æ∆˜≥ı ºªØ ß∞‹
 		MLOG(LE, "Renderer Initialize Failed!");
 		system("pause");
 		return;
 	}
 
-	MyAlg(&renderer, &mc);
+	//LTC(&DXRenderer::GetInstance(), &mc);
+	MyALG(&DXRenderer::GetInstance(), &mc);
+	//ScreenSpaceRayTracing(&DXRenderer::GetInstance(), &mc);
 	
 	CoUninitialize();
 	system("pause");

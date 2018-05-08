@@ -26,10 +26,29 @@ bool RasterState::Setup(ID3D11Device* dev) {
 	return true;
 }
 
-void RasterState::Bind(ID3D11DeviceContext* devCtx) {
+void RasterState::Bind(ID3D11DeviceContext* devCtx, ShaderBindTarget, SIZE_T) {
 	devCtx->RSSetState(m_rasterState.Get());
 }
 
-void RasterState::Unbind(ID3D11DeviceContext* devCtx) {
+void RasterState::Unbind(ID3D11DeviceContext* devCtx, ShaderBindTarget, SIZE_T) {
 	// Do Nothing!
+}
+
+BlendState::BlendState(D3D11_BLEND_DESC desc, DirectX::XMFLOAT4 factor, UINT mask)
+	: BlendStateDesc(desc), BlendFactor(factor), BlendMask(mask) {}
+
+bool BlendState::Setup(ID3D11Device* dev) {
+	if (FAILED(dev->CreateBlendState(&BlendStateDesc, m_blendState.ReleaseAndGetAddressOf()))) {
+		MLOG(LE, __FUNCTION__, LL, " create blend state failed!");
+		return false;
+	}
+	return true;
+}
+
+void BlendState::Bind(ID3D11DeviceContext* devCtx, ShaderBindTarget, SIZE_T) {
+	devCtx->OMSetBlendState(m_blendState.Get(), &(BlendFactor.x), BlendMask);
+}
+
+void BlendState::Unbind(ID3D11DeviceContext* devCtx, ShaderBindTarget, SIZE_T) {
+	devCtx->OMSetBlendState(nullptr, nullptr, UINT_MAX);
 }

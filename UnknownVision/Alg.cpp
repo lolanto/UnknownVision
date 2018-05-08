@@ -6,963 +6,1532 @@
 
 #include "DXRenderer.h"
 #include "Model.h"
+
+#include "Texture.h"
+#include "Shader.h"
+#include "Sampler.h"
 #include "Camera.h"
+#include "Pass.h"
 #include "Canvas.h"
 #include "Light.h"
-#include "Shader.h"
-#include "Material.h"
-#include "Buffer.h"
-#include "Pipeline.h"
-#include "Sampler.h"
-#include "RasterState.h"
-#include "UI.h"
-
-const float WIDTH = 1280.0f;
-const float HEIGHT = 960.0f;
 
 const float CUBE_MAP_SIZE = 1280.0f;
 
 typedef DirectX::XMFLOAT4 float4;
+typedef DirectX::XMFLOAT2 float2;
 
-Sampler linearSampler(D3D11_FILTER_MIN_MAG_MIP_LINEAR);
-Sampler pointSampler(D3D11_FILTER_MIN_MAG_MIP_POINT);
+Sampler gLinearSampler(D3D11_FILTER_MIN_MAG_MIP_LINEAR);
+Sampler gPointSampler(D3D11_FILTER_MIN_MAG_MIP_POINT);
+MeshFactory gMF;
 
-void CubeMapGen(DXRenderer* renderer, MainClass* mc) {
-	RasterState normalRS;
-	renderer->Setup(&normalRS);
-	RasterState cullFrontFace(D3D11_CULL_FRONT);
-	renderer->Setup(&cullFrontFace);
-
+void ImageBasedLighting(DefaultParameters) {
 	// 创建camera
 	CAMERA_DESC camDesc(WIDTH, HEIGHT);
 	camDesc.fov = 0.79;
 	camDesc.lookAt = DirectX::XMFLOAT3();
-	camDesc.position = DirectX::XMFLOAT3(0.0f, 0.0f, -0.01f);
+	camDesc.position = DirectX::XMFLOAT3(0.0f, 5.0f, -3.0f);
 	Camera cc(camDesc);
-	renderer->Setup(&cc);
+	cc.Setup(MainDev);
 	// 添加摄像机控制器
 	OrbitController obController(&cc);
-	MainClass::UserFunc = [&obController](HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)->void {
-		switch (uMsg) {
-		case WM_MOUSEMOVE:
-			obController.MouseMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-			break;
-		case WM_LBUTTONDOWN:
-			obController.MouseEventHandler(MBTN_LEFT, true);
-			break;
-		case WM_LBUTTONUP:
-			obController.MouseEventHandler(MBTN_LEFT, false);
-			break;
-		case WM_RBUTTONDOWN:
-			obController.MouseEventHandler(MBTN_RIGHT, true);
-			break;
-		case WM_RBUTTONUP:
-			obController.MouseEventHandler(MBTN_RIGHT, false);
-			break;
-		case WM_MOUSEWHEEL:
-			obController.MouseWheel(GET_WHEEL_DELTA_WPARAM(wParam));
-			break;
-		}
-	};
+	CameraControllerSetting(obController);
 
-	// cubemap viewport
-	D3D11_VIEWPORT cubemapViewport = {
-		0.0f , 0.0f , CUBE_MAP_SIZE, CUBE_MAP_SIZE, 0.0f, 1.0f };
+	gLinearSampler.Setup(MainDev);
+	gPointSampler.Setup(MainDev);
 
-	// 创建shader
-	VertexShader1 quadVS("../Debug/GenCubeMapQuadVertexShader.cso");
-	renderer->Setup(&quadVS);
+	// Shaders
+	VertexShader IBLVS("../Debug/imageBasedLightingVS.cso");
+	IBLVS.Setup(MainDev);
+	PixelShader IBLPS("../Debug/imageBasedLightingPS.cso");
+	IBLPS.Setup(MainDev);
 
-	VertexShader1 simpleVS("../Debug/GenCubeMapSimpleVertexShader.cso");
-	renderer->Setup(&simpleVS);
-	PixelShader1 simplePS("../Debug/GenCubeMapSimplePixelShader.cso");
-	renderer->Setup(&simplePS);
-	GeometryShader1 cubeGS("../Debug/GenCubeMapSimpleGeometryShader.cso");
-	renderer->Setup(&cubeGS);
+	VertexShader IBLBasicVS("../Debug/imageBasedLightingBasicVS.cso");
+	IBLBasicVS.Setup(MainDev);
+	PixelShader IBLBasicPS("../Debug/imageBasedLightingBasicPS.cso");
+	IBLBasicPS.Setup(MainDev);
 
-	PixelShader1 cubeReadPS("../Debug/GenCubeMapCubeMapReadPixelShader.cso");
-	renderer->Setup(&cubeReadPS);
-
-	VertexShader1 sceneVS("../Debug/GenCubeMapSceneVS.cso");
-	renderer->Setup(&sceneVS);
-	PixelShader1 scenePS("../Debug/GenCubeMapScenePS.cso");
-	renderer->Setup(&scenePS);
-
-	// 创建texture
-	CommonTexture BC(L"./CubeMapScene/BC.png");
-	renderer->Setup(&BC);
-
-	// 创建canvas
-	CanvasCubeMap cubeMap(CUBE_MAP_SIZE);
-	renderer->Setup(&cubeMap);
-
-	Canvas quadCanvas(WIDTH, HEIGHT);
-	renderer->Setup(&quadCanvas);
-
-	DepthTexture cubeDepthTexture(CUBE_MAP_SIZE, CUBE_MAP_SIZE);
-	cubeDepthTexture.SetCubeMap();
-	cubeDepthTexture.SetMipMap();
-	renderer->Setup(&cubeDepthTexture);
-
-	DepthTexture quadDepthTexture(WIDTH, HEIGHT);
-	renderer->Setup(&quadDepthTexture);
-
-
-	// 创建sampler
-	Sampler comSampler(D3D11_FILTER_MIN_MAG_MIP_LINEAR);
-	renderer->Setup(&comSampler);
-	Sampler pointSampler(D3D11_FILTER_MIN_MAG_MIP_POINT);
-	renderer->Setup(&pointSampler);
-
-	// 创建constant buffer
-	ConstantBuffer cubeMapCamBuffer(cubeGS.GetShaderCBuffer(0));
-	renderer->Setup(&cubeMapCamBuffer);
-	ConstantBuffer cubeMapViewBuffer(simpleVS.GetShaderCBuffer(1));
-	renderer->Setup(&cubeMapViewBuffer);
-
-	DirectX::XMFLOAT4X4 cubeMapCamData[7];
-	DirectX::XMFLOAT4X4 cubeMapViewData;
-
-	CubeMapHelper cubeMapHelper({ 0, 3, 0 });
-	cubeMapHelper.GetBasicViewMat(&cubeMapViewData);
-	cubeMapHelper.GetRotAndProjMat(cubeMapCamData);
-
-	cubeMapCamBuffer.Update("leftViewMat", cubeMapCamData, sizeof(DirectX::XMFLOAT4X4));
-	cubeMapCamBuffer.Update("rightViewMat", cubeMapCamData + 1, sizeof(DirectX::XMFLOAT4X4));
-	cubeMapCamBuffer.Update("topViewMat", cubeMapCamData + 2, sizeof(DirectX::XMFLOAT4X4));
-	cubeMapCamBuffer.Update("bottomViewMat", cubeMapCamData + 3, sizeof(DirectX::XMFLOAT4X4));
-	cubeMapCamBuffer.Update("forwardViewMat", cubeMapCamData + 4, sizeof(DirectX::XMFLOAT4X4));
-	cubeMapCamBuffer.Update("backwardViewMat", cubeMapCamData + 5, sizeof(DirectX::XMFLOAT4X4));
-	cubeMapCamBuffer.Update("projMatrix", cubeMapCamData + 6, sizeof(DirectX::XMFLOAT4X4));
-
-	cubeMapViewBuffer.Update("basicViewMat", &cubeMapViewData, sizeof(DirectX::XMFLOAT4X4));
-
-	ConstantBuffer cubeMapDataBuffer(scenePS.GetShaderCBuffer(1));
-	renderer->Setup(&cubeMapDataBuffer);
-	cubeMapDataBuffer.Update("CM_Matrix", &cubeMapViewData, sizeof(DirectX::XMFLOAT4X4));
-
-	// 创建material
-	Material simpleMat;
-	simpleMat.SetVertexShader(&simpleVS);
-	simpleMat.SetPixelShader(&simplePS);
-	simpleMat.SetGeometryShader(&cubeGS);
-	simpleMat.SetTexture(&BC, SBT_PIXEL_SHADER, 0);
-	simpleMat.SetConstantBuffer(&cubeMapViewBuffer, SBT_VERTEX_SHADER, 3);
-	simpleMat.SetConstantBuffer(&cubeMapCamBuffer, SBT_GEOMETRY_SHADER, 0);
-	simpleMat.SetSamplerState(&comSampler, SBT_PIXEL_SHADER, 0);
-	renderer->Setup(&simpleMat);
-
-	Material sceneMat;
-	sceneMat.SetVertexShader(&sceneVS);
-	sceneMat.SetPixelShader(&scenePS);
-	sceneMat.SetTexture(&cubeMap, SBT_PIXEL_SHADER, 0);
-	sceneMat.SetTexture(&BC, SBT_PIXEL_SHADER, 1);
-	sceneMat.SetConstantBuffer(&cubeMapDataBuffer, SBT_PIXEL_SHADER, 1);
-	sceneMat.SetSamplerState(&comSampler, SBT_PIXEL_SHADER, 0);
-	renderer->Setup(&sceneMat);
-
-	// 创建model
-	Model m1;
-	renderer->Setup(&m1);
-
-	// 创建mesh
-	MeshFactory mf;
-	/*std::vector<std::shared_ptr<Mesh>> meshList = mf.Load("./PreviewSphere/previewSphere.obj");*/
-	std::vector<std::shared_ptr<Mesh>> meshList = mf.Load("./CubeMapScene/testEnvSimple.obj");
-	for (auto iter = meshList.begin(), end = meshList.end(); iter != end; ++iter) {
-		renderer->Setup(iter._Ptr->get());
-		iter._Ptr->get()->SetModel(&m1);
-	}
-
-	std::shared_ptr<Mesh> plane;
-	mf.Load(BMT_PLANE, plane, 2, 2);
-	plane->SetModel(&m1);
-	renderer->Setup(plane.get());
-
-	// 创建pipeline
-	Pipeline cubeMapPL;
-	cubeMapPL.SetMaterial(&simpleMat);
-	cubeMapPL.AddMesh(meshList[0].get());
-	cubeMapPL.SetDepthStencilView(cubeDepthTexture.GetDSV(), true, false);
-	cubeMapPL.AddRenderTarget(&cubeMap, true, false);
-	cubeMapPL.SetCamera(&cc);
-	renderer->Setup(&cubeMapPL);
-
-	Pipeline renderScene;
-	renderScene.SetMaterial(&sceneMat);
-	renderScene.AddMesh(meshList[0].get());
-	renderScene.AddRenderTarget(renderer->GetMainRT(), true, false);
-	renderScene.SetDepthStencilView(quadDepthTexture.GetDSV(), true, false);
-	renderScene.SetCamera(&cc);
-	renderer->Setup(&renderScene);
-
-	UIRenderer::GetInstance().Prepare();
-
-	mc->Run([&] {
-		renderer->IterateFuncs();
-
-		renderer->SetRenderState(&normalRS, &cubemapViewport);
-		renderer->Bind(&cubeMapPL);
-		renderer->Unbind(&cubeMapPL);
-		renderer->SetRenderState(&normalRS);
-		renderer->Bind(&renderScene);
-		renderer->Unbind(&renderScene);
-		renderer->EndRender();
-	});
-}
-
-void DeepGBuffer(ALGDefualtParam) {
-	RasterState normalRS;
-	RendererSetup(normalRS)
-	MeshFactory mf;
-	// 创建camera desc
-	CAMERA_DESC camDesc(WIDTH, HEIGHT);
-	camDesc.fov = 0.79;
-	camDesc.lookAt = DirectX::XMFLOAT3();
-	camDesc.position = DirectX::XMFLOAT3(0.0f, 0.0f, -0.01f);
-	Camera cc(camDesc);
-	RendererSetup(cc);
-	// 添加摄像机控制器
-	OrbitController obController(&cc);
-	CameraControllerSetting(obController)
-
-	// 创建深度图以及渲染对象
-	Canvas canvasArray1(WIDTH, HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM, false, 2);
-	RendererSetup(canvasArray1)
-	Canvas canvasArray2(WIDTH, HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM, false, 2);
-	renderer->Setup(&canvasArray2);
-	DepthTexture depthTexArray1(WIDTH, HEIGHT, 2);
-	renderer->Setup(&depthTexArray1);
-	DepthTexture depthTexArray2(WIDTH, HEIGHT, 2);
-	renderer->Setup(&depthTexArray2);
-
-	// 创建sampler
-	Sampler pointSampler(D3D11_FILTER_MIN_MAG_MIP_POINT);
-	renderer->Setup(&pointSampler);
-	Sampler comSampler(D3D11_FILTER_MIN_MAG_MIP_LINEAR);
-	renderer->Setup(&comSampler);
-
-	// 创建基础贴图
-	CommonTexture BC(L"./CubeMapScene/BC.png");
-	renderer->Setup(&BC);
-
-	// 加载模型
+	// Model
 	Model basicModel;
-	renderer->Setup(&basicModel);
-	// 加载网格
-	std::vector<std::shared_ptr<Mesh>> meshList = mf.Load("./CubeMapScene/testEnv.obj");
-	for (auto iter = meshList.begin(), end = meshList.end(); iter != end; ++iter) {
-		renderer->Setup(iter._Ptr->get());
-		iter->get()->SetModel(&basicModel);
-	}
+	basicModel.Setup(MainDev);
 
-	std::shared_ptr<Mesh> plane;
-	mf.Load(BMT_PLANE, plane, 2, 2);
-	plane->SetModel(&basicModel);
-	renderer->Setup(plane.get());
-
-	// 创建shader
-	ShaderGenVGP(DGBuf, DeepGBuffer);
-	ShaderGenVP(quad, DeepGBufferQuad);
-
-	// 创建material
-	Material DGMat;
-	MaterialSettingBeg(DGMat);
-	MatSetVGP(DGBuf);
-	MatSetSamplerState(pointSampler, SBT_PIXEL_SHADER, 0);
-	MatSetTexture(BC, SBT_PIXEL_SHADER, 0);
-	MatSetup;
-	MaterialSettingEnd;
-
-
-	Material quadMat;
-	MaterialSettingBeg(quadMat);
-	MatSetVP(quad);
-	MatSetSamplerState(comSampler, SBT_PIXEL_SHADER, 0);
-	MatSetTexture(canvasArray1, SBT_PIXEL_SHADER, 0);
-	MatSetup;
-	MaterialSettingEnd;
-
-	// 创建pipeline
-	Pipeline DGPipeline;
-	PipelineSettingBeg(DGPipeline);
-	PplAddMesh(meshList[0].get());
-	PplSetCam(cc);
-	PplSetMat(DGMat);
-	PplSetup;
-	PipelineSettingEnd;
-
-	Pipeline quadPipeline;
-	PipelineSettingBeg(quadPipeline);
-	PplAddMesh(plane.get());
-	PplAddRT(*renderer->GetMainRT(), Ppl_BC_NAC);
-	PplSetCam(cc);
-	PplSetMat(quadMat);
-	PplSetup;
-	PipelineSettingEnd;
-
-	mc->Run([&] {
-		renderer->SetRenderState(&normalRS);
-
-		DGPipeline.AddRenderTarget(&canvasArray1, true, false);
-		DGMat.SetTexture(&depthTexArray2, SBT_PIXEL_SHADER, 1);
-		DGPipeline.SetDepthStencilView(depthTexArray1.GetDSV(), true, false);
-		renderer->Bind(&DGPipeline);
-		renderer->Unbind(&DGPipeline);
-
-		DGPipeline.RemoveRenderTarget(&canvasArray1);
-
-		DGPipeline.AddRenderTarget(&canvasArray2, true, false);
-		DGMat.SetTexture(&depthTexArray1, SBT_PIXEL_SHADER, 1);
-		DGPipeline.SetDepthStencilView(depthTexArray2.GetDSV(), true, false);
-		renderer->Bind(&DGPipeline);
-		renderer->Unbind(&DGPipeline);
-
-		DGPipeline.RemoveRenderTarget(&canvasArray2);
-
-		renderer->Bind(&quadPipeline);
-		renderer->Unbind(&quadPipeline);
-		renderer->EndRender();
-	});
-}
-
-void ScreenSpaceReflection(DXRenderer* renderer, MainClass* mc) {
-	RasterState normalRS;
-	renderer->Setup(&normalRS);
-	MeshFactory mf;
-	// 创建camera
-	CAMERA_DESC camDesc(WIDTH, HEIGHT);
-	camDesc.fov = 0.79;
-	camDesc.lookAt = DirectX::XMFLOAT3();
-	camDesc.position = DirectX::XMFLOAT3(0.0f, 0.0f, -0.01f);
-	Camera cc(camDesc);
-	renderer->Setup(&cc);
-	// 添加摄像机控制器
-	OrbitController obController(&cc);
-	MainClass::UserFunc = [&obController](HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)->void {
-		switch (uMsg) {
-		case WM_MOUSEMOVE:
-			obController.MouseMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-			break;
-		case WM_LBUTTONDOWN:
-			obController.MouseEventHandler(MBTN_LEFT, true);
-			break;
-		case WM_LBUTTONUP:
-			obController.MouseEventHandler(MBTN_LEFT, false);
-			break;
-		case WM_RBUTTONDOWN:
-			obController.MouseEventHandler(MBTN_RIGHT, true);
-			break;
-		case WM_RBUTTONUP:
-			obController.MouseEventHandler(MBTN_RIGHT, false);
-			break;
-		case WM_MOUSEWHEEL:
-			obController.MouseWheel(GET_WHEEL_DELTA_WPARAM(wParam));
-			break;
-		}
+	Model iblModel;
+	DirectX::XMFLOAT3 dir = { 0.0f, 2.0f, 3.0f };
+	DirectX::XMFLOAT3 rag = { 0.0f, 0.2f, 0.0f };
+	iblModel.Translate(dir);
+	iblModel.RotateAroundOrigin(rag);
+	iblModel.Setup(MainDev);
+	
+	struct iblMatrixStruct {
+		DirectX::XMFLOAT4X4 matrix;
 	};
 
-	// 创建GBuffer资源--颜色信息以及法线信息
-	Canvas ssColor(WIDTH, HEIGHT);
-	Canvas ssNormalAndLinearZ(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
-	renderer->Setup(&ssColor);
-	renderer->Setup(&ssNormalAndLinearZ);
-	Canvas result1(WIDTH, HEIGHT);
-	Canvas result2(WIDTH, HEIGHT);
-	renderer->Setup(&result1);
-	renderer->Setup(&result2);
-
-	// 创建普通深度图
-	DepthTexture depthTex(WIDTH, HEIGHT);
-	renderer->Setup(&depthTex);
-	// model
-	Model m1;
-	renderer->Setup(&m1);
-	// 加载模型
-	std::vector<std::shared_ptr<Mesh>> meshList = mf.Load("./CubeMapScene/testEnv.obj");
-	for (auto iter = meshList.begin(), end = meshList.end(); iter != end; ++iter) {
-		renderer->Setup(iter->get());
-		iter->get()->SetModel(&m1);
-	}
-	// 加载平面
-	std::shared_ptr<Mesh> plane;
-	mf.Load(BMT_PLANE, plane, 2, 2);
-	renderer->Setup(plane.get());
-	plane->SetModel(&m1);
-
-	// 基本贴图
-	CommonTexture BC(L"./CubeMapScene/BC.png");
-	renderer->Setup(&BC);
-	// 创建sampler
-	Sampler pointSampler(D3D11_FILTER_MIN_MAG_MIP_POINT);
-	renderer->Setup(&pointSampler);
-	Sampler linearSampler(D3D11_FILTER_MIN_MAG_MIP_LINEAR);
-	renderer->Setup(&linearSampler);
-
-	// 创建shader
-	PixelShader1 SSRPS("../Debug/ScreenSpaceReflectionPS.cso");
-	renderer->Setup(&SSRPS);
-	VertexShader1 SSRVS("../Debug/ScreenSpaceReflectionVS.cso");
-	renderer->Setup(&SSRVS);
-	PixelShader1 SSRQuadPS("../Debug/ScreenSpaceReflectionQuadPS.cso");
-	renderer->Setup(&SSRQuadPS);
-	VertexShader1 SSRQuadVS("../Debug/ScreenSpaceReflectionQuadVS.cso");
-	renderer->Setup(&SSRQuadVS);
-
-	// 创建material
-	Material SSRMat;
-	SSRMat.SetVertexShader(&SSRVS);
-	SSRMat.SetPixelShader(&SSRPS);
-	SSRMat.SetTexture(&BC, SBT_PIXEL_SHADER, 0);
-	SSRMat.SetSamplerState(&linearSampler, SBT_PIXEL_SHADER, 0);
-	renderer->Setup(&SSRMat);
-
-	Material SSRQuadMat;
-	SSRQuadMat.SetVertexShader(&SSRQuadVS);
-	SSRQuadMat.SetPixelShader(&SSRQuadPS);
-	SSRQuadMat.SetTexture(&ssNormalAndLinearZ, SBT_PIXEL_SHADER, 0);
-	SSRQuadMat.SetTexture(&ssColor, SBT_PIXEL_SHADER, 1);
-	SSRQuadMat.SetSamplerState(&pointSampler, SBT_PIXEL_SHADER, 0);
-	SSRQuadMat.SetSamplerState(&linearSampler, SBT_PIXEL_SHADER, 1);
-
-	// 创建pipeline
-	Pipeline SSRPipeline;
-	SSRPipeline.AddMesh(meshList[0].get());
-	SSRPipeline.SetMaterial(&SSRMat);
-	SSRPipeline.AddRenderTarget(&ssColor, true, false);
-	SSRPipeline.AddRenderTarget(&ssNormalAndLinearZ, true, false);
-	SSRPipeline.SetDepthStencilView(depthTex.GetDSV(), true, false);
-	SSRPipeline.SetCamera(&cc);
-
-	Pipeline quadPipeline;
-	quadPipeline.SetMaterial(&SSRQuadMat);
-	quadPipeline.AddMesh(plane.get());
-	quadPipeline.AddRenderTarget(renderer->GetMainRT(), true, false);
-	quadPipeline.SetCamera(&cc);
-
-	mc->Run([&] {
-		renderer->SetRenderState(&normalRS);
-		renderer->Bind(&SSRPipeline);
-		renderer->Unbind(&SSRPipeline);
-		renderer->Bind(&quadPipeline);
-		renderer->Unbind(&quadPipeline);
-		renderer->EndRender();
-	});
-}
-
-void ImageBasedLighting(DXRenderer* renderer, MainClass* mc) {
-	RasterState normalRS;
-	renderer->Setup(&normalRS);
-	MeshFactory mf;
-	// 创建camera
-	CAMERA_DESC camDesc(WIDTH, HEIGHT);
-	camDesc.fov = 0.79;
-	camDesc.lookAt = DirectX::XMFLOAT3();
-	camDesc.position = DirectX::XMFLOAT3(0.0f, 8.0f, -3.0f);
-	Camera cc(camDesc);
-	renderer->Setup(&cc);
-	// 添加摄像机控制器
-	OrbitController obController(&cc);
-	MainClass::UserFunc = [&obController](HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)->void {
-		switch (uMsg) {
-		case WM_MOUSEMOVE:
-			obController.MouseMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-			break;
-		case WM_LBUTTONDOWN:
-			obController.MouseEventHandler(MBTN_LEFT, true);
-			break;
-		case WM_LBUTTONUP:
-			obController.MouseEventHandler(MBTN_LEFT, false);
-			break;
-		case WM_RBUTTONDOWN:
-			obController.MouseEventHandler(MBTN_RIGHT, true);
-			break;
-		case WM_RBUTTONUP:
-			obController.MouseEventHandler(MBTN_RIGHT, false);
-			break;
-		case WM_MOUSEWHEEL:
-			obController.MouseWheel(GET_WHEEL_DELTA_WPARAM(wParam));
-			break;
-		}
+	struct iblWidthHeight {
+		DirectX::XMFLOAT4 wh;
 	};
 
-	// 创建模型
-	Model m1;
-	renderer->Setup(&m1);
-	Model m2;
-	renderer->Setup(&m2);
-	DirectX::XMFLOAT3 planePos = { 2.0f, 4.0f, 2.0f };
-	DirectX::XMFLOAT3 planeRotate = { 0.0f, 0.74f, 0.0f };
-	m2.RotateAroundOrigin(planeRotate);
-	m2.Translate(planePos);
-	// 加载网格
-	std::vector<std::shared_ptr<Mesh>> meshList = mf.Load("./ImageBasedLighting/testEnv.obj");
+	ConstantBuffer<iblMatrixStruct>  iblMatrixCB;
+	iblMatrixCB.GetData().matrix = iblModel.GetModelData().modelMatrixInv;
+	iblMatrixCB.Setup(MainDev);
+	ConstantBuffer<iblWidthHeight> iblWidthHeightCB;
+	iblWidthHeightCB.GetData().wh = { 1.0f, 1.0f, 0.0f, 0.0f };
+	iblWidthHeightCB.Setup(MainDev);
+
+	// Mesh
+	std::vector<std::shared_ptr<Mesh>> meshList;
+	meshList = gMF.Load("./ImageBasedLighting/testEnv.obj");
 	for (auto iter = meshList.begin(), end = meshList.end(); iter != end; ++iter) {
-		renderer->Setup(iter._Ptr->get());
-		iter->get()->SetModel(&m1);
+		iter->get()->Setup(MainDev);
 	}
+
 	std::shared_ptr<Mesh> plane;
-	mf.Load(BMT_PLANE, plane, 4.0f, 4.0f);
-	renderer->Setup(plane.get());
-	plane->SetModel(&m2);
-
-	// depth texture
-	DepthTexture mainDepth(WIDTH, HEIGHT);
-	renderer->Setup(&mainDepth);
-
-	// Shader
-	VertexShader1 IBLVS("../Debug/imageBasedLightingVS.cso");
-	renderer->Setup(&IBLVS);
-	PixelShader1 IBLPS("../Debug/imageBasedLightingPS.cso");
-	renderer->Setup(&IBLPS);
-
-	VertexShader1 IBLBasicVS("../Debug/imageBasedLightingBasicVS.cso");
-	renderer->Setup(&IBLBasicVS);
-	PixelShader1 IBLBasicPS("../Debug/imageBasedLightingBasicPS.cso");
-	renderer->Setup(&IBLBasicPS);
-
-	// sampler
-	Sampler linearSampler(D3D11_FILTER_MIN_MAG_MIP_LINEAR);
-	renderer->Setup(&linearSampler);
+	gMF.Load(BMT_PLANE, plane, 1.0f, 1.0f);
+	plane.get()->Setup(MainDev);
 
 	// texture
 	CommonTexture BC(L"./ImageBasedLighting/AO.png");
-	renderer->Setup(&BC);
-	CommonTexture BoardColor(L"./ImageBasedLighting/based.jpg");
-	renderer->Setup(&BoardColor);
+	BC.Setup(MainDev);
+	CommonTexture refImage(L"./ImageBasedLighting/based.jpg");
+	refImage.Setup(MainDev);
 
-	// constant buffer
-	ConstantBuffer IBLVSConstantBuf(IBLVS.GetShaderCBuffer(2));
-	renderer->Setup(&IBLVSConstantBuf);
-	ConstantBuffer IBLPSConstantBuf(IBLPS.GetShaderCBuffer(0));
-	renderer->Setup(&IBLPSConstantBuf);
+	// pass0
+	ShadingPass pass0(&IBLVS, &IBLPS);
+	pass0.BindSource(meshList[0].get());
 
-	// material
-	Material IBLMat;
-	IBLMat.SetVertexShader(&IBLVS);
-	IBLMat.SetPixelShader(&IBLPS);
-	IBLMat.SetTexture(&BC, SBT_PIXEL_SHADER, 0);
-	IBLMat.SetTexture(&BoardColor, SBT_PIXEL_SHADER, 1);
-	IBLMat.SetSamplerState(&linearSampler, SBT_PIXEL_SHADER, 0);
-	IBLMat.SetConstantBuffer(&IBLVSConstantBuf, SBT_VERTEX_SHADER, 3);
-	IBLMat.SetConstantBuffer(&IBLPSConstantBuf, SBT_PIXEL_SHADER, 1);
-	renderer->Setup(&IBLMat);
+	pass0.BindSource(&basicModel, SBT_VERTEX_SHADER, 1);
+	pass0.BindSource(&cc, SBT_VERTEX_SHADER, 2);
+	pass0.BindSource(&iblMatrixCB, SBT_VERTEX_SHADER, 3);
 
-	Material IBLBoardMat;
-	IBLBoardMat.SetVertexShader(&IBLBasicVS);
-	IBLBoardMat.SetPixelShader(&IBLBasicPS);
-	IBLBoardMat.SetTexture(&BoardColor, SBT_PIXEL_SHADER, 0);
-	IBLBoardMat.SetSamplerState(&linearSampler, SBT_PIXEL_SHADER, 0);
-	renderer->Setup(&IBLBoardMat);
+	pass0.BindSource(&BC, SBT_PIXEL_SHADER, 0);
+	pass0.BindSource(&refImage, SBT_PIXEL_SHADER, 1);
+	pass0.BindSource(&iblWidthHeightCB, SBT_PIXEL_SHADER, 1);
+	pass0.BindSource(&cc, SBT_PIXEL_SHADER, 0);
+	pass0.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0);
 
-	// pipeline
-	Pipeline IBLPipeline;
-	IBLPipeline.AddMesh(meshList[0].get());
-	IBLPipeline.SetMaterial(&IBLMat);
-	IBLPipeline.SetCamera(&cc);
-	IBLPipeline.AddRenderTarget(renderer->GetMainRT(), true, false);
-	IBLPipeline.SetDepthStencilView(mainDepth.GetDSV(), true, false);
-	renderer->Setup(&IBLPipeline);
+	pass0.BindSource(renderer->GetMainRT(), true, false);
+	pass0.BindSource(renderer->GetMainDS(), true, false);
 
-	Pipeline IBLBoardPipeline;
-	IBLBoardPipeline.AddMesh(plane.get());
-	IBLBoardPipeline.SetMaterial(&IBLBoardMat);
-	IBLBoardPipeline.SetCamera(&cc);
-	IBLBoardPipeline.AddRenderTarget(renderer->GetMainRT(), false, false);
-	IBLBoardPipeline.SetDepthStencilView(mainDepth.GetDSV(), false, false);
-	renderer->Setup(&IBLBoardPipeline);
+	// pass1
+	ShadingPass pass1(&IBLBasicVS, &IBLBasicPS);
+	pass1.BindSource(plane.get());
+
+	pass1.BindSource(&iblModel, SBT_VERTEX_SHADER, 1);
+	pass1.BindSource(&cc, SBT_VERTEX_SHADER, 2);
+	
+	pass1.BindSource(&refImage, SBT_PIXEL_SHADER, 0);
+	pass1.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0);
+
+	pass1.BindSource(renderer->GetMainRT(), false, false);
+	pass1.BindSource(renderer->GetMainDS(), false, false);
+
+	mc->Run([&]{
+		pass0.Run(MainDevCtx);
+		pass0.End(MainDevCtx);
+		pass1.Run(MainDevCtx);
+		pass1.End(MainDevCtx);
+		renderer->EndRender();
+	});
+
+}
+
+void LTC(DefaultParameters) {
+	// 创建camera
+	CAMERA_DESC camDesc(WIDTH, HEIGHT);
+	camDesc.fov = 0.79;
+	camDesc.lookAt = DirectX::XMFLOAT3();
+	camDesc.position = DirectX::XMFLOAT3(0.0f, 5.0f, -3.0f);
+	Camera cc(camDesc);
+	cc.Setup(MainDev);
+	// 添加摄像机控制器
+	OrbitController obController(&cc);
+	CameraControllerSetting(obController);
+
+	Sampler mLinearSampler(D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_TEXTURE_ADDRESS_CLAMP);
+	mLinearSampler.Setup(MainDev);
+	gLinearSampler.Setup(MainDev);
+
+	// Shaders
+	VertexShader floorVS("../Debug/imageBasedLightingRefVS.cso");
+	floorVS.Setup(MainDev);
+	PixelShader floorPS("../Debug/imageBasedLightingRefPS.cso");
+	floorPS.Setup(MainDev);
+	VertexShader imgPlaneVS("../Debug/imageBasedLightingBasicVS.cso");
+	imgPlaneVS.Setup(MainDev);
+	PixelShader imgPlanePS("../Debug/imageBasedLightingBasicPS.cso");
+	imgPlanePS.Setup(MainDev);
+
+
+	struct IMGRect {
+		float4 center;
+		float4 plane;
+		float4 wh_hwh;
+	}; 
+	DirectX::XMFLOAT3 rot = { 1.57f, 0.0f, 0.0f };
+	ConstantBuffer<IMGRect> rectData;
+	rectData.GetData().center = { 0, 1.2f, 3, 1 };
+	rectData.GetData().plane = { 0, 0, -1, 3 };
+	rectData.GetData().wh_hwh = { 2, 2, 1, 1 };
+	rectData.Setup(MainDev);
+
+	// model
+	Model floorModel;
+	floorModel.RotateAroundOrigin(rot);
+	floorModel.Setup(MainDev);
+
+	rot = {
+		rectData.ReadData().center.x,
+		rectData.ReadData().center.y,
+		rectData.ReadData().center.z };
+
+	Model imgModel;
+	imgModel.Translate(rot);
+	imgModel.Setup(MainDev);
+
+
+	// plane
+	std::shared_ptr<Mesh> floor;
+	gMF.Load(BMT_PLANE, floor, 15.0f, 15.0f);
+	floor->Setup(MainDev);
+
+	std::shared_ptr<Mesh> imgPlane;
+	gMF.Load(BMT_PLANE, imgPlane, rectData.ReadData().wh_hwh.x, rectData.ReadData().wh_hwh.y);
+	imgPlane->Setup(MainDev);
+
+	// Texture
+	CommonTexture ORM(L"./LTC/ORM.png");
+	ORM.Setup(MainDev);
+	CommonTexture Base(L"./LTC/BC.png");
+	Base.Setup(MainDev);
+	DDSTexture ltc_mat(L"./LTC/ltc_mat.dds");
+	ltc_mat.Setup(MainDev);
+	DDSTexture glass(L"./LTC/glass.dds");
+	glass.Setup(MainDev);
+
+	// pass0
+	// render floor
+	ShadingPass pass0(&floorVS, &floorPS);
+	// vs res
+	pass0
+		.BindSource(floor.get())
+		.BindSource(&floorModel, SBT_VERTEX_SHADER, 1)
+		.BindSource(&cc, SBT_VERTEX_SHADER, 2);
+
+	// ps res
+	pass0
+		.BindSource(renderer->GetMainRT(), true, false)
+		.BindSource(renderer->GetMainDS(), true, false)
+		.BindSource(&ltc_mat, SBT_PIXEL_SHADER, 0)
+		.BindSource(&cc, SBT_PIXEL_SHADER, 0)
+		.BindSource(&glass, SBT_PIXEL_SHADER, 1)
+		.BindSource(&ORM, SBT_PIXEL_SHADER, 2)
+		.BindSource(&Base, SBT_PIXEL_SHADER, 3)
+		.BindSource(&mLinearSampler, SBT_PIXEL_SHADER, 0)
+		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 1)
+		.BindSource(&rectData, SBT_PIXEL_SHADER, 1);
+
+	// pass1
+	// render image plane
+	ShadingPass pass1(&imgPlaneVS, &imgPlanePS);
+	// vs res
+	pass1
+		.BindSource(imgPlane.get())
+		.BindSource(&imgModel, SBT_VERTEX_SHADER, 1)
+		.BindSource(&cc, SBT_VERTEX_SHADER, 2);
+
+	// ps res
+	pass1
+		.BindSource(renderer->GetMainRT(), false, false)
+		.BindSource(renderer->GetMainDS(), false, false)
+		.BindSource(&glass, SBT_PIXEL_SHADER, 0)
+		.BindSource(&cc, SBT_PIXEL_SHADER, 0)
+		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0);
 
 	mc->Run([&] {
-		renderer->SetRenderState(&normalRS);
-		DirectX::XMFLOAT4X4 modelINV = m2.GetModelData().modelMatrixInv;
-		DirectX::XMFLOAT4 modelWH = { 4.0f, 4.0f, 0.0f, 0.0f };
-		IBLVSConstantBuf.Update("BoardMatrix", &modelINV, sizeof(DirectX::XMFLOAT4X4));
-		IBLPSConstantBuf.Update("WH", &modelWH, sizeof(modelWH));
-		renderer->Bind(&IBLPipeline);
-		renderer->Unbind(&IBLPipeline);
-		renderer->Bind(&IBLBoardPipeline);
-		renderer->Unbind(&IBLBoardPipeline);
+		pass0.Run(MainDevCtx).End(MainDevCtx);
+		pass1.Run(MainDevCtx).End(MainDevCtx);
 		renderer->EndRender();
 	});
 }
 
-void BruteForce(ALGDefualtParam) {
-	RasterState normalRS;
-	RendererSetup(normalRS);
-	MeshFactory mf;
+void ScreenSpaceRayTracing(DefaultParameters) {
 	// 创建camera
 	CAMERA_DESC camDesc(WIDTH, HEIGHT);
 	camDesc.fov = 0.79;
 	camDesc.lookAt = DirectX::XMFLOAT3();
-	//camDesc.position = DirectX::XMFLOAT3(0.0f, 8.0f, -3.0f);
-	camDesc.position = DirectX::XMFLOAT3(0.0f, 1.0f, -1.0f);
+	camDesc.position = DirectX::XMFLOAT3(4.0f, 10.0f, -4.0f);
 	Camera cc(camDesc);
-	RendererSetup(cc);
+	cc.Setup(MainDev);
 	// 添加摄像机控制器
 	OrbitController obController(&cc);
 	CameraControllerSetting(obController);
 
-	// 创建贴图
-	CommonTexture BC(L"./CubeMapScene/BC.png");
-	RendererSetup(BC);
+	gLinearSampler.Setup(MainDev);
+	gPointSampler.Setup(MainDev);
 
-	// Sampler
-	RendererSetup(linearSampler);
-	RendererSetup(pointSampler);
+	// raster state
+	RasterState noBackCull(D3D11_CULL_NONE);
+	noBackCull.Setup(MainDev);
 
-	const int SMSize = 20;
-	D3D11_VIEWPORT SMViewport;
-	SMViewport.Height = SMSize;
-	SMViewport.Width = SMSize;
-	SMViewport.MaxDepth = 1.0f;
-	SMViewport.MinDepth = 0.0f;
-	SMViewport.TopLeftX = 0;
-	SMViewport.TopLeftY = 0;
-	// 创建场景的G-Buffer
-	Canvas SMPos(SMSize, SMSize, DXGI_FORMAT_R32G32B32A32_FLOAT);
-	RendererSetup(SMPos);
-	Canvas SMNor(SMSize, SMSize, DXGI_FORMAT_R32G32B32A32_FLOAT);
-	RendererSetup(SMNor);
-	Canvas SMAlbedo(SMSize, SMSize);
-	RendererSetup(SMAlbedo);
+	// model
+	Model basicModel;
+	basicModel.Setup(MainDev);
 
-	// 创建当前屏幕空间的G-Buffer
-	Canvas SSPos(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
-	RendererSetup(SSPos);
-	Canvas SSNor(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
-	RendererSetup(SSNor);
-	Canvas SSRef(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
-	RendererSetup(SSRef);
-	Canvas SSAlbedo(WIDTH, HEIGHT);
-	RendererSetup(SSAlbedo);
+	// Mesh
+	std::vector<std::shared_ptr<Mesh>> meshList;
+	meshList = gMF.Load("./UnknownRoom/UnknownRoom.obj");
+	for (auto ele : meshList) ele->Setup(MainDev);
 
-	// 创建记录反射信息的G-Buffer
-	Canvas RSPos(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
-	RSPos.unorderAccess = true;
-	RendererSetup(RSPos);
-	Canvas RSNor(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
-	RSNor.unorderAccess = true;
-	RendererSetup(RSNor);
-	Canvas RSAlbedo(WIDTH, HEIGHT);
-	RSAlbedo.unorderAccess = true;
-	RendererSetup(RSAlbedo);
-	Canvas RSResult(WIDTH, HEIGHT);
-	RSResult.unorderAccess = true;
-	RendererSetup(RSResult);
-
-	Model basic;
-	renderer->Setup(&basic);
-
-	// 创建模型
 	std::shared_ptr<Mesh> plane;
-	mf.Load(BMT_PLANE, plane, 2.0f, 2.0f);
-	renderer->Setup(plane.get());
-	plane->SetModel(&basic);
-	
-	std::vector<std::shared_ptr<Mesh>> meshList = mf.Load("./CubeMapScene/testEnv.obj");
-	for (auto iter = meshList.begin(), end = meshList.end(); iter != end; ++iter) {
-		renderer->Setup(iter->get());
-		iter->get()->SetModel(&basic);
-	}
+	gMF.Load(BMT_PLANE, plane, 2, 2);
+	plane->Setup(MainDev);
 
-	
-	// 创建shader
-	// 创建Scene Map相关的shader
-	ShaderGenVP(BFSM, BruteForceSceneMap);
-	// 创建屏幕空间G-buffer相关的shader
-	ShaderGenVP(BFSS, BruteForceSS);
-	// 创建读取G-buffer相关的shader
-	ShaderGenVP(BFQuad, BruteForceQuad);
-	// 创建compute shader
-	ComputeShader1 BFCS("../Debug/BruteForceReflectCS.cso");
-	RendererSetup(BFCS);
+	// Common Texture
+	CommonTexture BC(L"./UnknownRoom/BC.png");
+	BC.Setup(MainDev);
 
-	// 创建材质
-	// 创建Scene Map相关的材质
-	Material SMMat;
-	MaterialSettingBeg(SMMat);
-	MatSetVP(BFSM);
-	MatSetTexture(BC, SBT_PIXEL_SHADER, 0);
-	MatSetSamplerState(linearSampler, SBT_PIXEL_SHADER, 0);
-	MaterialSettingEnd;
+	// DepthTexture
+	DepthTexture deTex(WIDTH, HEIGHT);
+	deTex.Setup(MainDev);
 
-	// 创建屏幕空间G-Buffer相关材质
-	Material SSMat;
-	MaterialSettingBeg(SSMat);
-	MatSetVP(BFSS);
-	MatSetTexture(BC, SBT_PIXEL_SHADER, 0);
-	MatSetSamplerState(linearSampler, SBT_PIXEL_SHADER, 0);
-	MaterialSettingEnd;
+	// Canvas
+	// 摄像机空间下的发线
+	Canvas SSNor(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	SSNor.Setup(MainDev);
+	// 摄像机空间下的位置
+	Canvas SSPos(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	SSPos.Setup(MainDev);
 
-	// 创建读取G-Buffer相关信息的材质
-	Material QuadMat;
-	MaterialSettingBeg(QuadMat);
-	MatSetVP(BFQuad);
-	MatSetTexture(SSAlbedo, SBT_PIXEL_SHADER, 0);
-	MatSetSamplerState(pointSampler, SBT_PIXEL_SHADER, 0);
-	MaterialSettingEnd;
+	// 链表头节点
+	Canvas fragmentHead(WIDTH, HEIGHT, DXGI_FORMAT_R32_UINT);
+	fragmentHead.SetUARes();
+	fragmentHead.Setup(MainDev);
+	Canvas fragmentColor(WIDTH, HEIGHT * 4, DXGI_FORMAT_R8G8B8A8_UNORM);
+	fragmentColor.SetUARes();
+	fragmentColor.Setup(MainDev);
+	Canvas fragmentDepthAndNext(WIDTH, HEIGHT * 4, DXGI_FORMAT_R32G32_UINT);
+	fragmentDepthAndNext.SetUARes();
+	fragmentDepthAndNext.Setup(MainDev);
+	Canvas fragmentNor(WIDTH, HEIGHT * 4, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	fragmentNor.SetUARes();
+	fragmentNor.Setup(MainDev);
+	Canvas fragmentPos(WIDTH, HEIGHT * 4, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	fragmentPos.SetUARes();
+	fragmentPos.Setup(MainDev);
 
-	// 创建pipeline
-	// 创建Scene Map相关的pipeline
-	Pipeline SMPipeline;
-	PipelineSettingBeg(SMPipeline);
-	PplAddMesh(meshList[0].get());
-	PplAddRT(SMPos, Ppl_BC_NAC);
-	PplAddRT(SMNor, Ppl_BC_NAC);
-	PplAddRT(SMAlbedo, Ppl_BC_NAC);
-	PplSetMat(SMMat);
-	PipelineSettingEnd;
+	Canvas tracingResult(WIDTH, HEIGHT);
+	tracingResult.SetUARes();
+	tracingResult.Setup(MainDev);
 
-	// 创建屏幕空间G-Buffer相关的pipeline
-	Pipeline SSPipeline;
-	PipelineSettingBeg(SSPipeline);
-	PplAddMesh(meshList[0].get());
-	PplSetCam(cc);
-	PplSetMat(SSMat);
-	PplAddRT(SSPos, Ppl_BC_NAC);
-	PplAddRT(SSNor, Ppl_BC_NAC);
-	PplAddRT(SSRef, Ppl_BC_NAC);
-	PplAddRT(SSAlbedo, Ppl_BC_NAC);
-	PplSetDS(MainDS, Ppl_BC_NAC);
-	PipelineSettingEnd;
+	Canvas cpyLevel0(WIDTH, HEIGHT);
+	cpyLevel0.SetUARes();
+	cpyLevel0.Setup(MainDev);
 
-	// 创建读取G-Buffers相关的pipeline
-	Pipeline QuadPipeline;
-	PipelineSettingBeg(QuadPipeline);
-	PplAddMesh(plane.get());
-	PplAddRT(*MainRT, Ppl_BC_NAC);
-	PplSetMat(QuadMat);
-	PplSetCam(cc);
-	PipelineSettingEnd;
+	Canvas Level1(WIDTH / 2, HEIGHT / 2);
+	Level1.SetUARes();
+	Level1.Setup(MainDev);
 
-	// 创建compute pipeline
-	ComputePipeline cptPipeline(&BFCS, { 40, 30, 1 });
-	cptPipeline.BindResource(&SSPos, 0);
-	cptPipeline.BindResource(&SSRef, 1);
-	cptPipeline.BindResource(&SMPos, 2);
-	cptPipeline.BindResource(&SMAlbedo, 3);
-	cptPipeline.BindUATarget(&RSAlbedo, 0);
-	RendererSetup(cptPipeline);
+	Canvas cpyLevel1(WIDTH / 2, HEIGHT / 2);
+	cpyLevel1.SetUARes();
+	cpyLevel1.Setup(MainDev);
 
-	SetRS(normalRS);
+	Canvas Level2(WIDTH / 4, HEIGHT / 4);
+	Level2.SetUARes();
+	Level2.Setup(MainDev);
 
+	Canvas cpyLevel2(WIDTH / 4, HEIGHT / 4);
+	cpyLevel2.SetUARes();
+	cpyLevel2.Setup(MainDev);
+
+	Canvas Level3(WIDTH / 8, HEIGHT / 8);
+	Level3.SetUARes();
+	Level3.Setup(MainDev);
+
+	Canvas cpyLevel3(WIDTH / 8, HEIGHT / 8);
+	cpyLevel3.SetUARes();
+	cpyLevel3.Setup(MainDev);
+
+	Canvas Level4(WIDTH / 16, HEIGHT / 16);
+	Level4.SetUARes();
+	Level4.Setup(MainDev);
+
+	Canvas cpyLevel4(WIDTH / 16, HEIGHT / 16);
+	cpyLevel4.SetUARes();
+	cpyLevel4.Setup(MainDev);
+
+	// 充当计数器的结构化缓冲区
+	StructuredBuffer<int, 1> structureCounter(false);
+	structureCounter.Setup(MainDev);
+
+	struct LinkedListData {
+		DirectX::XMFLOAT4 data;
+	};
+	ConstantBuffer<LinkedListData> linkedListData;
+	linkedListData.Setup(MainDev);
+	linkedListData.GetData().data = { WIDTH, HEIGHT * 6,  WIDTH * HEIGHT * 6, HEIGHT };
+
+	struct MultiLevelData {
+		DirectX::XMFLOAT4 data;
+	};
+	ConstantBuffer<MultiLevelData> multiLevelData;
+	multiLevelData.Setup(MainDev);
+	multiLevelData.GetData().data = { 0, WIDTH, HEIGHT, HEIGHT };
+
+	// 存储分层结果
+	// 存储分层的颜色值
+	Canvas fragmentDiffuse(WIDTH, HEIGHT * 6, DXGI_FORMAT_R8G8B8A8_UNORM);
+	fragmentDiffuse.SetUARes(true, false);
+	fragmentDiffuse.Setup(MainDev);
+
+	// 存储分层的深度值(min, max)
+	Canvas fragmentDepth1(WIDTH, HEIGHT * 6, DXGI_FORMAT_R32G32_FLOAT);
+	fragmentDepth1.SetUARes();
+	fragmentDepth1.Setup(MainDev);
+
+	Canvas fragmentDepth2(WIDTH / 2, (HEIGHT / 2) * 6, DXGI_FORMAT_R32G32_FLOAT);
+	fragmentDepth2.SetUARes();
+	fragmentDepth2.Setup(MainDev);
+
+	Canvas fragmentDepth3(WIDTH / 4, (HEIGHT / 4) * 6, DXGI_FORMAT_R32G32_FLOAT);
+	fragmentDepth3.SetUARes();
+	fragmentDepth3.Setup(MainDev);
+
+	Canvas fragmentDepth4(WIDTH / 8, (HEIGHT / 8) * 6, DXGI_FORMAT_R32G32_FLOAT);
+	fragmentDepth4.SetUARes();
+	fragmentDepth4.Setup(MainDev);
+
+	Canvas fragmentDepth5(WIDTH / 16, (HEIGHT / 16) * 6, DXGI_FORMAT_R32G32_FLOAT);
+	fragmentDepth5.SetUARes();
+	fragmentDepth5.Setup(MainDev);
+
+	Canvas fragmentDepth6(WIDTH / 32, (HEIGHT / 32) * 6, DXGI_FORMAT_R32G32_FLOAT);
+	fragmentDepth6.SetUARes();
+	fragmentDepth6.Setup(MainDev);
+
+	Canvas fragmentDepth7(WIDTH / 64, (HEIGHT / 64) * 6, DXGI_FORMAT_R32G32_FLOAT);
+	fragmentDepth7.SetUARes();
+	fragmentDepth7.Setup(MainDev);
+
+	// Shader
+	// 构建屏幕空间基本信息
+	VertexShader BasicVS("../Debug/ScreenSpaceBasicVS.cso");
+	BasicVS.Setup(MainDev);
+	PixelShader BasicPS("../Debug/ScreenSpaceBasicPS.cso");
+	BasicPS.Setup(MainDev);
+	// 构建屏幕空间信息的两个Shader
+	VertexShader BuildLLVS("../Debug/BuildLinkedListVS.cso");
+	BuildLLVS.Setup(MainDev);
+	PixelShader BuildLLPS("../Debug/BuildLinkedListPS.cso");
+	BuildLLPS.Setup(MainDev);
+	//
+	VertexShader ShowVS("../Debug/ScreenSpaceShowVS.cso");
+	ShowVS.Setup(MainDev);
+	PixelShader ShowPS("../Debug/ScreenSpaceShowPS.cso");
+	ShowPS.Setup(MainDev);
+
+	// 对构建的屏幕信息进行整理
+	ComputeShader LLCS("../Debug/LinkedListArrangeCS.cso");
+	LLCS.Setup(MainDev);
+
+	// 构建多个level
+	ComputeShader FilterCS("../Debug/MultiLevelCS.cso");
+	FilterCS.Setup(MainDev);
+
+	// 光线追踪结果
+	ComputeShader TracingCS("../Debug/ScreenSpaceReflectionCS.cso");
+	TracingCS.Setup(MainDev);
+
+	// pull push
+	ComputeShader PullCS("../Debug/PullPhaseCS.cso");
+	PullCS.Setup(MainDev);
+
+	ComputeShader PushCS("../Debug/PushPhaseCS.cso");
+	PushCS.Setup(MainDev);
+
+	// 显示结果
+	VertexShader QuadVS("../Debug/ScreenSpaceReflectionQuadVS.cso");
+	QuadVS.Setup(MainDev);
+	PixelShader QuadPS("../Debug/ScreenSpaceReflectionQuadPS.cso");
+	QuadPS.Setup(MainDev);
+
+	ShadingPass passBasic(&BasicVS, &BasicPS);
+	passBasic
+		.BindSource(meshList[0].get())
+		.BindSource(&SSNor, true, false)
+		.BindSource(&SSPos, true, false)
+		.BindSource(renderer->GetMainDS(), true, false)
+		.BindSource(&cc, SBT_PIXEL_SHADER, PS_CAMERA_DATA_SLOT)
+		.BindSource(&cc, SBT_VERTEX_SHADER, VS_CAMERA_DATA_SLOT)
+		.BindSource(&basicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
+		.BindSource(&BC, SBT_PIXEL_SHADER, 0)
+		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0);
+
+	ShadingPass pass0(&BuildLLVS, &BuildLLPS);
+	pass0
+		.BindSource(meshList[0].get())
+		.BindSource(&noBackCull)
+		.BindSource(&cc, SBT_PIXEL_SHADER, PS_CAMERA_DATA_SLOT)
+		.BindSource(&cc, SBT_VERTEX_SHADER, VS_CAMERA_DATA_SLOT)
+		.BindSource(&basicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
+		.BindSource(&BC, SBT_PIXEL_SHADER, 0)
+		.BindSourceUA(&structureCounter, SBT_PIXEL_SHADER, 0)
+		.BindSourceUA(&fragmentHead, SBT_PIXEL_SHADER, 1)
+		.BindSourceUA(&fragmentColor, SBT_PIXEL_SHADER, 2)
+		.BindSourceUA(&fragmentDepthAndNext, SBT_PIXEL_SHADER, 3)
+		.BindSourceUA(&fragmentNor, SBT_PIXEL_SHADER, 4)
+		.BindSourceUA(&fragmentPos, SBT_PIXEL_SHADER, 5)
+		.BindSource(&linkedListData, SBT_PIXEL_SHADER, 1)
+		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0);
+
+	ComputingPass pass1(&LLCS, { 96, 96 ,1 });
+	pass1
+		.BindSourceTex(&fragmentColor, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&fragmentHead, SBT_COMPUTE_SHADER, 1)
+		.BindSourceTex(&fragmentDepthAndNext, SBT_COMPUTE_SHADER, 2)
+		.BindSourceTex(&fragmentNor, SBT_COMPUTE_SHADER, 3)
+		.BindSourceTex(&fragmentPos, SBT_COMPUTE_SHADER, 4)
+		.BindSourceUA(&fragmentDiffuse, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&fragmentDepth1, SBT_COMPUTE_SHADER, 1)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&linkedListData, SBT_COMPUTE_SHADER, 1);
+
+	ComputingPass pass2(&FilterCS, { 48, 48, 1 });
+	pass2
+		.BindSourceTex(&fragmentDepth1, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&fragmentDepth2, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&multiLevelData, SBT_COMPUTE_SHADER, 1);
+
+	ComputingPass pass3(&FilterCS, { 24, 24, 1 });
+	pass3
+		.BindSourceTex(&fragmentDepth2, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&fragmentDepth3, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&multiLevelData, SBT_COMPUTE_SHADER, 1);
+
+	ComputingPass pass4(&FilterCS, { 12, 12, 1 });
+	pass4
+		.BindSourceTex(&fragmentDepth3, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&fragmentDepth4, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&multiLevelData, SBT_COMPUTE_SHADER, 1);
+
+	ComputingPass pass5(&FilterCS, { 6, 6, 1 });
+	pass5
+		.BindSourceTex(&fragmentDepth4, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&fragmentDepth5, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&multiLevelData, SBT_COMPUTE_SHADER, 1);
+
+	ComputingPass pass6(&FilterCS, { 3, 3, 1 });
+	pass6
+		.BindSourceTex(&fragmentDepth5, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&fragmentDepth6, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&multiLevelData, SBT_COMPUTE_SHADER, 1);
+
+	ComputingPass pass7(&FilterCS, { 2, 2, 1 });
+	pass7
+		.BindSourceTex(&fragmentDepth6, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&fragmentDepth7, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&multiLevelData, SBT_COMPUTE_SHADER, 1);
+
+	ComputingPass passTracing(&TracingCS, { 96, 96, 1 });
+	passTracing
+		.BindSourceTex(&SSNor, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&SSPos, SBT_COMPUTE_SHADER, 1)
+		.BindSourceTex(&fragmentDiffuse, SBT_COMPUTE_SHADER, 2)
+		.BindSourceTex(&fragmentDepth1, SBT_COMPUTE_SHADER, 3)
+		.BindSourceTex(&fragmentDepth2, SBT_COMPUTE_SHADER, 4)
+		.BindSourceTex(&fragmentDepth3, SBT_COMPUTE_SHADER, 5)
+		.BindSourceTex(&fragmentDepth4, SBT_COMPUTE_SHADER, 6)
+		.BindSourceTex(&fragmentDepth5, SBT_COMPUTE_SHADER, 7)
+		.BindSourceTex(&fragmentDepth6, SBT_COMPUTE_SHADER, 8)
+		.BindSourceTex(&fragmentDepth7, SBT_COMPUTE_SHADER, 9)
+		.BindSourceUA(&tracingResult, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pullPass0(&PullCS, { 48, 48, 1 });
+	pullPass0
+		.BindSourceTex(&tracingResult, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&Level1, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pullPass1(&PullCS, { 24, 24, 1 });
+	pullPass1
+		.BindSourceTex(&Level1, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&Level2, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pullPass2(&PullCS, { 12, 12, 1 });
+	pullPass2
+		.BindSourceTex(&Level2, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&Level3, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pullPass3(&PullCS, { 6, 6, 1 });
+	pullPass3
+		.BindSourceTex(&Level3, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&Level4, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pushPass0(&PushCS, { 12, 12, 1 });
+	pushPass0
+		.BindSourceTex(&Level4, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&Level3, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&cpyLevel3, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pushPass1(&PushCS, { 24, 24, 1 });
+	pushPass1
+		.BindSourceTex(&cpyLevel3, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&Level2, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&cpyLevel2, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pushPass2(&PushCS, { 48, 48, 1 });
+	pushPass2
+		.BindSourceTex(&cpyLevel2, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&Level1, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&cpyLevel1, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pushPass3(&PushCS, { 96, 96, 1 });
+	pushPass3
+		.BindSourceTex(&cpyLevel1, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&tracingResult, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&cpyLevel0, SBT_COMPUTE_SHADER, 0);
+
+	ShadingPass passShow2(&ShowVS, &ShowPS);
+	passShow2
+		.BindSource(meshList[0].get())
+		.BindSource(renderer->GetMainRT(), true, false)
+		.BindSource(renderer->GetMainDS(), true, false)
+		.BindSourceTex(&cpyLevel0, SBT_PIXEL_SHADER, 0)
+		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0)
+		.BindSource(&basicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
+		.BindSource(&cc, SBT_VERTEX_SHADER, VS_CAMERA_DATA_SLOT);
+
+	ShadingPass passShow(&QuadVS, &QuadPS);
+	passShow
+		.BindSource(plane.get())
+		.BindSource(renderer->GetMainRT(), true, false)
+		.BindSource(&basicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
+		.BindSourceTex(&cpyLevel0, SBT_PIXEL_SHADER, 0)
+		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0);
+	const UINT MaxStorage = WIDTH * HEIGHT * 6;
 	mc->Run([&] {
-		renderer->SetRenderState(&normalRS, &SMViewport);
-		IMRunPipeline(SMPipeline);
-		SetRS(normalRS);
-		IMRunPipeline(SSPipeline);
-		IMRunPipeline(cptPipeline);
-		IMRunPipeline(QuadPipeline);
-		EndFrame;
-	});
+		passBasic.Run(MainDevCtx).End(MainDevCtx);
 
+		renderer->ClearRenderTarget(&fragmentNor);
+		renderer->ClearRenderTarget(&fragmentPos);
+		renderer->ClearRenderTarget(&fragmentColor);
+		renderer->ClearUAV_UINT(&fragmentHead, {MaxStorage, MaxStorage, MaxStorage, MaxStorage});
+		//renderer->ClearRenderTarget(&fragmentHead);
+		renderer->ClearUAV_UINT(&fragmentDepthAndNext, { MaxStorage, MaxStorage, MaxStorage, MaxStorage });
+		//renderer->ClearRenderTarget(&fragmentDepthAndNext);
+		renderer->ClearRenderTarget(&fragmentDiffuse);
+		renderer->ClearRenderTarget(&fragmentDepth1);
+		renderer->ClearRenderTarget(&fragmentDepth2);
+		renderer->ClearRenderTarget(&fragmentDepth3);
+		renderer->ClearRenderTarget(&fragmentDepth4);
+		renderer->ClearRenderTarget(&fragmentDepth5);
+		renderer->ClearRenderTarget(&fragmentDepth6);
+		renderer->ClearRenderTarget(&fragmentDepth7);
+		renderer->ClearRenderTarget(&tracingResult);
+
+		renderer->ClearRenderTarget(&Level1);
+		renderer->ClearRenderTarget(&Level2);
+		renderer->ClearRenderTarget(&Level3);
+		renderer->ClearRenderTarget(&Level4);
+
+		renderer->ClearRenderTarget(&cpyLevel0);
+		renderer->ClearRenderTarget(&cpyLevel1);
+		renderer->ClearRenderTarget(&cpyLevel2);
+		renderer->ClearRenderTarget(&cpyLevel3);
+
+		pass0.Run(MainDevCtx).End(MainDevCtx);
+		pass1.Run(MainDevCtx).End(MainDevCtx);
+
+		multiLevelData.GetData().data = { 1, WIDTH / 2, HEIGHT / 2, HEIGHT };
+		pass2.Run(MainDevCtx).End(MainDevCtx);
+
+		multiLevelData.GetData().data = { 2, WIDTH / 4, HEIGHT / 4, HEIGHT / 2 };
+		pass3.Run(MainDevCtx).End(MainDevCtx);
+
+		multiLevelData.GetData().data = { 3, WIDTH / 8, HEIGHT / 8, HEIGHT / 4 };
+		pass4.Run(MainDevCtx).End(MainDevCtx);
+
+		multiLevelData.GetData().data = { 4, WIDTH / 16, HEIGHT / 16, HEIGHT / 8 };
+		pass5.Run(MainDevCtx).End(MainDevCtx);
+
+		multiLevelData.GetData().data = { 5, WIDTH / 32, HEIGHT / 32, HEIGHT / 16 };
+		pass6.Run(MainDevCtx).End(MainDevCtx);
+
+		multiLevelData.GetData().data = { 6, WIDTH / 64, HEIGHT / 64, HEIGHT / 32 };
+		pass7.Run(MainDevCtx).End(MainDevCtx);
+
+		passTracing.Run(MainDevCtx).End(MainDevCtx);
+
+		pullPass0.Run(MainDevCtx).End(MainDevCtx);
+		pullPass1.Run(MainDevCtx).End(MainDevCtx);
+		pullPass2.Run(MainDevCtx).End(MainDevCtx);
+		pullPass3.Run(MainDevCtx).End(MainDevCtx);
+
+		pushPass0.Run(MainDevCtx).End(MainDevCtx);
+		pushPass1.Run(MainDevCtx).End(MainDevCtx);
+		pushPass2.Run(MainDevCtx).End(MainDevCtx);
+		pushPass3.Run(MainDevCtx).End(MainDevCtx);
+
+		passShow2.Run(MainDevCtx).End(MainDevCtx);
+
+		renderer->EndRender();
+	});
 }
 
-void MyAlg(ALGDefualtParam)
-{
-	RasterState normalRS;
-	RendererSetup(normalRS);
-	MeshFactory mf;
+void PullPush(DefaultParameters) {
+	gPointSampler.Setup(MainDev);
+	// basic shader
+	VertexShader BasicVS("../Debug/ScreenSpaceReflectionQuadVS.cso");
+	BasicVS.Setup(MainDev);
+	PixelShader BasicPS("../Debug/ScreenSpaceReflectionQuadPS.cso");
+	BasicPS.Setup(MainDev);
+	// Shader
+	ComputeShader PullCS("../Debug/PullPhaseCS.cso");
+	PullCS.Setup(MainDev);
+	ComputeShader PushCS("../Debug/PushPhaseCS.cso");
+	PushCS.Setup(MainDev);
+
+	// Based Level
+	CommonTexture RefImg(L"./UnknownRoom/TestImage/test2.bmp");
+	RefImg.Setup(MainDev);
+
+	// Canvas
+	Canvas Level0(WIDTH, HEIGHT);
+	Level0.SetUARes();
+	Level0.Setup(MainDev);
+
+	Canvas cpyLevel0(WIDTH, HEIGHT);
+	cpyLevel0.SetUARes();
+	cpyLevel0.Setup(MainDev);
+
+	Canvas Level1(WIDTH / 2, HEIGHT / 2);
+	Level1.SetUARes();
+	Level1.Setup(MainDev);
+
+	Canvas cpyLevel1(WIDTH / 2, HEIGHT / 2);
+	cpyLevel1.SetUARes();
+	cpyLevel1.Setup(MainDev);
+
+	Canvas Level2(WIDTH / 4, HEIGHT / 4);
+	Level2.SetUARes();
+	Level2.Setup(MainDev);
+
+	Canvas cpyLevel2(WIDTH / 4, HEIGHT / 4);
+	cpyLevel2.SetUARes();
+	cpyLevel2.Setup(MainDev);
+
+	Canvas Level3(WIDTH / 8, HEIGHT / 8);
+	Level3.SetUARes();
+	Level3.Setup(MainDev);
+
+	Canvas cpyLevel3(WIDTH / 8, HEIGHT / 8);
+	cpyLevel3.SetUARes();
+	cpyLevel3.Setup(MainDev);
+
+	Canvas Level4(WIDTH / 16, HEIGHT / 16);
+	Level4.SetUARes();
+	Level4.Setup(MainDev);
+
+	// Mesh
+	std::shared_ptr<Mesh> plane;
+	gMF.Load(BMT_PLANE, plane, 2, 2);
+	plane->Setup(MainDev);
+
+	// pass
+	ShadingPass loadPass(&BasicVS, &BasicPS);
+	loadPass
+		.BindSource(plane.get())
+		.BindSource(&Level0, true, false)
+		.BindSource(&RefImg, SBT_PIXEL_SHADER, 0)
+		.BindSource(&gPointSampler, SBT_PIXEL_SHADER, 0);
+
+	ComputingPass pullPass0(&PullCS, {48, 48, 1});
+	pullPass0
+		.BindSourceTex(&Level0, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&Level1, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pullPass1(&PullCS, { 24, 24, 1 });
+	pullPass1
+		.BindSourceTex(&Level1, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&Level2, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pullPass2(&PullCS, { 12, 12, 1 });
+	pullPass2
+		.BindSourceTex(&Level2, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&Level3, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pullPass3(&PullCS, { 6, 6, 1 });
+	pullPass3
+		.BindSourceTex(&Level3, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&Level4, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pushPass0(&PushCS, { 12, 12, 1 });
+	pushPass0
+		.BindSourceTex(&Level4, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&Level3, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&cpyLevel3, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pushPass1(&PushCS, { 24, 24, 1 });
+	pushPass1
+		.BindSourceTex(&cpyLevel3, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&Level2, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&cpyLevel2, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pushPass2(&PushCS, { 48, 48, 1 });
+	pushPass2
+		.BindSourceTex(&cpyLevel2, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&Level1, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&cpyLevel1, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass pushPass3(&PushCS, { 96, 96, 1 });
+	pushPass3
+		.BindSourceTex(&cpyLevel1, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&Level0, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&cpyLevel0, SBT_COMPUTE_SHADER, 0);
+
+	ShadingPass showPass(&BasicVS, &BasicPS);
+	showPass
+		.BindSource(plane.get())
+		.BindSource(renderer->GetMainRT(), true, false)
+		.BindSourceTex(&cpyLevel0, SBT_PIXEL_SHADER, 0)
+		.BindSource(&gPointSampler, SBT_PIXEL_SHADER, 0);
+
+	mc->Run([&] {
+		renderer->ClearRenderTarget(&Level0);
+		renderer->ClearRenderTarget(&Level1);
+		renderer->ClearRenderTarget(&Level2);
+		renderer->ClearRenderTarget(&Level3);
+		renderer->ClearRenderTarget(&Level4);
+
+		renderer->ClearRenderTarget(&cpyLevel0);
+		renderer->ClearRenderTarget(&cpyLevel1);
+		renderer->ClearRenderTarget(&cpyLevel2);
+		renderer->ClearRenderTarget(&cpyLevel3);
+
+		loadPass.Run(MainDevCtx).End(MainDevCtx);
+		pullPass0.Run(MainDevCtx).End(MainDevCtx);
+		pullPass1.Run(MainDevCtx).End(MainDevCtx);
+		pullPass2.Run(MainDevCtx).End(MainDevCtx);
+		pullPass3.Run(MainDevCtx).End(MainDevCtx);
+		pushPass0.Run(MainDevCtx).End(MainDevCtx);
+		pushPass1.Run(MainDevCtx).End(MainDevCtx);
+		pushPass2.Run(MainDevCtx).End(MainDevCtx);
+		pushPass3.Run(MainDevCtx).End(MainDevCtx);
+		showPass.Run(MainDevCtx).End(MainDevCtx);
+		renderer->EndRender();
+	});
+}
+
+void MyALG(DefaultParameters) {
 	// 创建camera
 	CAMERA_DESC camDesc(WIDTH, HEIGHT);
 	camDesc.fov = 0.79;
 	camDesc.lookAt = DirectX::XMFLOAT3();
-	camDesc.position = DirectX::XMFLOAT3(0.0f, 4.0f, -1.0f);
+	camDesc.position = DirectX::XMFLOAT3(0.0f, 5.0f, -3.0f);
 	Camera cc(camDesc);
-	RendererSetup(cc);
+	cc.Setup(MainDev);
 	// 添加摄像机控制器
 	OrbitController obController(&cc);
 	CameraControllerSetting(obController);
+	gLinearSampler.Setup(MainDev);
+	gPointSampler.Setup(MainDev);
+// 预先需要每个三角形的ID图
+// 渲染场景中所有面的空间信息位置信息
+	VertexShader UpdatePosVS("../Debug/MyALGUpdatePosVS.cso");
+	UpdatePosVS.Setup(MainDev);
+	PixelShader UpdatePosPS("../Debug/MyALGUpdatePosPS.cso");
+	UpdatePosPS.Setup(MainDev);
+// 构建屏幕空间信息G-Buffer
+	VertexShader SSDataVS("../Debug/MyALGSSDataVS.cso");
+	SSDataVS.Setup(MainDev);
+	PixelShader SSDataPS("../Debug/MyALGSSDataPS.cso");
+	SSDataPS.Setup(MainDev);
+// 处理屏幕下的ID信息
+	ComputeShader ClusterArrangeCS2("../Debug/MyALGArrangeClusterCoreCS2.cso");
+	ClusterArrangeCS2.Setup(MainDev);
+	ComputeShader NormalizeAscriptionCS("../Debug/MyALGNormalizeAscriptionCS.cso");
+	NormalizeAscriptionCS.Setup(MainDev);
+// 利用管线对反射样本点进行聚类
+	VertexShader ClusterRefVS("../Debug/MyALGArrangeClusterCoreVS.cso");
+	ClusterRefVS.Setup(MainDev);
+	PixelShader ClusterRefPS("../Debug/MyALGArrangeClusterCorePS.cso");
+	ClusterRefPS.Setup(MainDev);
+// 将管线结果进行平均化
+	ComputeShader ClusterAverageCS("../Debug/MyALGAverageClusterCoreCS.cso");
+	ClusterAverageCS.Setup(MainDev);
+// 从屏幕空间中选择点作为反射参考点
+	ComputeShader RefPntCS("../Debug/MyALGRefPoint2CS.cso");
+	RefPntCS.Setup(MainDev);
+// 构建阴影图——将场景中的所有点映射到反射参考点的空间中
+	ComputeShader ConstructShadowMapCS("../Debug/MyALGCstShadowMap2CS.cso");
+	ConstructShadowMapCS.Setup(MainDev);
+// 利用管线构造阴影图
+	VertexShader PPConstructShadowMapVS("../Debug/MyALGCstShadowMapVS.cso");
+	PPConstructShadowMapVS.Setup(MainDev);
+	GeometryShader PPConstructShadowMapGS("../Debug/MyALGCstShadowMapGS.cso");
+	PPConstructShadowMapGS.Setup(MainDev);
+	PixelShader PPConstructShadowMapPS("../Debug/MyALGCstShadowMapPS.cso");
+	PPConstructShadowMapPS.Setup(MainDev);
+// 利用管线构造阴影图2
+	VertexShader PPConstructShadowMap2VS("../Debug/MyALGCstShadowMap2VS.cso");
+	PPConstructShadowMap2VS.Setup(MainDev);
+	GeometryShader PPConstructShadowMap2GS("../Debug/MyALGCstShadowMap2GS.cso");
+	PPConstructShadowMap2GS.Setup(MainDev);
+	PixelShader PPConstructShadowMap2PS("../Debug/MyALGCstShadowMap2PS.cso");
+	PPConstructShadowMap2PS.Setup(MainDev);
+// 利用管线构造阴影图(仅包含Diffuse)
+	VertexShader PPShowShadowMapVS("../Debug/MyALGShowShadowMap2VS.cso");
+	PPShowShadowMapVS.Setup(MainDev);
+	GeometryShader PPShowShadowMapGS("../Debug/MyALGShowShadowMap2GS.cso");
+	PPShowShadowMapGS.Setup(MainDev);
+	PixelShader PPShowShadowMapPS("../Debug/MyALGShowShadowMap2PS.cso");
+	PPShowShadowMapPS.Setup(MainDev);
+// 展示某个反射采样点的视角所见内容
+	VertexShader ShowRefViewVS("../Debug/MyALGShowRefPntViewVS.cso");
+	ShowRefViewVS.Setup(MainDev);
+	PixelShader ShowRefViewPs("../Debug/MyALGShowRefPntViewPS.cso");
+	ShowRefViewPs.Setup(MainDev);
+// 计算当前视口每个像素点参考的反射点
+	ComputeShader CalculateAscripitionCS("../Debug/MyALGCalAscriptionCS.cso");
+	CalculateAscripitionCS.Setup(MainDev);
+// 对反射结果进行采样计算
+	ComputeShader SampleReflectionCS("../Debug/MyALGSampleReflectionCS.cso");
+	SampleReflectionCS.Setup(MainDev);
+// 展示场景点化的结果
+	ComputeShader ShowPointsCS("../Debug/MyALGShowPointsCS.cso");
+	ShowPointsCS.Setup(MainDev);
+// 展示否幅图片的边缘检测结果
+	ComputeShader ShowEdgeDetect("../Debug/MyALGEdgeDetect.cso");
+	ShowEdgeDetect.Setup(MainDev);
+// 计算当前像素点应该采样哪个反射位置
+	ComputeShader ShowAscriptionCS("../Debug/MyALGShowAscriptionCS.cso");
+	ShowAscriptionCS.Setup(MainDev);
+// 构建阴影图——将场景中的所有点映射到反射参考点的空间中
+	ComputeShader ShowShadowMapCS("../Debug/MyALGShowShadowMapCS.cso");
+	ShowShadowMapCS.Setup(MainDev);
+// 展示后处理结果
+	VertexShader ShowPostProcessVS("../Debug/MyALGShowPostProcessVS.cso");
+	ShowPostProcessVS.Setup(MainDev);
+	PixelShader ShowPostProcessPS("../Debug/MyALGShowPostProcessPS.cso");
+	ShowPostProcessPS.Setup(MainDev);
+// 构造灯光阴影图
+	VertexShader UtilityShadowMapVS("../Debug/Utility_ShadowMapVS.cso");
+	UtilityShadowMapVS.Setup(MainDev);
+// 构造反射图的光照结果
+	VertexShader RefRadianceVS("../Debug/MyALGRefRadianceVS.cso");
+	RefRadianceVS.Setup(MainDev);
+	PixelShader RefRadiancePS("../Debug/MyALGRefRadiancePS.cso");
+	RefRadiancePS.Setup(MainDev);
 
-	const int SamplePointX = 10;
-	const int SamplePointY = 10;
-	const int SamplePoints = SamplePointX * SamplePointY;
+	std::vector<std::shared_ptr<Mesh>> meshList;
+	meshList = gMF.Load("./UnknownRoom/UnknownRoom.obj");
+	for (auto& iter : meshList) iter->Setup(MainDev);
 
-	// 创建texture
-	CommonTexture BC(L"./CubeMapScene/BC.png");
-	RendererSetup(BC);
-
-	// 创建模型和网格
-	Model basicModel;
-	RendererSetup(basicModel);
 	std::shared_ptr<Mesh> plane;
-	mf.Load(BMT_PLANE, plane, 2.0f, 2.0f);
-	RendererSetup(*plane.get());
-	plane->SetModel(&basicModel);
+	gMF.Load(BMT_PLANE, plane, 2.0f, 2.0f);
+	plane->Setup(MainDev);
+
+	Model BasicModel;
+	BasicModel.Setup(MainDev);
+
+	CommonTexture BasicColor(L"./UnknownRoom/BC.png");
+	BasicColor.Setup(MainDev);
+
+	CommonTexture IDTex(L"./UnknownRoom/ID.png");
+	IDTex.Setup(MainDev);
+
+	CommonTexture ORM(L"./UnknownRoom/ORM.png");
+	ORM.Setup(MainDev);
+
+	CommonTexture Normal(L"./UnknownRoom/N.png");
+	Normal.Setup(MainDev);
+
+	const float ScePntNum = 150;
+	const int ScePntNumInt = 150;
+	// Raster state
+	RasterState noCullingRS(D3D11_CULL_NONE);
+	noCullingRS.Setup(MainDev);
+
+	D3D11_VIEWPORT GeoViewPort;
+	GeoViewPort.Height = ScePntNum;
+	GeoViewPort.Width = ScePntNum;
+	GeoViewPort.MinDepth = 0.0f;
+	GeoViewPort.MaxDepth = 1.0f;
+	GeoViewPort.TopLeftX = GeoViewPort.TopLeftY = 0;
+// Canvas
+// 记录采样的点，包括点的位置，法线，正副切线
+	Canvas ScePntPos(ScePntNum, ScePntNum, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ScePntPos.SetUARes();
+	ScePntPos.Setup(MainDev);
+	Canvas ScePntNor(ScePntNum, ScePntNum, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ScePntNor.SetUARes();
+	ScePntNor.Setup(MainDev);
+	Canvas ScePntDiffuse(ScePntNum, ScePntNum, DXGI_FORMAT_R8G8B8A8_UNORM);
+	ScePntDiffuse.SetUARes();
+	ScePntDiffuse.Setup(MainDev);
+
+	ConstantBuffer<DirectX::XMFLOAT4> initPntData;
+	initPntData.GetData().x = ScePntNum;
+	initPntData.GetData().y = ScePntNum;
+	initPntData.Setup(MainDev);
+
+	struct ScePntStruct {
+		DirectX::XMFLOAT4 vertPos;
+		DirectX::XMFLOAT4 vertNor;
+	};
+
+// 记录当前视口下每个像素点的位置以及法线
+	Canvas SSWPos(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	SSWPos.Setup(MainDev);
+	Canvas SSWNor(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	SSWNor.Setup(MainDev);
+	Canvas SSWNorModify(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	SSWNorModify.Setup(MainDev);
+	Canvas SSWRef(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	SSWRef.Setup(MainDev);
+	Canvas SSID(WIDTH, HEIGHT, DXGI_FORMAT_R32_UINT);
+	SSID.SetUARes();
+	SSID.Setup(MainDev);
+	Canvas SSUV(WIDTH, HEIGHT, DXGI_FORMAT_R32G32_FLOAT);
+	SSUV.Setup(MainDev);
+
+	const int RefPntNumX = 10;
+	const int RefPntNumY = 15;
+
+	struct RefEleData
+	{
+		DirectX::XMFLOAT4 wPos;
+		DirectX::XMFLOAT4 wRef;
+		DirectX::XMFLOAT4 vRef;
+		DirectX::XMFLOAT4 wNor;
+		DirectX::XMFLOAT4X4 refMatrix;
+		DirectX::XMFLOAT4X4 refProjMatrix;
+	};
+
+	StructuredBuffer<RefEleData, RefPntNumX * RefPntNumY> RefViewMatrixs(false);
+	RefViewMatrixs.Setup(MainDev);
+
+	ConstantBuffer<DirectX::XMFLOAT4> refPntData;
+	refPntData.GetData().x = WIDTH;
+	refPntData.GetData().y = HEIGHT;
+	refPntData.GetData().z = RefPntNumX;
+	refPntData.GetData().w = RefPntNumY;
+	refPntData.Setup(MainDev);
+
+// 利用渲染管线将反射样本点进行聚类
+	D3D11_BLEND_DESC ClusterBlendDesc;
+	ZeroMemory(&ClusterBlendDesc, sizeof(ClusterBlendDesc));
+	ClusterBlendDesc.AlphaToCoverageEnable = FALSE;
+	ClusterBlendDesc.IndependentBlendEnable = TRUE;
+	ClusterBlendDesc.RenderTarget[0].BlendEnable = ClusterBlendDesc.RenderTarget[1].BlendEnable = TRUE;
+	// src.rgb * (1, 1, 1) + dest.rgb * (1, 1, 1)
+	ClusterBlendDesc.RenderTarget[0].SrcBlend = ClusterBlendDesc.RenderTarget[1].SrcBlend = D3D11_BLEND_ONE;
+	ClusterBlendDesc.RenderTarget[0].DestBlend = ClusterBlendDesc.RenderTarget[1].DestBlend = D3D11_BLEND_ONE;
+	ClusterBlendDesc.RenderTarget[0].BlendOp = ClusterBlendDesc.RenderTarget[1].BlendOp = D3D11_BLEND_OP_ADD;
+	// src.a * 1 + desc.a * 1
+	ClusterBlendDesc.RenderTarget[0].SrcBlendAlpha = ClusterBlendDesc.RenderTarget[1].SrcBlendAlpha = D3D11_BLEND_ONE;
+	ClusterBlendDesc.RenderTarget[0].DestBlendAlpha = ClusterBlendDesc.RenderTarget[1].DestBlendAlpha = D3D11_BLEND_ONE;
+	ClusterBlendDesc.RenderTarget[0].BlendOpAlpha = ClusterBlendDesc.RenderTarget[1].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+
+	ClusterBlendDesc.RenderTarget[0].RenderTargetWriteMask = ClusterBlendDesc.RenderTarget[1].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	BlendState ClusterBlendState(ClusterBlendDesc);
+	ClusterBlendState.Setup(MainDev);
+
+	Canvas ClusterResultPos(RefPntNumX, RefPntNumY, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ClusterResultPos.SetUARes();
+	ClusterResultPos.Setup(MainDev);
+	Canvas ClusterResultNor(RefPntNumX, RefPntNumY, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ClusterResultNor.SetUARes();
+	ClusterResultNor.Setup(MainDev);
+
+	D3D11_VIEWPORT ClusterViewPort;
+	ClusterViewPort.Height = RefPntNumY;
+	ClusterViewPort.Width = RefPntNumX;
+	ClusterViewPort.MaxDepth = 1.0f;
+	ClusterViewPort.MinDepth = 0.0f;
+	ClusterViewPort.TopLeftX = ClusterViewPort.TopLeftY = 0;
+
+// 记录当前构建的每个反射位置的阴影图
+	const int SubShadowMapSize = 128;
+	const int ShadowMapSizeX = SubShadowMapSize * RefPntNumX;
+	const int ShadowMapSizeY = SubShadowMapSize * RefPntNumY;
+	Canvas ShadowMapDiffuse(ShadowMapSizeX, ShadowMapSizeY, DXGI_FORMAT_R8G8B8A8_UNORM);
+	ShadowMapDiffuse.SetUARes();
+	ShadowMapDiffuse.Setup(MainDev);
+	Canvas ShadowMapTexPos(ShadowMapSizeX, ShadowMapSizeY, DXGI_FORMAT_R32G32_UINT);
+	ShadowMapTexPos.SetUARes();
+	ShadowMapTexPos.Setup(MainDev);
+	Canvas ShadowMapDepth(ShadowMapSizeX, ShadowMapSizeY, DXGI_FORMAT_R32_UINT);
+	ShadowMapDepth.SetUARes(true, true);
+	ShadowMapDepth.Setup(MainDev);
+	struct CstShadowMapData {
+		DirectX::XMFLOAT4 exData;
+		DirectX::XMFLOAT4 shadowMapSize;
+	};
+
+	DepthTexture ShadowMapDepth2(ShadowMapSizeX, ShadowMapSizeY);
+	ShadowMapDepth2.Setup(MainDev);
+	Canvas ShadowMapPos(ShadowMapSizeX, ShadowMapSizeY, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ShadowMapPos.Setup(MainDev);
+	Canvas ShadowMapNor(ShadowMapSizeX, ShadowMapSizeY, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ShadowMapNor.Setup(MainDev);
+	Canvas ShadowMapTan(ShadowMapSizeX, ShadowMapSizeY, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ShadowMapTan.Setup(MainDev);
+	Canvas ShadowMapBin(ShadowMapSizeX, ShadowMapSizeY, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ShadowMapBin.Setup(MainDev);
+	Canvas ShadowMapUV(ShadowMapSizeX, ShadowMapSizeY, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ShadowMapUV.Setup(MainDev);
+
+	ConstantBuffer<CstShadowMapData> cstShadowMapData;
+	cstShadowMapData.GetData().exData = DirectX::XMFLOAT4(RefPntNumX, RefPntNumY, RefPntNumX * RefPntNumY, 0);
+	cstShadowMapData.GetData().shadowMapSize = DirectX::XMFLOAT4(SubShadowMapSize, SubShadowMapSize, ShadowMapSizeX, ShadowMapSizeY);
+	cstShadowMapData.Setup(MainDev);
+
+	D3D11_VIEWPORT ShadowMapViewPort;
+	ShadowMapViewPort.Width = ShadowMapSizeX;
+	ShadowMapViewPort.Height = ShadowMapSizeY;
+	ShadowMapViewPort.MaxDepth = 1.0f;
+	ShadowMapViewPort.MinDepth = 0.0f;
+	ShadowMapViewPort.TopLeftX = ShadowMapViewPort.TopLeftY = 0;
+
+	struct ProjMatrixData {
+		DirectX::XMFLOAT4 PerProjSettingData;
+		DirectX::XMFLOAT4X4 PerProjMatrix;
+		DirectX::XMFLOAT4X4 PerProjMatrixInv;
+		DirectX::XMFLOAT4 OrtProjSettingData;
+		DirectX::XMFLOAT4X4 OrtProjMatrix;
+		DirectX::XMFLOAT4X4 OrtProjMatrixInv;
+	};
+
+	ConstantBuffer<ProjMatrixData> ProjectMatrixData;
+	DirectX::XMFLOAT4X4 SMProjMatrix;
+	DirectX::XMFLOAT4X4 SMProjMatrixInv;
+	DirectX::XMMATRIX tempProjMatrix;
+
+	DirectX::XMFLOAT4 SMPerProjMatrixSetting = { 0.24f, 1.0f, 0.05f, 50.0f };
+	tempProjMatrix = DirectX::XMMatrixPerspectiveFovLH(SMPerProjMatrixSetting.x, SMPerProjMatrixSetting.y,
+		SMPerProjMatrixSetting.z, SMPerProjMatrixSetting.w);
+	DirectX::XMStoreFloat4x4(&SMProjMatrix, tempProjMatrix);
+	DirectX::XMStoreFloat4x4(&SMProjMatrixInv, DirectX::XMMatrixInverse(nullptr, tempProjMatrix));
+
+	ProjectMatrixData.GetData().PerProjMatrix = SMProjMatrix;
+	ProjectMatrixData.GetData().PerProjMatrixInv = SMProjMatrixInv;
+	ProjectMatrixData.GetData().PerProjSettingData = SMPerProjMatrixSetting;
+
+	DirectX::XMFLOAT4 SMOrtProjMatrixSetting = { 5.0f, 5.0f, 0.05f, 50.0f };
+	tempProjMatrix = DirectX::XMMatrixOrthographicLH(SMOrtProjMatrixSetting.x, SMOrtProjMatrixSetting.y,
+		SMOrtProjMatrixSetting.z, SMOrtProjMatrixSetting.w);
+	DirectX::XMStoreFloat4x4(&SMProjMatrix, tempProjMatrix);
+	DirectX::XMStoreFloat4x4(&SMProjMatrixInv, DirectX::XMMatrixInverse(nullptr, tempProjMatrix));
+
+	ProjectMatrixData.GetData().OrtProjMatrix = SMProjMatrix;
+	ProjectMatrixData.GetData().OrtProjMatrixInv = SMProjMatrixInv;
+	ProjectMatrixData.GetData().OrtProjSettingData = SMOrtProjMatrixSetting;
+
+	ProjectMatrixData.Setup(MainDev);
+
+	D3D11_VIEWPORT ShadowMapViewPortssss[RefPntNumX * RefPntNumY];
 	
-	std::vector<std::shared_ptr<Mesh>> meshList = mf.Load("./CubeMapScene/testEnv4.obj");
-	for (auto iter = meshList.begin(), end = meshList.end(); iter != end; ++iter) {
-		RendererSetup(*iter->get());
-		iter->get()->SetModel(&basicModel);
+	for (DirectX::XMUINT2 iter = { 0, 0 }; iter.y < RefPntNumY; ++iter.y) {
+		for (iter.x = 0; iter.x < RefPntNumX; ++iter.x) {
+			UINT index = iter.x + iter.y * RefPntNumX;
+			ShadowMapViewPortssss[index].Height = ShadowMapViewPortssss[index].Width = SubShadowMapSize;
+			ShadowMapViewPortssss[index].MaxDepth = 1.0f;
+			ShadowMapViewPortssss[index].MinDepth = 0.0f;
+			ShadowMapViewPortssss[index].TopLeftX = iter.x * SubShadowMapSize;
+			ShadowMapViewPortssss[index].TopLeftY = iter.y * SubShadowMapSize;
+		}
 	}
+	D3D11_VIEWPORT* ShadowMapViewPortPointer = nullptr;
+	ConstantBuffer<DirectX::XMUINT4> InstanceData;
+	InstanceData.GetData().x = 0;
+	InstanceData.Setup(MainDev);
 
-	RendererSetup(linearSampler);
-	RendererSetup(pointSampler);
+// 记录当前场景点化的结果
+	//Canvas DepthTexture(WIDTH, HEIGHT, DXGI_FORMAT_R32_FLOAT);
+	//DepthTexture.SetUARes(true, true);
+	//DepthTexture.Setup(MainDev);
 
-	// pass1 创建SS的G-Buffer需要的材料
-	// 创建Canvas
-	Canvas SSPos(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
-	RendererSetup(SSPos);
-	Canvas SSNor(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
-	RendererSetup(SSNor);
-	Canvas SSRef(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
-	RendererSetup(SSRef);
-	Canvas SSAlbedo(WIDTH, HEIGHT);
-	RendererSetup(SSAlbedo);
+	Canvas PointsResult(WIDTH, HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM);
+	PointsResult.SetUARes();
+	PointsResult.Setup(MainDev);
 
-	// 创建shader
-	ShaderGenVGP(SSBasic, MyAlgSS);
+// 记录当前视点下每个像素应该采样哪个反射点
+	Canvas AscriptionMap(WIDTH, HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM);
+	AscriptionMap.SetUARes();
+	AscriptionMap.Setup(MainDev);
+	Canvas AscriptionData(WIDTH, HEIGHT, DXGI_FORMAT_R32_UINT);
+	AscriptionData.SetUARes();
+	AscriptionData.Setup(MainDev);
 
-	// 创建Mat
-	Material SSMat;
-	MaterialSettingBeg(SSMat);
-	MatSetVP(SSBasic);
-	MatSetTexture(BC, SBT_PIXEL_SHADER, 0);
-	MatSetSamplerState(linearSampler, SBT_PIXEL_SHADER, 0);
-	MaterialSettingEnd;
+// 记录当前视点下每个像素的反射结果
+	Canvas ReflectionResultPos(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ReflectionResultPos.SetUARes();
+	ReflectionResultPos.Setup(MainDev);
+	Canvas ReflectionResultNor(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ReflectionResultNor.SetUARes();
+	ReflectionResultNor.Setup(MainDev);
+	Canvas ReflectionResultUV(WIDTH, HEIGHT, DXGI_FORMAT_R32G32_FLOAT);
+	ReflectionResultUV.SetUARes();
+	ReflectionResultUV.Setup(MainDev);
 
-	// 创建pipeline
-	Pipeline SSPipeline;
-	PipelineSettingBeg(SSPipeline);
-	PplAddMesh(meshList[0].get());
-	PplSetCam(cc);
-	PplSetMat(SSMat);
-	PplAddRT(SSPos, Ppl_BC_NAC);
-	PplAddRT(SSNor, Ppl_BC_NAC);
-	PplAddRT(SSRef, Ppl_BC_NAC);
-	PplAddRT(SSAlbedo, Ppl_BC_NAC);
-	PplSetDS(MainDS, Ppl_BC_NAC);
-	PipelineSettingEnd;
+// 记录某幅图的描边结果
+	Canvas EdgeDetectResult(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	EdgeDetectResult.SetUARes();
+	EdgeDetectResult.Setup(MainDev);
 
-	// pass2 创建构造采样点相关的材料
-	// 创建记录
-	StructuredBuffer VPLMatrixs(SamplePoints, sizeof(DirectX::XMFLOAT4X4), false);
-	RendererSetup(VPLMatrixs);
-	ComputeShader1 catCS("../Debug/MyAlgCatCS.cso");
-	RendererSetup(catCS);
-	ComputePipeline catPipeline(&catCS, {1, 1, 1});
-	catPipeline.BindResource(&SSPos, 0);
-	catPipeline.BindResource(&SSNor, 1);
-	catPipeline.BindUATarget(&VPLMatrixs, 0);
-	RendererSetup(catPipeline);
+// 当前屏幕的分块(行/列)个数
+	const UINT ScreenTiles = 5; // 屏幕被分割成行列个K个，总共K x K个区域
+	const UINT TileMaxSubTile = 36; // 每个区域最大的面数量
+	Canvas TileIDIndex(ScreenTiles * ScreenTiles * TileMaxSubTile, 1, DXGI_FORMAT_R32_UINT);
+	TileIDIndex.SetUARes(true, true);
+	TileIDIndex.Setup(MainDev);
 
-	// pass3 创建shadow map
-	const float GSMSize = 1280.0f;
-	D3D11_VIEWPORT GSMViewport;
-	GSMViewport.Height = GSMViewport.Width = GSMSize;
-	GSMViewport.MaxDepth = 1.0f;
-	GSMViewport.MinDepth = 0.0f;
-	GSMViewport.TopLeftX = GSMViewport.TopLeftY = 0;
-	RasterState GSMRasterState(D3D11_CULL_NONE);
-	RendererSetup(GSMRasterState);
+	// 充当计数器的结构化缓冲区
+	StructuredBuffer<int, 1> structureCounter(false);
+	structureCounter.Setup(MainDev);
 
-	DepthTexture GSMDepTex(GSMSize, GSMSize);
-	RendererSetup(GSMDepTex);
-	Canvas GSMUV(GSMSize, GSMSize);
-	RendererSetup(GSMUV);
+// 构造灯光
+	const float LightShadowMapSize = 1024;
+	SpotLight mSpotLight({ 0.0f, 7.0f,  -0.0f }, { 20.0f, 20.0f, 20.0f }, { 0.0f, -0.9f, 0.01f }, 1.57f, 2.1f);
+	mSpotLight.SetDepthNearFar(1.0f);
+	mSpotLight.Setup(MainDev);
+	DepthTexture mSpotLightShadowMap(LightShadowMapSize, LightShadowMapSize);
+	mSpotLightShadowMap.Setup(MainDev);
+	D3D11_VIEWPORT mSpotLightViewport;
+	mSpotLightViewport.Width = mSpotLightViewport.Height = LightShadowMapSize;
+	mSpotLightViewport.MaxDepth = 1.0f;
+	mSpotLightViewport.MinDepth = 0.0f;
+	mSpotLightViewport.TopLeftX = mSpotLightViewport.TopLeftY = 0;
 
-	ShaderGenVGP(GenShadowMap, MyAlgGenShadowMap);
+// 反射内容辐射结果
+	Canvas ReflectionResultRadiance(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ReflectionResultRadiance.SetMipmap();
+	ReflectionResultRadiance.Setup(MainDev);
 
-	Material GSMMat;
-	MaterialSettingBeg(GSMMat);
-	MatSetVGP(GenShadowMap);
-	MatSetTexture(VPLMatrixs, SBT_GEOMETRY_SHADER, 0);
-	MaterialSettingEnd;
-	Pipeline GSMPipeline;
-	PipelineSettingBeg(GSMPipeline);
-	PplSetDS(GSMDepTex.GetDSV(), Ppl_BC_NAC);
-	PplSetMat(GSMMat);
-	PplAddRT(GSMUV, Ppl_BC_NAC);
-	PplAddMesh(meshList[0].get());
-	PplSetCam(cc);
-	PipelineSettingEnd;
+// pass
+	ShadingPass updatePosPass(&UpdatePosVS, &UpdatePosPS);
+	updatePosPass
+		.BindSource(&noCullingRS, &GeoViewPort)
+		.BindSource(meshList[0].get())
+		.BindSource(&ScePntPos, true, false)
+		.BindSource(&ScePntNor, true, false)
+		.BindSource(&ScePntDiffuse, true, false)
+		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0)
+		.BindSourceTex(&BasicColor, SBT_PIXEL_SHADER, 0)
+		.BindSource(&BasicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
+		.BindSource(&cc, SBT_VERTEX_SHADER, VS_CAMERA_DATA_SLOT);
 
-	// pass4 创建 scene map
-	const float SceneMapSize = 2048.0f;
-	Canvas SMPos(SceneMapSize, SceneMapSize, DXGI_FORMAT_R32G32B32A32_FLOAT);
-	RendererSetup(SMPos);
-	Canvas SMNor(SceneMapSize, SceneMapSize, DXGI_FORMAT_R32G32B32A32_FLOAT);
-	RendererSetup(SMNor);
-	Canvas SMAlbedo(SceneMapSize, SceneMapSize);
-	RendererSetup(SMAlbedo);
+	ShadingPass ssDataPass(&SSDataVS, &SSDataPS);
+	ssDataPass
+		.BindSource(&SSWPos, true, false)
+		.BindSource(&SSWNor, true, false)
+		.BindSource(&SSWNorModify, true, false)
+		.BindSource(&SSWRef, true, false)
+		.BindSource(&SSID, false, false)
+		.BindSource(&SSUV, true, false)
+		.BindSource(renderer->GetMainDS(), true, false)
+		.BindSource(meshList[0].get())
+		.BindSource(&BasicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
+		.BindSource(&cc, SBT_VERTEX_SHADER, VS_CAMERA_DATA_SLOT)
+		.BindSourceTex(&Normal, SBT_PIXEL_SHADER, 0)
+		.BindSource(&cc, SBT_PIXEL_SHADER, PS_CAMERA_DATA_SLOT)
+		.BindSource(&gPointSampler, SBT_PIXEL_SHADER, 0);
 
-	ShaderGenVP(SceneMap, MyAlgSM);
+	ComputingPass refPntPass(&RefPntCS, { 1, 1, 1 });
+	refPntPass
+		.BindSourceTex(&SSWPos, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&SSWNor, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&RefViewMatrixs, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&refPntData, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 1);
 
-	Material SceneMapMat;
-	MaterialSettingBeg(SceneMapMat);
-	MatSetVP(SceneMap);
-	MatSetTexture(BC, SBT_PIXEL_SHADER, 0);
-	MatSetSamplerState(linearSampler, SBT_PIXEL_SHADER, 0);
-	MaterialSettingEnd;
+	ShadingPass PPClusterRefPass(&ClusterRefVS, &ClusterRefPS);
+	PPClusterRefPass
+		.SpecialDrawCall(WIDTH * HEIGHT)
+		.BindSource(&ClusterBlendState)
+		.BindSource(nullptr, &ClusterViewPort)
+		.BindSource(&ClusterResultPos, true, false)
+		.BindSource(&ClusterResultNor, true, false)
+		.BindSourceTex(&SSWPos, SBT_VERTEX_SHADER, 0)
+		.BindSourceTex(&SSWNor, SBT_VERTEX_SHADER, 1)
+		.BindSourceTex(&SSID, SBT_VERTEX_SHADER, 2)
+		.BindSourceTex(&TileIDIndex, SBT_VERTEX_SHADER, 3)
+		.BindSource(&refPntData, SBT_VERTEX_SHADER, 0);
 
-	Pipeline SceneMapPipeline;
-	PipelineSettingBeg(SceneMapPipeline);
-	PplSetMat(SceneMapMat);
-	PplAddRT(SMPos, Ppl_BC_NAC);
-	PplAddRT(SMNor, Ppl_BC_NAC);
-	PplAddRT(SMAlbedo, Ppl_BC_NAC);
-	PplAddMesh(meshList[0].get());
-	PipelineSettingEnd;
+	ComputingPass ClusterAveragePass(&ClusterAverageCS, { ceil(float(RefPntNumX) / 10.0f), ceil(float(RefPntNumY) / 10.0f), 1 });
+	ClusterAveragePass
+		.BindSourceTex(&ClusterResultPos, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&ClusterResultNor, SBT_COMPUTE_SHADER, 1)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&refPntData, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&RefViewMatrixs, SBT_COMPUTE_SHADER, 0);
 
-	RasterState SceneMapRS(D3D11_CULL_NONE);
-	RendererSetup(SceneMapRS);
+	ComputingPass cstShadowMapPass(&ConstructShadowMapCS, { ScePntNum / 10, ScePntNum / 10, 1 });
+	cstShadowMapPass
+		.BindSourceBuf(&RefViewMatrixs, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&ScePntPos, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&ShadowMapTexPos, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&ShadowMapDepth, SBT_COMPUTE_SHADER, 1)
+		.BindSource(&cstShadowMapData, SBT_COMPUTE_SHADER, 0);
 
-	D3D11_VIEWPORT SceneMapVP;
-	SceneMapVP.Height = SceneMapSize;
-	SceneMapVP.Width = SceneMapSize;
-	SceneMapVP.TopLeftX = SceneMapVP.TopLeftY = 0.0f;
-	SceneMapVP.MaxDepth = 1.0f;
-	SceneMapVP.MinDepth = 0.0f;
+	ShadingPass PPCstShadowMapPass(&PPConstructShadowMapVS, &PPConstructShadowMapPS, &PPConstructShadowMapGS);
+	PPCstShadowMapPass
+		.BindSource(nullptr, &ShadowMapViewPort)
+		.SpecialDrawCall(ScePntNumInt * ScePntNumInt)
+		.BindSource(&ShadowMapDepth2, true, false)
+		.BindSource(&ShadowMapPos, true, false)
+		.BindSource(&ShadowMapNor, true, false)
+		.BindSource(&ShadowMapDiffuse, true, false)
+		.BindSourceTex(&ScePntPos, SBT_VERTEX_SHADER, 0)
+		.BindSourceTex(&ScePntNor, SBT_VERTEX_SHADER, 1)
+		.BindSourceTex(&ScePntDiffuse, SBT_VERTEX_SHADER, 2)
+		.BindSource(&initPntData, SBT_VERTEX_SHADER, 0)
+		.BindSourceBuf(&RefViewMatrixs, SBT_GEOMETRY_SHADER, 0)
+		.BindSource(&cstShadowMapData, SBT_GEOMETRY_SHADER, 0);
 
-	// pass5 创建GB2
-	Canvas SRAlbedo(WIDTH, HEIGHT);
-	SRAlbedo.unorderAccess = true;
-	RendererSetup(SRAlbedo);
-	
-	ComputeShader1 SRCSGS("../Debug/MyAlgSRCS.cso");
-	RendererSetup(SRCSGS);
-	ComputePipeline SRPipeline(&SRCSGS, { 128, 96, 1 });
-	SRPipeline.BindResource(&GSMUV, 0);
-	SRPipeline.BindResource(&SSPos, 1);
-	SRPipeline.BindResource(&SSRef, 2);
-	SRPipeline.BindResource(&SMAlbedo, 3);
-	SRPipeline.BindResource(&VPLMatrixs, 4);
-	SRPipeline.BindUATarget(&SRAlbedo, 0);
-	RendererSetup(SRPipeline);
+	ShadingPass PPCstShadowMapPass2(&PPConstructShadowMap2VS, &PPConstructShadowMap2PS, &PPConstructShadowMap2GS);
+	PPCstShadowMapPass2
+		.BindSource(meshList[0].get())
+		.BindSource(&ShadowMapPos, false, false)
+		.BindSource(&ShadowMapNor, false, false)
+		.BindSource(&ShadowMapTan, false, false)
+		.BindSource(&ShadowMapBin, false, false)
+		.BindSource(&ShadowMapUV, false, false)
+		.BindSource(&ShadowMapDepth2, false, false)
+		.BindSource(&BasicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
+		.BindSourceBuf(&RefViewMatrixs, SBT_GEOMETRY_SHADER, 0)
+		.BindSource(&ProjectMatrixData, SBT_GEOMETRY_SHADER, 0)
+		.BindSource(&refPntData, SBT_GEOMETRY_SHADER, 1)
+		.BindSource(&cc, SBT_GEOMETRY_SHADER, 3);
 
+	ShadingPass PPShowShadowMap(&PPShowShadowMapVS, &PPShowShadowMapPS, &PPShowShadowMapGS);
+	PPShowShadowMap
+		.BindSource(meshList[0].get())
+		.BindSource(&ShadowMapDiffuse, false, false)
+		.BindSource(&ShadowMapDepth2, false, false)
+		.BindSource(&BasicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
+		.BindSourceBuf(&RefViewMatrixs, SBT_GEOMETRY_SHADER, 0)
+		.BindSource(&ProjectMatrixData, SBT_GEOMETRY_SHADER, 0)
+		.BindSource(&refPntData, SBT_GEOMETRY_SHADER, 1)
+		.BindSource(&cc, SBT_GEOMETRY_SHADER, 3)
+		.BindSource(&BasicColor, SBT_PIXEL_SHADER, 0)
+		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0);
 
-	// pass0 创建承载后处理结果的quad
-	// 创建shader
-	ShaderGenVP(QuadBasic, MyAlgQuad);
-	// 创建mat
-	Material QuadBasicMat;
-	MaterialSettingBeg(QuadBasicMat);
-	MatSetVP(QuadBasic);
-	MatSetTexture(SRAlbedo, SBT_PIXEL_SHADER, 0);
-	MatSetTexture(SSAlbedo, SBT_PIXEL_SHADER, 1);
-	MatSetSamplerState(pointSampler, SBT_PIXEL_SHADER, 0);
-	MaterialSettingEnd;
-	// 创建pipeline
-	Pipeline QuadBasicPipeline;
-	PipelineSettingBeg(QuadBasicPipeline);
-	PplAddMesh(plane.get());
-	PplSetCam(cc);
-	PplSetMat(QuadBasicMat);
-	PplAddRT(*MainRT, Ppl_BC_NAC);
-	PipelineSettingEnd;
+	ComputingPass calculateAscriptionPass(&CalculateAscripitionCS, { WIDTH / 10, HEIGHT / 10, 1 });
+	calculateAscriptionPass
+		.BindSourceBuf(&RefViewMatrixs, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&SSWPos, SBT_COMPUTE_SHADER, 1)
+		.BindSourceTex(&SSWNor, SBT_COMPUTE_SHADER, 2)
+		.BindSourceTex(&SSID, SBT_COMPUTE_SHADER, 3)
+		.BindSourceTex(&TileIDIndex, SBT_COMPUTE_SHADER, 4)
+		.BindSourceUA(&AscriptionData, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&refPntData, SBT_COMPUTE_SHADER, 1);
 
-	renderer->SetRenderState(&SceneMapRS, &SceneMapVP);
-	IMRunPipeline(SceneMapPipeline);
+	ComputingPass reflectionResultPass(&SampleReflectionCS, { WIDTH / 10, HEIGHT / 10, 1 });
+	reflectionResultPass
+		.BindSourceTex(&AscriptionData, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&ShadowMapDiffuse, SBT_COMPUTE_SHADER, 1)
+		.BindSourceTex(&SSWPos, SBT_COMPUTE_SHADER, 2)
+		.BindSourceTex(&SSWNor, SBT_COMPUTE_SHADER, 3)
+		.BindSourceTex(&ScePntPos, SBT_COMPUTE_SHADER, 4)
+		.BindSourceTex(&ScePntNor, SBT_COMPUTE_SHADER, 5)
+		.BindSourceBuf(&RefViewMatrixs, SBT_COMPUTE_SHADER, 6)
+		.BindSourceTex(&ShadowMapPos, SBT_COMPUTE_SHADER, 7)
+		.BindSourceTex(&ShadowMapNor, SBT_COMPUTE_SHADER, 8)
+		.BindSourceTex(&ShadowMapDepth2, SBT_COMPUTE_SHADER, 9)
+		.BindSourceTex(&ShadowMapTan, SBT_COMPUTE_SHADER, 10)
+		.BindSourceTex(&ShadowMapBin, SBT_COMPUTE_SHADER, 11)
+		.BindSourceTex(&ShadowMapUV, SBT_COMPUTE_SHADER, 12)
+		.BindSourceUA(&ReflectionResultPos, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&ReflectionResultNor, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&ReflectionResultUV, SBT_COMPUTE_SHADER, 2)
+		.BindSource(&cstShadowMapData, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 1)
+		.BindSource(&ProjectMatrixData, SBT_COMPUTE_SHADER, 2);
+
+	ComputingPass clusterCoreArrangePass(&ClusterArrangeCS2, { WIDTH / 10, HEIGHT / 10, 1 });
+	clusterCoreArrangePass
+		.BindSourceTex(&SSID, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&TileIDIndex, SBT_COMPUTE_SHADER, 0);
+
+	ComputingPass normalizeAscriptionPass(&NormalizeAscriptionCS, { ScreenTiles * ScreenTiles * TileMaxSubTile / 10, 1, 1 });
+	normalizeAscriptionPass
+		.BindSourceUA(&TileIDIndex, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&structureCounter, SBT_COMPUTE_SHADER, 1);
+
+	ShadingPass showRefPntViewPass(&ShowRefViewVS, &ShowRefViewPs);
+	showRefPntViewPass
+		.BindSource(meshList[0].get())
+		.BindSource(renderer->GetMainDS(), true, false)
+		.BindSource(renderer->GetMainRT(), true ,false)
+		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0)
+		.BindSourceBuf(&RefViewMatrixs, SBT_VERTEX_SHADER, 0)
+		.BindSource(&ProjectMatrixData, SBT_VERTEX_SHADER, 0)
+		.BindSource(&BasicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
+		.BindSource(&cc, SBT_VERTEX_SHADER, 2)
+		.BindSourceTex(&BasicColor, SBT_PIXEL_SHADER, 0);
+
+	ComputingPass showShadowMapPass(&ShowShadowMapCS, { ScePntNum / 10, ScePntNum / 10, 1 });
+	showShadowMapPass
+		.BindSourceBuf(&RefViewMatrixs, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&ScePntPos, SBT_COMPUTE_SHADER, 1)
+		.BindSourceTex(&BasicColor, SBT_COMPUTE_SHADER, 2)
+		.BindSourceUA(&ShadowMapDiffuse, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&ShadowMapDepth, SBT_COMPUTE_SHADER, 1)
+		.BindSource(&cstShadowMapData, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&initPntData, SBT_COMPUTE_SHADER, 1);
+
+	ComputingPass showEdgeDetectPass(&ShowEdgeDetect, { WIDTH / 10, HEIGHT / 10, 1 });
+	showEdgeDetectPass
+		.BindSourceTex(&AscriptionMap, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&EdgeDetectResult, SBT_COMPUTE_SHADER, 0);
+
+	//ComputingPass showPointsPass(&ShowPointsCS, { ScePntNum / 10, ScePntNum / 10, 1 });
+	//showPointsPass
+	//	.BindSourceTex(&ScePntPos, SBT_COMPUTE_SHADER, 0)
+	//	.BindSourceTex(&BasicColor, SBT_COMPUTE_SHADER, 1)
+	//	.BindSourceUA(&DepthTexture, SBT_COMPUTE_SHADER, 0)
+	//	.BindSourceUA(&PointsResult, SBT_COMPUTE_SHADER, 1)
+	//	.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+	//	.BindSource(&initPntData, SBT_COMPUTE_SHADER, 1);
+
+	ComputingPass showAscriptionPass(&ShowAscriptionCS, { WIDTH / 10, HEIGHT / 10, 1 });
+	showAscriptionPass
+		.BindSourceBuf(&RefViewMatrixs, SBT_COMPUTE_SHADER, 0)
+		.BindSourceTex(&SSWPos, SBT_COMPUTE_SHADER, 1)
+		.BindSourceTex(&SSWNor, SBT_COMPUTE_SHADER, 2)
+		.BindSourceTex(&SSID, SBT_COMPUTE_SHADER, 3)
+		.BindSourceTex(&TileIDIndex, SBT_COMPUTE_SHADER, 4)
+		.BindSourceUA(&AscriptionMap, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+		.BindSource(&refPntData, SBT_COMPUTE_SHADER, 1);
+
+	// 展示后处理结果
+	ShadingPass showPostProcessPass(&ShowPostProcessVS, &ShowPostProcessPS);
+	showPostProcessPass
+		.BindSource(plane.get())
+		.BindSource(renderer->GetMainRT(), true, false)
+		.BindSourceTex(&SSWPos, SBT_PIXEL_SHADER, 0)
+		.BindSourceTex(&SSWNorModify, SBT_PIXEL_SHADER, 1)
+		.BindSourceTex(&SSUV, SBT_PIXEL_SHADER, 2)
+		.BindSourceTex(&BasicColor, SBT_PIXEL_SHADER, 3)
+		.BindSourceTex(&ORM, SBT_PIXEL_SHADER, 4)
+		.BindSourceTex(&mSpotLightShadowMap, SBT_PIXEL_SHADER, 5)
+		.BindSourceTex(&ReflectionResultRadiance, SBT_PIXEL_SHADER, 6)
+		.BindSourceTex(&ReflectionResultPos, SBT_PIXEL_SHADER, 7)
+		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0)
+		.BindSource(&gPointSampler, SBT_PIXEL_SHADER, 1)
+		.BindSource(&cc, SBT_PIXEL_SHADER, PS_CAMERA_DATA_SLOT)
+		.BindSource(&mSpotLight, SBT_PIXEL_SHADER, 1);
+
+	// 构造spotlight的阴影图
+	ShadingPass mSpotLightShadowMapPass(&UtilityShadowMapVS);
+	mSpotLightShadowMapPass
+		.BindSource(meshList[0].get())
+		.BindSource(nullptr, &mSpotLightViewport)
+		.BindSource(&mSpotLightShadowMap, true, false)
+		.BindSource(&mSpotLight, SBT_VERTEX_SHADER, 0)
+		.BindSource(&BasicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT);
+
+	ShadingPass refRadiancePass(&RefRadianceVS, &RefRadiancePS);
+	refRadiancePass
+		.BindSource(plane.get())
+		.BindSource(&ReflectionResultRadiance, true ,false)
+		.BindSourceTex(&ReflectionResultPos, SBT_PIXEL_SHADER, 0)
+		.BindSourceTex(&ReflectionResultNor, SBT_PIXEL_SHADER, 1)
+		.BindSourceTex(&ReflectionResultUV, SBT_PIXEL_SHADER, 2)
+		.BindSourceTex(&BasicColor, SBT_PIXEL_SHADER, 3)
+		.BindSourceTex(&ORM, SBT_PIXEL_SHADER, 4)
+		.BindSourceTex(&mSpotLightShadowMap, SBT_PIXEL_SHADER, 5)
+		.BindSourceTex(&SSWRef, SBT_PIXEL_SHADER, 6)
+		.BindSource(&cc, SBT_PIXEL_SHADER, 0)
+		.BindSource(&mSpotLight, SBT_PIXEL_SHADER, 1)
+		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0)
+		.BindSource(&gPointSampler, SBT_PIXEL_SHADER, 1);
+
 	mc->Run([&] {
-		renderer->ClearRenderTarget(&SRAlbedo);
-		SetRS(normalRS);
-		IMRunPipeline(SSPipeline);
-		IMRunPipeline(catPipeline);
-		renderer->SetRenderState(&GSMRasterState, &GSMViewport);
-		IMRunPipeline(GSMPipeline);
-		SetRS(normalRS);
-		IMRunPipeline(SRPipeline);
-		IMRunPipeline(QuadBasicPipeline);
-		EndFrame;
+		// 初始化场景中的点
+		//updatePosPass.Run(MainDevCtx).End(MainDevCtx);
+		// 渲染当前视口信息G-buffer
+		renderer->ClearUAV_UINT(&SSID, { UINT_MAX, UINT_MAX, UINT_MAX, UINT_MAX });
+		ssDataPass.Run(MainDevCtx).End(MainDevCtx);
+
+		// 计算分块情况
+		renderer->ClearUAV_UINT(&TileIDIndex);
+		clusterCoreArrangePass.Run(MainDevCtx).End(MainDevCtx);
+		normalizeAscriptionPass.Run(MainDevCtx).End(MainDevCtx);
+		// 计算当前反射样本点的聚类
+		PPClusterRefPass.Run(MainDevCtx).End(MainDevCtx);
+		// 对当前反射样本点聚类进行平均，求出聚类核心信息
+		ClusterAveragePass.Run(MainDevCtx).End(MainDevCtx);
+		// 计算当前反射采样点
+		//refPntPass.Run(MainDevCtx).End(MainDevCtx);
+		// 计算当前视口下每个采样点的归属
+		renderer->ClearRenderTarget(&AscriptionMap);
+		renderer->ClearRenderTarget(&AscriptionData);
+		showAscriptionPass.Run(MainDevCtx).End(MainDevCtx);
+		showEdgeDetectPass.Run(MainDevCtx).End(MainDevCtx);
+
+		calculateAscriptionPass.Run(MainDevCtx).End(MainDevCtx);
+
+		// 构造反射图
+		//renderer->ClearUAV_UINT(&ShadowMapDepth, { UINT_MAX, UINT_MAX, UINT_MAX, UINT_MAX });
+		//renderer->ClearRenderTarget(&ShadowMapDiffuse);
+		//renderer->ClearRenderTarget(&ShadowMapTexPos);
+		// 展示构造的反射图
+		//cstShadowMapPass.Run(MainDevCtx).End(MainDevCtx);
+		//showShadowMapPass.Run(MainDevCtx).End(MainDevCtx);
+
+		//PPCstShadowMapPass.Run(MainDevCtx).End(MainDevCtx);
+		
+		// 利用管线构造阴影图
+		renderer->ClearRenderTarget(&ShadowMapPos);
+		renderer->ClearRenderTarget(&ShadowMapNor);
+		renderer->ClearRenderTarget(&ShadowMapTan);
+		renderer->ClearRenderTarget(&ShadowMapBin);
+		renderer->ClearRenderTarget(&ShadowMapUV);
+		renderer->ClearDepthStencil(&ShadowMapDepth2);
+		for (UINT i = 0; i < RefPntNumY; ++i) {
+			InstanceData.GetData().x = i;
+			ShadowMapViewPortPointer = ShadowMapViewPortssss + i * 10;
+			PPCstShadowMapPass2.BindSource(nullptr, ShadowMapViewPortPointer, 10).BindSource(&InstanceData, SBT_GEOMETRY_SHADER, 2);
+			PPCstShadowMapPass2.Run(MainDevCtx).End(MainDevCtx);
+		}
+
+		// 利用管线展示阴影图
+		//renderer->ClearRenderTarget(&ShadowMapDiffuse);
+		//renderer->ClearDepthStencil(&ShadowMapDepth2);
+		//for (UINT i = 0; i < 10; ++i) {
+		//	InstanceData.GetData().x = i;
+		//	ShadowMapViewPortPointer = ShadowMapViewPortssss + i * 10;
+		//	PPShowShadowMap.BindSource(nullptr, ShadowMapViewPortPointer, 10).BindSource(&InstanceData, SBT_GEOMETRY_SHADER, 2);
+		//	PPShowShadowMap.Run(MainDevCtx).End(MainDevCtx);
+		//}
+
+		// 展示场景点化结果
+		//renderer->ClearRenderTarget(&DepthTexture, { FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX });
+		//renderer->ClearRenderTarget(&PointsResult, { 0, 0, 0, 0 });
+		//showPointsPass.Run(MainDevCtx).End(MainDevCtx);
+
+		// 计算当前的反射结果
+		renderer->ClearRenderTarget(&ReflectionResultPos);
+		renderer->ClearRenderTarget(&ReflectionResultNor);
+		renderer->ClearRenderTarget(&ReflectionResultUV);
+		reflectionResultPass.Run(MainDevCtx).End(MainDevCtx);
+
+		mSpotLightShadowMapPass.Run(MainDevCtx).End(MainDevCtx);
+
+		refRadiancePass.Run(MainDevCtx).End(MainDevCtx);
+		ReflectionResultRadiance.GenMipMap(MainDevCtx);
+
+		showPostProcessPass.Run(MainDevCtx).End(MainDevCtx);
+
+		renderer->EndRender();
 	});
 }

@@ -1,18 +1,22 @@
 #pragma once
 #include <d3d11.h>
+#include <DirectXMath.h>
 #include <wrl.h>
 #include <map>
-#include "RendererProxy.h"
-#include "RenderTarget.h"
+#include <memory>
+#include "RasterState.h"
+
+#define MainDev DXRenderer::GetInstance().GetDevice()
+#define MainDevCtx DXRenderer::GetInstance().GetContext()
 
 typedef std::map<UINT, Microsoft::WRL::ComPtr<ID3D11Buffer>>					BufferList;
 
-class UObject;
-class Canvas;
-class LightProxy;
-class InternalTexture;
-class IShader;
 class RasterState;
+class RenderTargetWrapper;
+class DepthTexture;
+class IRenderTarget;
+class IDepthStencil;
+class IUnorderAccess;
 
 class UnknownObject;
 
@@ -23,50 +27,21 @@ private:
 	static D3D11_INPUT_ELEMENT_DESC															Static_InputElementDesc[];
 	static D3D11_INPUT_ELEMENT_DESC															Dynamic_InputElementDesc[];
 public:
-// RenderProxy virtual function
 	bool InitSys(HWND, float, float);
-	//bool BindModel(Model*);
-	//void SetupModel(Model*);
-
-	void Setup(UObject*);
-	void Setup(Canvas*);
-	void Setup(ITexture*);
-	void Setup(LightProxy*);
-	void Setup(IShader*);
-	void Setup(UnknownObject*);
-
-	void Bind(UObject*);
-	void Bind(RenderTargetsDesc*, bool, bool);
-	void Bind(ShaderResourcesDesc*);
-	void Bind(LightProxy*);
-	void Bind(IShader*);
-	void Bind(UnknownObject*);
-
-	void Unbind(UObject*);
-	void Unbind(RenderTargetsDesc*);
-	void Unbind(ShaderResourcesDesc*);
-	void Unbind(LightProxy*);
-	void Unbind(IShader*);
-	void Unbind(UnknownObject*);
-
-	void ClearRenderTarget(IRenderTarget*);
-	void ClearDepthStencil(ID3D11DepthStencilView*);
-
-	void SetRenderState(RasterState*, D3D11_VIEWPORT* viewport = NULL);
 	void EndRender();
 
-	ID3D11Device** GetDevice();
-	ID3D11DeviceContext** GetDeviceContext();
-	IRenderTarget* GetMainRT();
-	ID3D11DepthStencilView* GetMainDepthStencilBuffer();
-	ITexture* GetMainDS();
+	ID3D11Device* GetDevice();
+	ID3D11DeviceContext* GetContext();
 
-	void IterateFuncs();
-	void AddIterateObject(IterateObject*);
-
+	RenderTargetWrapper* GetMainRT();
+	DepthTexture* GetMainDS();
+	// 单独提供渲染对象的清空
+	void ClearRenderTarget(IRenderTarget* rt, DirectX::XMFLOAT4 clearColor = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f) );
+	void ClearDepthStencil(IDepthStencil* ds, float depthValue = 1.0f, UINT stencilValue = 0);
+	void ClearUAV_UINT(IUnorderAccess* uav, DirectX::XMUINT4 clearValue = DirectX::XMUINT4(0, 0, 0, 0));
+	void ClearUAV_FLOAT(IUnorderAccess* uav, DirectX::XMFLOAT4 clearValue = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f));
 private:
 	DXRenderer();
-	void clearRenderTargets();
 
 	bool setReferenceDev(HWND hwnd, float width, float height);
 	bool setBackBuffer(HWND hwnd, float width, float height);
@@ -78,18 +53,14 @@ private:
 private:
 
 private:
-	std::vector<IterateObject*>																			m_iterateList;
+	//std::vector<IterateObject*>																			m_iterateList;
 	Microsoft::WRL::ComPtr<ID3D11Device>													m_dev;
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext>										m_devContext;
-	Microsoft::WRL::ComPtr<IDXGISwapChain>													m_swapChain;
-
-	Microsoft::WRL::ComPtr<ID3D11DepthStencilView>									m_depthStencilView;
-	Microsoft::WRL::ComPtr<ID3D11Texture2D>												m_depthStencilTexture;
+	Microsoft::WRL::ComPtr<IDXGISwapChain>												m_swapChain;
 
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>											m_comInputLayout;
-
-	D3D11_VIEWPORT																						m_viewport;
-	CommonRenderTarget																					m_mainRenderTarget;
-	std::shared_ptr<InternalTexture>																	m_mainDSResource;
-	BufferList																										m_bufferList;
+	RasterState																									m_defRasterState;
+	D3D11_VIEWPORT																						m_defViewport;
+	std::shared_ptr<RenderTargetWrapper>														m_mainRenderTarget;
+	std::shared_ptr<DepthTexture>																	m_mainDepthTexture;
 };
