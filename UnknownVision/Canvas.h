@@ -17,6 +17,7 @@ public:
 	const float																					width;
 	const float																					height;
 	void SetMipmap(bool v = true);
+	void GenMipMap(ID3D11DeviceContext*);
 	void GenArray(UINT size = 6);
 	void SetUARes(bool v = true, bool simRW = false);
 private:

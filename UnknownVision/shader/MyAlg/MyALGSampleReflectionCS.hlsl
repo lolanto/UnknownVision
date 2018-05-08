@@ -27,6 +27,8 @@ Texture2D<float4> ShadowMapUV : register(t12);
 
 
 RWTexture2D<float4> RefResPos : register(u0);
+RWTexture2D<float4> RefResNor : register(u1);
+RWTexture2D<float2> RefResUV : register(u2);
 
 cbuffer ShadowMapData : register(b0) {
   // xy: reflect Point size; z: numOfReflect points
@@ -253,8 +255,10 @@ void main(uint3 GTID : SV_GroupThreadID,
   float2 xUV = float2(dot(dPos, ShadowMapTan[texPos].xyz),
     dot(dPos, ShadowMapBin[texPos].xyz));
   xUV = xUV * refUV.zw + refUV.xy;
-  // RefResPos[tuv] = float4(pntPos + t * pntRef, 1.0f);
-  RefResPos[tuv] = float4(xUV, 0.0f ,1.0f);
+
+  RefResPos[tuv] = float4(tPos, 1.0f);
+  RefResNor[tuv] = float4(refNor, 1.0f);
+  RefResUV[tuv] = xUV;
 
   // RefResPos[tuv] = ShadowMapDiffuse[texPos];
 }

@@ -114,6 +114,9 @@ bool Canvas::Setup(ID3D11Device* dev) {
 /////////////////////////////////////
 // public function
 /////////////////////////////////////
+void Canvas::GenMipMap(ID3D11DeviceContext* devCtx) {
+	if (m_hasMipmap) ITexture::GenMipMap(devCtx);
+}
 void Canvas::GenArray(UINT size) { m_arraySize = size; }
 void Canvas::SetMipmap(bool v) { m_hasMipmap = v; }
 void Canvas::SetUARes(bool ua, bool simRW) { m_isUnorderAccess = ua; m_simultaneouslyRW = simRW; }

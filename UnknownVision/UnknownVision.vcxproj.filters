@@ -34,6 +34,9 @@
     <Filter Include="UnknownVision\Shader\MyALG">
       <UniqueIdentifier>{3f084edb-7570-4a33-8538-bb8be7f396be}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UnknownVision\Shader\Utility">
+      <UniqueIdentifier>{3854b410-e6ca-4df8-8fc6-c93f39691182}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="entry.cpp">
@@ -159,6 +162,9 @@
       <Filter>UnknownVision\Header</Filter>
     </ClInclude>
     <ClInclude Include="Pass.h">
+      <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Light.h">
       <Filter>UnknownVision\Header</Filter>
     </ClInclude>
   </ItemGroup>
@@ -329,6 +335,15 @@
       <Filter>UnknownVision\Shader\MyALG</Filter>
     </FxCompile>
     <FxCompile Include="shader\MyAlg\MyALGNormalizeAscriptionCS.hlsl">
+      <Filter>UnknownVision\Shader\MyALG</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\Utility\Utility_ShadowMapVS.hlsl">
+      <Filter>UnknownVision\Shader\Utility</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\MyAlg\MyALGRefRadiancePS.hlsl">
+      <Filter>UnknownVision\Shader\MyALG</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\MyAlg\MyALGRefRadianceVS.hlsl">
       <Filter>UnknownVision\Shader\MyALG</Filter>
     </FxCompile>
   </ItemGroup>

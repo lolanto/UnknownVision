@@ -234,7 +234,7 @@ ShadingPass& ShadingPass::Run(ID3D11DeviceContext* devCtx) {
 }
 
 ShadingPass& ShadingPass::End(ID3D11DeviceContext* devCtx) {
-	if (m_vs == nullptr || m_ps == nullptr) {
+	if (m_vs == nullptr) {
 		return *this;
 	}
 	if (m_meshBindingData.resPointer == nullptr && !m_specialDrawCall) {
@@ -242,7 +242,7 @@ ShadingPass& ShadingPass::End(ID3D11DeviceContext* devCtx) {
 	}
 	static float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	m_vs->Unbind(devCtx);
-	m_ps->Unbind(devCtx);
+	if (m_ps) m_ps->Unbind(devCtx);
 	if (m_gs) m_gs->Unbind(devCtx);
 
 	BasePass::End(devCtx);
@@ -265,7 +265,6 @@ ShadingPass& ShadingPass::End(ID3D11DeviceContext* devCtx) {
 	}
 
 	// Unbind RT
-	//devCtx->OMSetRenderTargets(0, NULL, nullptr);
 	ID3D11UnorderedAccessView* nullUAV[1] = { nullptr };
 	UINT nullInitValue[1] = { 0 };
 	devCtx->OMSetRenderTargetsAndUnorderedAccessViews(0, nullptr, nullptr, 0, 1, nullUAV, nullInitValue);

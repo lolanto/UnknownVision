@@ -131,7 +131,7 @@
     <ClCompile Include="entry.cpp" />
     <ClCompile Include="InfoLog.cpp" />
     <ClCompile Include="Light.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="MainClass.cpp" />
     <ClCompile Include="Mesh.cpp" />
@@ -157,6 +157,7 @@
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="DXRenderer.h" />
     <ClInclude Include="InfoLog.h" />
+    <ClInclude Include="Light.h" />
     <ClInclude Include="MainClass.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="MMarco.h" />
@@ -274,6 +275,14 @@
     </FxCompile>
     <FxCompile Include="shader\MyAlg\MyALGEdgeDetect.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="shader\MyAlg\MyALGRefRadiancePS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="shader\MyAlg\MyALGRefRadianceVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
     </FxCompile>
     <FxCompile Include="shader\MyAlg\MyALGSampleReflectionCS.hlsl">
@@ -401,6 +410,10 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
     </FxCompile>
     <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceShowVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="shader\Utility\Utility_ShadowMapVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
     </FxCompile>

@@ -29,6 +29,7 @@ void main() {
 		return;
 	}
 
+	//LTC(&DXRenderer::GetInstance(), &mc);
 	MyALG(&DXRenderer::GetInstance(), &mc);
 	//ScreenSpaceRayTracing(&DXRenderer::GetInstance(), &mc);
 	

@@ -13,6 +13,7 @@
 #include "Camera.h"
 #include "Pass.h"
 #include "Canvas.h"
+#include "Light.h"
 
 const float CUBE_MAP_SIZE = 1280.0f;
 
@@ -916,6 +917,14 @@ void MyALG(DefaultParameters) {
 	ShowPostProcessVS.Setup(MainDev);
 	PixelShader ShowPostProcessPS("../Debug/MyALGShowPostProcessPS.cso");
 	ShowPostProcessPS.Setup(MainDev);
+// 构造灯光阴影图
+	VertexShader UtilityShadowMapVS("../Debug/Utility_ShadowMapVS.cso");
+	UtilityShadowMapVS.Setup(MainDev);
+// 构造反射图的光照结果
+	VertexShader RefRadianceVS("../Debug/MyALGRefRadianceVS.cso");
+	RefRadianceVS.Setup(MainDev);
+	PixelShader RefRadiancePS("../Debug/MyALGRefRadiancePS.cso");
+	RefRadiancePS.Setup(MainDev);
 
 	std::vector<std::shared_ptr<Mesh>> meshList;
 	meshList = gMF.Load("./UnknownRoom/UnknownRoom.obj");
@@ -933,6 +942,12 @@ void MyALG(DefaultParameters) {
 
 	CommonTexture IDTex(L"./UnknownRoom/ID.png");
 	IDTex.Setup(MainDev);
+
+	CommonTexture ORM(L"./UnknownRoom/ORM.png");
+	ORM.Setup(MainDev);
+
+	CommonTexture Normal(L"./UnknownRoom/N.png");
+	Normal.Setup(MainDev);
 
 	const float ScePntNum = 150;
 	const int ScePntNumInt = 150;
@@ -973,9 +988,15 @@ void MyALG(DefaultParameters) {
 	SSWPos.Setup(MainDev);
 	Canvas SSWNor(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
 	SSWNor.Setup(MainDev);
+	Canvas SSWNorModify(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	SSWNorModify.Setup(MainDev);
+	Canvas SSWRef(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	SSWRef.Setup(MainDev);
 	Canvas SSID(WIDTH, HEIGHT, DXGI_FORMAT_R32_UINT);
 	SSID.SetUARes();
 	SSID.Setup(MainDev);
+	Canvas SSUV(WIDTH, HEIGHT, DXGI_FORMAT_R32G32_FLOAT);
+	SSUV.Setup(MainDev);
 
 	const int RefPntNumX = 10;
 	const int RefPntNumY = 15;
@@ -1131,9 +1152,9 @@ void MyALG(DefaultParameters) {
 	InstanceData.Setup(MainDev);
 
 // 记录当前场景点化的结果
-	Canvas DepthTexture(WIDTH, HEIGHT, DXGI_FORMAT_R32_FLOAT);
-	DepthTexture.SetUARes(true, true);
-	DepthTexture.Setup(MainDev);
+	//Canvas DepthTexture(WIDTH, HEIGHT, DXGI_FORMAT_R32_FLOAT);
+	//DepthTexture.SetUARes(true, true);
+	//DepthTexture.Setup(MainDev);
 
 	Canvas PointsResult(WIDTH, HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM);
 	PointsResult.SetUARes();
@@ -1151,6 +1172,12 @@ void MyALG(DefaultParameters) {
 	Canvas ReflectionResultPos(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
 	ReflectionResultPos.SetUARes();
 	ReflectionResultPos.Setup(MainDev);
+	Canvas ReflectionResultNor(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ReflectionResultNor.SetUARes();
+	ReflectionResultNor.Setup(MainDev);
+	Canvas ReflectionResultUV(WIDTH, HEIGHT, DXGI_FORMAT_R32G32_FLOAT);
+	ReflectionResultUV.SetUARes();
+	ReflectionResultUV.Setup(MainDev);
 
 // 记录某幅图的描边结果
 	Canvas EdgeDetectResult(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
@@ -1167,6 +1194,24 @@ void MyALG(DefaultParameters) {
 	// 充当计数器的结构化缓冲区
 	StructuredBuffer<int, 1> structureCounter(false);
 	structureCounter.Setup(MainDev);
+
+// 构造灯光
+	const float LightShadowMapSize = 1024;
+	SpotLight mSpotLight({ 0.0f, 7.0f,  -0.0f }, { 20.0f, 20.0f, 20.0f }, { 0.0f, -0.9f, 0.01f }, 1.57f, 2.1f);
+	mSpotLight.SetDepthNearFar(1.0f);
+	mSpotLight.Setup(MainDev);
+	DepthTexture mSpotLightShadowMap(LightShadowMapSize, LightShadowMapSize);
+	mSpotLightShadowMap.Setup(MainDev);
+	D3D11_VIEWPORT mSpotLightViewport;
+	mSpotLightViewport.Width = mSpotLightViewport.Height = LightShadowMapSize;
+	mSpotLightViewport.MaxDepth = 1.0f;
+	mSpotLightViewport.MinDepth = 0.0f;
+	mSpotLightViewport.TopLeftX = mSpotLightViewport.TopLeftY = 0;
+
+// 反射内容辐射结果
+	Canvas ReflectionResultRadiance(WIDTH, HEIGHT, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	ReflectionResultRadiance.SetMipmap();
+	ReflectionResultRadiance.Setup(MainDev);
 
 // pass
 	ShadingPass updatePosPass(&UpdatePosVS, &UpdatePosPS);
@@ -1185,12 +1230,16 @@ void MyALG(DefaultParameters) {
 	ssDataPass
 		.BindSource(&SSWPos, true, false)
 		.BindSource(&SSWNor, true, false)
+		.BindSource(&SSWNorModify, true, false)
+		.BindSource(&SSWRef, true, false)
 		.BindSource(&SSID, false, false)
+		.BindSource(&SSUV, true, false)
 		.BindSource(renderer->GetMainDS(), true, false)
 		.BindSource(meshList[0].get())
 		.BindSource(&BasicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT)
 		.BindSource(&cc, SBT_VERTEX_SHADER, VS_CAMERA_DATA_SLOT)
-		.BindSourceTex(&IDTex, SBT_PIXEL_SHADER, 0)
+		.BindSourceTex(&Normal, SBT_PIXEL_SHADER, 0)
+		.BindSource(&cc, SBT_PIXEL_SHADER, PS_CAMERA_DATA_SLOT)
 		.BindSource(&gPointSampler, SBT_PIXEL_SHADER, 0);
 
 	ComputingPass refPntPass(&RefPntCS, { 1, 1, 1 });
@@ -1300,6 +1349,8 @@ void MyALG(DefaultParameters) {
 		.BindSourceTex(&ShadowMapBin, SBT_COMPUTE_SHADER, 11)
 		.BindSourceTex(&ShadowMapUV, SBT_COMPUTE_SHADER, 12)
 		.BindSourceUA(&ReflectionResultPos, SBT_COMPUTE_SHADER, 0)
+		.BindSourceUA(&ReflectionResultNor, SBT_COMPUTE_SHADER, 1)
+		.BindSourceUA(&ReflectionResultUV, SBT_COMPUTE_SHADER, 2)
 		.BindSource(&cstShadowMapData, SBT_COMPUTE_SHADER, 0)
 		.BindSource(&cc, SBT_COMPUTE_SHADER, 1)
 		.BindSource(&ProjectMatrixData, SBT_COMPUTE_SHADER, 2);
@@ -1341,14 +1392,14 @@ void MyALG(DefaultParameters) {
 		.BindSourceTex(&AscriptionMap, SBT_COMPUTE_SHADER, 0)
 		.BindSourceUA(&EdgeDetectResult, SBT_COMPUTE_SHADER, 0);
 
-	ComputingPass showPointsPass(&ShowPointsCS, { ScePntNum / 10, ScePntNum / 10, 1 });
-	showPointsPass
-		.BindSourceTex(&ScePntPos, SBT_COMPUTE_SHADER, 0)
-		.BindSourceTex(&BasicColor, SBT_COMPUTE_SHADER, 1)
-		.BindSourceUA(&DepthTexture, SBT_COMPUTE_SHADER, 0)
-		.BindSourceUA(&PointsResult, SBT_COMPUTE_SHADER, 1)
-		.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
-		.BindSource(&initPntData, SBT_COMPUTE_SHADER, 1);
+	//ComputingPass showPointsPass(&ShowPointsCS, { ScePntNum / 10, ScePntNum / 10, 1 });
+	//showPointsPass
+	//	.BindSourceTex(&ScePntPos, SBT_COMPUTE_SHADER, 0)
+	//	.BindSourceTex(&BasicColor, SBT_COMPUTE_SHADER, 1)
+	//	.BindSourceUA(&DepthTexture, SBT_COMPUTE_SHADER, 0)
+	//	.BindSourceUA(&PointsResult, SBT_COMPUTE_SHADER, 1)
+	//	.BindSource(&cc, SBT_COMPUTE_SHADER, 0)
+	//	.BindSource(&initPntData, SBT_COMPUTE_SHADER, 1);
 
 	ComputingPass showAscriptionPass(&ShowAscriptionCS, { WIDTH / 10, HEIGHT / 10, 1 });
 	showAscriptionPass
@@ -1366,8 +1417,41 @@ void MyALG(DefaultParameters) {
 	showPostProcessPass
 		.BindSource(plane.get())
 		.BindSource(renderer->GetMainRT(), true, false)
-		.BindSourceTex(&BasicColor, SBT_PIXEL_SHADER, 0)
-		.BindSourceTex(&ReflectionResultPos, SBT_PIXEL_SHADER, 1)
+		.BindSourceTex(&SSWPos, SBT_PIXEL_SHADER, 0)
+		.BindSourceTex(&SSWNorModify, SBT_PIXEL_SHADER, 1)
+		.BindSourceTex(&SSUV, SBT_PIXEL_SHADER, 2)
+		.BindSourceTex(&BasicColor, SBT_PIXEL_SHADER, 3)
+		.BindSourceTex(&ORM, SBT_PIXEL_SHADER, 4)
+		.BindSourceTex(&mSpotLightShadowMap, SBT_PIXEL_SHADER, 5)
+		.BindSourceTex(&ReflectionResultRadiance, SBT_PIXEL_SHADER, 6)
+		.BindSourceTex(&ReflectionResultPos, SBT_PIXEL_SHADER, 7)
+		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0)
+		.BindSource(&gPointSampler, SBT_PIXEL_SHADER, 1)
+		.BindSource(&cc, SBT_PIXEL_SHADER, PS_CAMERA_DATA_SLOT)
+		.BindSource(&mSpotLight, SBT_PIXEL_SHADER, 1);
+
+	// 构造spotlight的阴影图
+	ShadingPass mSpotLightShadowMapPass(&UtilityShadowMapVS);
+	mSpotLightShadowMapPass
+		.BindSource(meshList[0].get())
+		.BindSource(nullptr, &mSpotLightViewport)
+		.BindSource(&mSpotLightShadowMap, true, false)
+		.BindSource(&mSpotLight, SBT_VERTEX_SHADER, 0)
+		.BindSource(&BasicModel, SBT_VERTEX_SHADER, VS_MODEL_DATA_SLOT);
+
+	ShadingPass refRadiancePass(&RefRadianceVS, &RefRadiancePS);
+	refRadiancePass
+		.BindSource(plane.get())
+		.BindSource(&ReflectionResultRadiance, true ,false)
+		.BindSourceTex(&ReflectionResultPos, SBT_PIXEL_SHADER, 0)
+		.BindSourceTex(&ReflectionResultNor, SBT_PIXEL_SHADER, 1)
+		.BindSourceTex(&ReflectionResultUV, SBT_PIXEL_SHADER, 2)
+		.BindSourceTex(&BasicColor, SBT_PIXEL_SHADER, 3)
+		.BindSourceTex(&ORM, SBT_PIXEL_SHADER, 4)
+		.BindSourceTex(&mSpotLightShadowMap, SBT_PIXEL_SHADER, 5)
+		.BindSourceTex(&SSWRef, SBT_PIXEL_SHADER, 6)
+		.BindSource(&cc, SBT_PIXEL_SHADER, 0)
+		.BindSource(&mSpotLight, SBT_PIXEL_SHADER, 1)
 		.BindSource(&gLinearSampler, SBT_PIXEL_SHADER, 0)
 		.BindSource(&gPointSampler, SBT_PIXEL_SHADER, 1);
 
@@ -1437,11 +1521,16 @@ void MyALG(DefaultParameters) {
 
 		// 计算当前的反射结果
 		renderer->ClearRenderTarget(&ReflectionResultPos);
+		renderer->ClearRenderTarget(&ReflectionResultNor);
+		renderer->ClearRenderTarget(&ReflectionResultUV);
 		reflectionResultPass.Run(MainDevCtx).End(MainDevCtx);
 
-		showPostProcessPass.Run(MainDevCtx).End(MainDevCtx);
+		mSpotLightShadowMapPass.Run(MainDevCtx).End(MainDevCtx);
 
-		//showRefPntViewPass.Run(MainDevCtx).End(MainDevCtx);
+		refRadiancePass.Run(MainDevCtx).End(MainDevCtx);
+		ReflectionResultRadiance.GenMipMap(MainDevCtx);
+
+		showPostProcessPass.Run(MainDevCtx).End(MainDevCtx);
 
 		renderer->EndRender();
 	});
