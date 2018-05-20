@@ -28,12 +28,6 @@
     <Filter Include="UnknownVision\Shader\LTC">
       <UniqueIdentifier>{533bd0b8-0ba7-487f-bd14-32fc445c41b3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="UnknownVision\Shader\SSR">
-      <UniqueIdentifier>{6e09bd11-420e-4fc8-a3b4-71d0e398cbbc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="UnknownVision\Shader\MyALG">
-      <UniqueIdentifier>{3f084edb-7570-4a33-8538-bb8be7f396be}</UniqueIdentifier>
-    </Filter>
     <Filter Include="UnknownVision\Shader\Utility">
       <UniqueIdentifier>{3854b410-e6ca-4df8-8fc6-c93f39691182}</UniqueIdentifier>
     </Filter>
@@ -67,12 +61,6 @@
       <Filter>UnknownVision\Scrouce</Filter>
     </ClCompile>
     <ClCompile Include="Light.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
-    <ClCompile Include="DirectionLight.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
-    <ClCompile Include="PointLight.cpp">
       <Filter>UnknownVision\Scrouce</Filter>
     </ClCompile>
     <ClCompile Include="OrbitController.cpp">
@@ -128,9 +116,6 @@
     <ClInclude Include="Canvas.h">
       <Filter>UnknownVision\Header</Filter>
     </ClInclude>
-    <ClInclude Include="BasicModel.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
     <ClInclude Include="Texture.h">
       <Filter>UnknownVision\Header</Filter>
     </ClInclude>
@@ -152,9 +137,6 @@
     <ClInclude Include="Alg.h">
       <Filter>UnknownVision\Header</Filter>
     </ClInclude>
-    <ClInclude Include="MMarco.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
     <ClInclude Include="Buffer.h">
       <Filter>UnknownVision\Header</Filter>
     </ClInclude>
@@ -172,179 +154,20 @@
     <FxCompile Include="shader\InputLayout.hlsl">
       <Filter>UnknownVision\Shader</Filter>
     </FxCompile>
-    <FxCompile Include="shader\PullPush\PullPhaseCS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\PullPush\PushPhaseCS.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
-    </FxCompile>
     <FxCompile Include="shader\imageBasedLighting\imageBasedLightingBasicPS.hlsl">
       <Filter>UnknownVision\Shader\LTC</Filter>
     </FxCompile>
     <FxCompile Include="shader\imageBasedLighting\imageBasedLightingBasicVS.hlsl">
       <Filter>UnknownVision\Shader\LTC</Filter>
     </FxCompile>
-    <FxCompile Include="shader\imageBasedLighting\imageBasedLightingPS.hlsl">
-      <Filter>UnknownVision\Shader\LTC</Filter>
-    </FxCompile>
     <FxCompile Include="shader\imageBasedLighting\imageBasedLightingRefPS.hlsl">
-      <Filter>UnknownVision\Shader\LTC</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\imageBasedLighting\imageBasedLightingRefPS_Backup2.hlsl">
       <Filter>UnknownVision\Shader\LTC</Filter>
     </FxCompile>
     <FxCompile Include="shader\imageBasedLighting\imageBasedLightingRefVS.hlsl">
       <Filter>UnknownVision\Shader\LTC</Filter>
     </FxCompile>
-    <FxCompile Include="shader\imageBasedLighting\imageBasedLightingVS.hlsl">
-      <Filter>UnknownVision\Shader\LTC</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\ScreenSpaceReflection\BuildLinkedListPS.hlsl">
-      <Filter>UnknownVision\Shader\SSR</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\ScreenSpaceReflection\BuildLinkedListVS.hlsl">
-      <Filter>UnknownVision\Shader\SSR</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\ScreenSpaceReflection\LinkedListArrangeCS.hlsl">
-      <Filter>UnknownVision\Shader\SSR</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\ScreenSpaceReflection\MultiLevelCS.hlsl">
-      <Filter>UnknownVision\Shader\SSR</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceBasicPS.hlsl">
-      <Filter>UnknownVision\Shader\SSR</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceBasicVS.hlsl">
-      <Filter>UnknownVision\Shader\SSR</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionCS.hlsl">
-      <Filter>UnknownVision\Shader\SSR</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionQuadPS.hlsl">
-      <Filter>UnknownVision\Shader\SSR</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceReflectionQuadVS.hlsl">
-      <Filter>UnknownVision\Shader\SSR</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceShowPS.hlsl">
-      <Filter>UnknownVision\Shader\SSR</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\ScreenSpaceReflection\ScreenSpaceShowVS.hlsl">
-      <Filter>UnknownVision\Shader\SSR</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGUpdatePosPS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGUpdatePosVS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGInitPointsCS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGSSDataPS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGSSDataVS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGRefPointCS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGCstShadowMapCS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGArrangeClusterCoreCS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGAverageClusterCoreCS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGCalClusterCoreCS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGShowPostProcessPS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGShowPostProcessVS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGRefPoint2CS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGShowPointsCS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGShowAscriptionCS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGShowShadowMapCS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGCstShadowMap2CS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGCalAscriptionCS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGSampleReflectionCS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGCstShadowMapVS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGCstShadowMapGS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGCstShadowMapPS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGArrangeClusterCorePS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGArrangeClusterCoreVS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGCstShadowMap2GS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGCstShadowMap2PS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGCstShadowMap2VS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGShowShadowMap2GS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGShowShadowMap2PS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGShowShadowMap2VS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGShowRefPntViewPS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGShowRefPntViewVS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGEdgeDetect.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGArrangeClusterCoreCS2.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGNormalizeAscriptionCS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
     <FxCompile Include="shader\Utility\Utility_ShadowMapVS.hlsl">
       <Filter>UnknownVision\Shader\Utility</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGRefRadiancePS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\MyAlg\MyALGRefRadianceVS.hlsl">
-      <Filter>UnknownVision\Shader\MyALG</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

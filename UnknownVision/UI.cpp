@@ -15,7 +15,9 @@ void UIRenderer::Init(IDXGISurface*& sur) {
 	const char* funcTag = "UIRenderer::Init: ";
 	float dpiX = 0, dpiY = 0;
 	HRESULT hr = S_OK;
-	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, m_factory.ReleaseAndGetAddressOf());
+	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, 
+		{D2D1_DEBUG_LEVEL_INFORMATION},
+		m_factory.ReleaseAndGetAddressOf());
 	if (FAILED(hr)) {
 		MLOG(LL, funcTag, LL, "Create D2D Factory failed!");
 		return;
