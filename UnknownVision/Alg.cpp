@@ -25,6 +25,18 @@ Sampler gLinearSampler(D3D11_FILTER_MIN_MAG_MIP_LINEAR);
 Sampler gPointSampler(D3D11_FILTER_MIN_MAG_MIP_POINT);
 MeshFactory gMF;
 
+void UITest(DefaultParameters) {
+	HRESULT hr;
+
+	UIRenderer uiSys = UIRenderer::GetInstance();
+	uiSys.Prepare();
+
+	mc->Run([&] {
+		uiSys.Draw();
+		renderer->EndRender();
+	});
+}
+
 void LTC(DefaultParameters) {
 	// ´´½¨camera
 	CAMERA_DESC camDesc(WIDTH, HEIGHT);
@@ -140,19 +152,6 @@ void LTC(DefaultParameters) {
 	mc->Run([&] {
 		pass0.Run(MainDevCtx).End(MainDevCtx);
 		pass1.Run(MainDevCtx).End(MainDevCtx);
-		renderer->EndRender();
-	});
-}
-
-
-void UITest(DefaultParameters) {
-	HRESULT hr;
-
-	UIRenderer uiSys = UIRenderer::GetInstance();
-	uiSys.Prepare();
-	
-	mc->Run([&] {
-		uiSys.Draw();
 		renderer->EndRender();
 	});
 }

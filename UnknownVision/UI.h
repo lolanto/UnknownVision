@@ -2,9 +2,13 @@
 #include <d2d1.h>
 #include <dxgi.h>
 #include <wrl.h>
+#include <vector>
 
 // 这只是UI的渲染器
 // 还需要设计UI的结构(事件分发，响应和处理等！)
+
+typedef D2D_POINT_2F PntF;
+typedef D2D_RECT_F RectF;
 
 class UIRenderer {
 public:
@@ -27,10 +31,20 @@ private:
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush>	m_brush;
 };
 
-class IUIElement {
+class BaseUI {
 public:
-	virtual void HandleMouseMove(float x, float y, UINT timeStamp, int param) {}
-	virtual void HandleMouseDown(float x, float y, UINT timeStamp, int param) {}
-	virtual void HandleMouseUp(float x, float y, UINT timeStamp, int param) {}
-	virtual void HandleKeyDown() {}
+	BaseUI(RectF _area, BaseUI* _parent);
+public:
+	BaseUI * parent, *left, *right;
+	std::vector<BaseUI*> childs;
+public:
+	RectF							area;
+	bool								reDraw;
+	virtual void Draw() = 0;
+};
+
+class BasicWindow :
+	public BaseUI
+{
+	void Draw();
 };
