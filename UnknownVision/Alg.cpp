@@ -16,7 +16,10 @@
 
 #include "UI.h"
 
+
 const float CUBE_MAP_SIZE = 1280.0f;
+const float WIDTH = 480.0f;
+const float HEIGHT = 320.0f;
 
 typedef DirectX::XMFLOAT4 float4;
 typedef DirectX::XMFLOAT2 float2;
@@ -28,8 +31,14 @@ MeshFactory gMF;
 void UITest(DefaultParameters) {
 	HRESULT hr;
 
-	UIRenderer uiSys = UIRenderer::GetInstance();
-	uiSys.Prepare();
+	UISystem& uiSys = UISystem::GetInstance();
+	uiSys.Init();
+
+	BasicWindow bw({ 0, 0, 50, 72 });
+	uiSys.Attach(&bw);
+
+	TextCtrl text(L"A", { 0, 0, 50, 72 });
+	uiSys.Attach(&text);
 
 	mc->Run([&] {
 		uiSys.Draw();

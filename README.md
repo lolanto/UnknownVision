@@ -4,7 +4,6 @@
 
 ### 3rdPart
 
-- [FreeType2.9.1](www.freetype.org)
 - [DirectXTex](https://github.com/Microsoft/DirectXTex/blob/master/LICENSE)
 - [assimp](https://github.com/assimp/assimp)
 

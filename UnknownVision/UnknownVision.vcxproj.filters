@@ -31,6 +31,9 @@
     <Filter Include="UnknownVision\Shader\Utility">
       <UniqueIdentifier>{3854b410-e6ca-4df8-8fc6-c93f39691182}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UnknownVision\QuadTree">
+      <UniqueIdentifier>{86d8cef4-7a55-49ec-85d7-054007d87050}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="entry.cpp">
@@ -93,6 +96,9 @@
     <ClCompile Include="Pass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="QuadTree\QTree.cpp">
+      <Filter>UnknownVision\QuadTree</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainClass.h">
@@ -148,6 +154,9 @@
     </ClInclude>
     <ClInclude Include="Light.h">
       <Filter>UnknownVision\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="QuadTree\QTree.h">
+      <Filter>UnknownVision\QuadTree</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

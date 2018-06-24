@@ -35,8 +35,8 @@ class MainClass;
 		} \
 	};
 
-const float WIDTH = 960.0f;
-const float HEIGHT = 960.0f;
+extern const float WIDTH;
+extern const float HEIGHT;
 
 void ImageBasedLighting(DefaultParameters);
 

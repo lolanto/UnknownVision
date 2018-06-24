@@ -65,25 +65,24 @@ DepthTexture* DXRenderer::GetMainDS() {
 // width/height: 视口的高和宽，单位px
 
 bool DXRenderer::InitSys(HWND hwnd, float width, float height) {
-	static const char* funcTag = "DXRenderer::InitSys: ";
 	// Create a reference device
 	if (!setReferenceDev(hwnd, width, height)) {
-		MLOG(LL, funcTag, LL, "initialize failed!");
+		MLOG(LL, __FUNCTION__, LL, "initialize failed!");
 		return false;
 	}
 	// set backbuffer
 	if (!setBackBuffer(hwnd, width, height)) {
-		MLOG(LL, funcTag, LL, "initialize failed!");
+		MLOG(LL, __FUNCTION__, LL, "initialize failed!");
 		return false;
 	}
 	// Create texture for depth and texture and its view
 	if (!setDepthStencil(hwnd, width, height)) {
-		MLOG(LL, funcTag, LL, "initialize failed!");
+		MLOG(LL, __FUNCTION__, LL, "initialize failed!");
 		return false;
 	}
 	// Create Raster state and viewport
 	if (!setRenderState(hwnd, width, height)) {
-		MLOG(LL, funcTag, LL, "initialize failed!");
+		MLOG(LL, __FUNCTION__, LL, "initialize failed!");
 		return false;
 	}
 	setInputLayout();
@@ -240,14 +239,4 @@ void DXRenderer::ClearUAV_FLOAT(IUnorderAccess* uav, DirectX::XMFLOAT4 clearValu
 	m_devContext->ClearUnorderedAccessViewFloat(uav->GetUAV(), &clearValue.x);
 }
 
-// Set iterate object
-//void DXRenderer::AddIterateObject(IterateObject* itobj) {
-//	m_iterateList.push_back(itobj);
-//}
-//
-//void DXRenderer::IterateFuncs() {
-//	for (auto iter = m_iterateList.begin(); iter != m_iterateList.end(); ++iter) {
-//		(*iter)->IterFunc(m_dev.Get(), m_devContext.Get());
-//	}
-//}
 

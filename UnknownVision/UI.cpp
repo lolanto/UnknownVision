@@ -1,5 +1,30 @@
 #include "UI.h"
 #include "InfoLog.h"
+#include <assert.h>
+
+extern const float WIDTH;
+extern const float HEIGHT;
+
+template<typename T>
+void EasyExchange(T& a, T& b) {
+	T temp = a;
+	a = b;
+	b = temp;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////   BaseUI   ///////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+
+BaseUI::BaseUI(RectF _area)
+	:QLeave(_area),
+	parent(nullptr), isNeedDraw(true) {
+	// 每一个初始化的UI都需要被绘制所以isNeedDraw是true
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////   UIRender   ////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
 
 UIRenderer& UIRenderer::GetInstance() {
 	static UIRenderer _instance;
@@ -12,18 +37,19 @@ UIRenderer::UIRenderer() : m_hasInit(false) {}
 // public function
 ///////////////////
 void UIRenderer::Init(IDXGISurface*& sur) {
-	const char* funcTag = "UIRenderer::Init: ";
 	float dpiX = 0, dpiY = 0;
 	HRESULT hr = S_OK;
+	// 准备D2D Factory
 	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, 
 		{D2D1_DEBUG_LEVEL_INFORMATION},
 		m_factory.ReleaseAndGetAddressOf());
 	if (FAILED(hr)) {
-		MLOG(LL, funcTag, LL, "Create D2D Factory failed!");
+		MLOG(LL, __FUNCTION__, LL, "Create D2D Factory failed!");
 		return;
 	}
-	m_factory.Get()->GetDesktopDpi(&dpiX, &dpiY);
 
+	// 准备RenderTarget
+	m_factory.Get()->GetDesktopDpi(&dpiX, &dpiY);
 	D2D1_RENDER_TARGET_PROPERTIES rtp;
 	ZeroMemory(&rtp, sizeof(rtp));
 	rtp.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
@@ -36,36 +62,183 @@ void UIRenderer::Init(IDXGISurface*& sur) {
 
 	hr = m_factory.Get()->CreateDxgiSurfaceRenderTarget(sur, &rtp, m_renderTarget.ReleaseAndGetAddressOf());
 	if (FAILED(hr)) {
-		MLOG(LL, funcTag, LL, "Create D2D Render Target failed!");
+		MLOG(LL, __FUNCTION__, LL, "Create D2D Render Target failed!");
 		return;
 	}
+
+	// 准备DirectWrite
+	hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory),
+		reinterpret_cast<IUnknown**>(m_writeFactory.ReleaseAndGetAddressOf()));
+	if (FAILED(hr)) {
+		MLOG(LL, __FUNCTION__, LL, "Create DirectX Write Failed!");
+		return;
+	}
+
+	// 准备默认字体格式
+	if (!TextCtrl::InitTextCtrl(m_writeFactory.Get(), m_renderTarget.Get())) return;
+	if (!BasicWindow::InitBasicWindow(m_writeFactory.Get(), m_renderTarget.Get())) return;
 
 	m_hasInit = true;
 }
 
-void UIRenderer::Prepare() {
-	if (!m_hasInit) return;
-	m_renderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White),
-		m_brush.ReleaseAndGetAddressOf());
+inline void UIRenderer::StartRender() {
+	m_renderTarget->BeginDraw();
 }
 
-void UIRenderer::Draw() {
-	if (!m_hasInit) return;
-	m_renderTarget->BeginDraw();
-	m_renderTarget->DrawRectangle(
-		D2D1::RectF(0, 0, 100, 100), m_brush.Get()
-	);
+inline void UIRenderer::EndRender() {
 	m_renderTarget->EndDraw();
 }
 
-BaseUI::BaseUI(RectF _area, BaseUI* _parent)
- :parent(_parent), left(nullptr), right(nullptr),
- area(_area), reDraw(true){
-	// TODO: 需要修改父节点中子节点的左右指针！
+inline void UIRenderer::RenderText(std::wstring& str, IDWriteTextFormat* format, RectF area, ID2D1SolidColorBrush* brush) {
+	m_renderTarget->DrawTextA(str.c_str(), str.length(), format, area, brush);
 }
 
-void BasicWindow::Draw() {
-	// TODO: 利用Direct2D绘制窗口
+inline void UIRenderer::RenderRectangle(RectF& area, ID2D1Brush* brush, float stroke, ID2D1StrokeStyle* strokeStyle) {
+	m_renderTarget->DrawRectangle(area, brush, stroke, strokeStyle);
+}
+
+inline void UIRenderer::RenderRoundedRectangle(RectF& area, ID2D1Brush* brush, float stroke, ID2D1StrokeStyle* strokeStyle) {
+	m_renderTarget->DrawRoundedRectangle({ area , 3.0f, 3.0f}, brush, stroke, strokeStyle);
+}
+inline void UIRenderer::FilledRectangle(RectF& area, ID2D1Brush* brush) {
+	m_renderTarget->FillRectangle(area, brush);
+}
+
+inline void UIRenderer::FilledRoundedRectangle(RectF& area, ID2D1Brush* brush) {
+	m_renderTarget->FillRoundedRectangle({ area, 3.0f, 3.0f }, brush);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////   UISystem   ////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+BaseUI UISystem::RootUINode;
+
+///////////////////
+// public function
+///////////////////
+
+UISystem& UISystem::GetInstance() {
+	static UISystem _instance;
+	return _instance;
+}
+
+void UISystem::Init() {
+	// 初始化QT树
+	m_qTree = QTree({ 0, 0, WIDTH, HEIGHT }, 4);
+}
+
+void UISystem::Attach(BaseUI* child) {
+	RootUINode.childs.push_back(child);
+	m_qTree.Insert(child);
+}
+
+void UISystem::Attach(BaseUI* child, BaseUI* parent) {
+	parent->childs.push_back(child);
+	m_qTree.Insert(child);
+}
+
+void UISystem::Draw() {
+	// 开始渲染
+	UIRenderer::GetInstance().StartRender();
+	traverseUITree(&RootUINode, false, &UIRenderer::GetInstance());
+	UIRenderer::GetInstance().EndRender();
+}
+
+void UISystem::TaskProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	// 确定该行为是什么类型的操作
+	// 确定该行为触发的UI元素
+	// 确定该UI元素是否需要重新绘制
+}
+
+void UISystem::RedrawUI(BaseUI* ui) {
+	// 设置UI在渲染树中的状态为需要渲染
+	ui->isNeedDraw = true;
+	std::vector<QLeave*> container = std::vector<QLeave*>(0);
+	if (m_qTree.CollisionDetect(ui->area, container)) {
+		for (auto& iter : container) {
+			BaseUI* uiPt = static_cast<BaseUI*>(iter);
+			uiPt->isNeedDraw = true;
+		}
+	}
+}
+
+///////////////////
+// private function
+///////////////////
+
+void UISystem::traverseUITree(BaseUI* root, bool drawFlag, UIRenderer* renderer) {
+	if (drawFlag) {
+		root->Draw(renderer);
+		root->isNeedDraw = false;
+		for (auto& iter : root->childs)
+			traverseUITree(iter, true, renderer);
+	}
+	else {
+		if (root->isNeedDraw) {
+			root->Draw(renderer);
+			root->isNeedDraw = false;
+			for (auto& iter : root->childs)
+				traverseUITree(iter, true, renderer);
+		}
+		else {
+			for (auto& iter : root->childs)
+				traverseUITree(iter, false, renderer);
+		}
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////   Basic Window   ////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> BasicWindow::DefaultBrush;
+
+inline bool BasicWindow::InitBasicWindow(IDWriteFactory* factory, ID2D1RenderTarget* rt) {
+	rt->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Gray), DefaultBrush.ReleaseAndGetAddressOf());
+	return true;
+}
+
+BasicWindow::BasicWindow(RectF _area)
+	:BaseUI(_area) {}
+
+void BasicWindow::Draw(UIRenderer* renderer) {
+	renderer->FilledRoundedRectangle(BaseUI::area, DefaultBrush.Get());
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////   TextCtrl   //////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+
+Microsoft::WRL::ComPtr<IDWriteTextFormat> TextCtrl::DefaultFormat;
+Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> TextCtrl::DefaultBrush;
+
+inline bool TextCtrl::InitTextCtrl(IDWriteFactory* factory, ID2D1RenderTarget* rt) {
+	HRESULT hr = factory->CreateTextFormat(
+		DEFAULT_FONT_FAMILY,
+		nullptr,
+		DWRITE_FONT_WEIGHT_REGULAR,
+		DWRITE_FONT_STYLE_NORMAL,
+		DWRITE_FONT_STRETCH_NORMAL,
+		72.0f,
+		L"en-us",
+		DefaultFormat.ReleaseAndGetAddressOf());
+	if (FAILED(hr)) {
+		MLOG(LL, __FUNCTION__, LL, "Create default text format failed!");
+		return false;
+	}
+	DefaultFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+	DefaultFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+
+	rt->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White),
+		DefaultBrush.ReleaseAndGetAddressOf());
+
+	return true;
+}
+
+TextCtrl::TextCtrl(std::wstring str, RectF area) 
+	:BaseUI(area), content(str) {}
+
+void TextCtrl::Draw(UIRenderer* renderer) {
+	renderer->RenderText(content, DefaultFormat.Get(), BaseUI::area, DefaultBrush.Get());
 }
 
 // 绘制内容全部放在backbuffer中
