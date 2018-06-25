@@ -1,6 +1,10 @@
 #include "UI.h"
 #include "InfoLog.h"
+#include "MainClass.h"
+#include <iostream>
 #include <assert.h>
+#include <time.h>
+#include <windowsx.h>
 
 extern const float WIDTH;
 extern const float HEIGHT;
@@ -20,6 +24,10 @@ BaseUI::BaseUI(RectF _area)
 	:QLeave(_area),
 	parent(nullptr), isNeedDraw(true) {
 	// 每一个初始化的UI都需要被绘制所以isNeedDraw是true
+}
+
+void BaseUI::EventHandle(UI_EVENT e, UISystem& sys) {
+	if (e == UI_EVENT_MOUSE_CLICK) sys.SetToTop(this);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -129,23 +137,53 @@ void UISystem::Init() {
 
 void UISystem::Attach(BaseUI* child) {
 	RootUINode.childs.push_back(child);
+	child->parent = &RootUINode;
 	m_qTree.Insert(child);
 }
 
 void UISystem::Attach(BaseUI* child, BaseUI* parent) {
 	parent->childs.push_back(child);
+	child->parent = parent;
 	m_qTree.Insert(child);
 }
 
 void UISystem::Draw() {
 	// 开始渲染
 	UIRenderer::GetInstance().StartRender();
+	m_curZOrder = 0;
 	traverseUITree(&RootUINode, false, &UIRenderer::GetInstance());
 	UIRenderer::GetInstance().EndRender();
 }
 
+void UISystem::SetToTop(BaseUI* ui) { moveNodeToRight(ui); }
+
 void UISystem::TaskProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	// 确定该行为是什么类型的操作
+	UI_EVENT eveType;
+	std::vector<QLeave*> container;
+	UINT maxOrder = 0;
+	BaseUI* targetUI = nullptr;
+	PntF curPos, lastPos;
+	MOUSE_BEHAVIOR behavior;
+	MainClass::MainMouse.GetMouseState(curPos.x, curPos.y, behavior,
+		&lastPos.x, &lastPos.y);
+	switch (behavior) {
+	// 根据不同类型的鼠标行为选择UI的处理方式
+	case MOUSE_BEHAVIOR_CLICK:
+		if (m_qTree.CollisionDetect(curPos, container)) {
+			for (auto& iter : container) {
+				BaseUI* uiPt = static_cast<BaseUI*>(iter);
+				if (maxOrder < uiPt->zOrder) {
+					maxOrder = uiPt->zOrder;
+					targetUI = uiPt;
+				}
+			}
+			if (targetUI) targetUI->EventHandle(UI_EVENT_MOUSE_CLICK, *this);
+		}
+		break;
+	default:
+		break;
+	}
 	// 确定该行为触发的UI元素
 	// 确定该UI元素是否需要重新绘制
 }
@@ -167,6 +205,7 @@ void UISystem::RedrawUI(BaseUI* ui) {
 ///////////////////
 
 void UISystem::traverseUITree(BaseUI* root, bool drawFlag, UIRenderer* renderer) {
+	root->zOrder = m_curZOrder++;
 	if (drawFlag) {
 		root->Draw(renderer);
 		root->isNeedDraw = false;
@@ -185,6 +224,16 @@ void UISystem::traverseUITree(BaseUI* root, bool drawFlag, UIRenderer* renderer)
 				traverseUITree(iter, false, renderer);
 		}
 	}
+}
+
+void UISystem::moveNodeToRight(BaseUI* input) {
+	BaseUI* parent = input->parent;
+	parent->childs.remove(input);
+	parent->childs.push_back(input);
+	if (input->parent != &RootUINode)
+		moveNodeToRight(parent);
+	else
+		input->isNeedDraw = true;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

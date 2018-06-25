@@ -13,6 +13,7 @@
 const WCHAR DEFAULT_FONT_FAMILY[] = L"Georgia";
 
 class UIRenderer;
+class UISystem;
 enum UI_EVENT {
 	UI_EVENT_MOUSE_HOVER,
 	UI_EVENT_MOUSE_CLICK,
@@ -27,8 +28,9 @@ public:
 	BaseUI*						parent;
 	std::list<BaseUI*>			childs;
 	bool						isNeedDraw;
+	UINT						zOrder;
 public:
-	virtual void EventHandle(UI_EVENT) {};
+	virtual void EventHandle(UI_EVENT, UISystem&);
 	virtual void Draw(UIRenderer*) {};
 };
 
@@ -67,6 +69,8 @@ public:
 	void TaskProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	// 强行重绘某个UI
 	void RedrawUI(BaseUI*);
+	// 让某个UI及其父亲节点至于顶层
+	void SetToTop(BaseUI*);
 	// 绘制UI的接口
 	void Draw();
 	// 初始化系统
@@ -74,9 +78,14 @@ public:
 private:
 	// 遍历UI树以及调用渲染方法
 	void traverseUITree(BaseUI* root, bool drawFlag, UIRenderer*);
+	// 将输入节点移到父节点的最右边
+	void moveNodeToRight(BaseUI* input);
 private:
 	QTree											m_qTree;
+	UINT											m_curZOrder;
 };
+
+// 不同类型的UI应该对某几个UI事件做出不同类型的响应
 
 class BasicWindow 
 	:public BaseUI
@@ -94,7 +103,7 @@ class TextCtrl : public BaseUI
 {
 public:
 	// 字体默认格式
-	static Microsoft::WRL::ComPtr<IDWriteTextFormat>		DefaultFormat;
+	static Microsoft::WRL::ComPtr<IDWriteTextFormat>	DefaultFormat;
 	// 字体颜色
 	static Microsoft::WRL::ComPtr<ID2D1SolidColorBrush>	DefaultBrush;
 	static bool InitTextCtrl(IDWriteFactory*, ID2D1RenderTarget*);

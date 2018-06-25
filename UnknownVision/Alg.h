@@ -12,7 +12,7 @@ class MainClass;
 
 // 默认摄像机控制器的设置
 #define CameraControllerSetting(x) \
-	MainClass::UserFunc = [&x](HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)->void { \
+	MainClass::UserFunc.push_back([&x](HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)->void { \
 		switch (uMsg) { \
 			case WM_MOUSEMOVE: \
 				x.MouseMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)); \
@@ -33,7 +33,7 @@ class MainClass;
 				x.MouseWheel(GET_WHEEL_DELTA_WPARAM(wParam)); \
 				break; \
 		} \
-	};
+	});
 
 extern const float WIDTH;
 extern const float HEIGHT;
