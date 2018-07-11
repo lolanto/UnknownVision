@@ -22,7 +22,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{B580F29A-3D9D-41EB-BE23-E28511811FF4}</ProjectGuid>
     <RootNamespace>UnknownVision</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -70,8 +70,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)3rdPart\assimp\include;$(SolutionDir)3rdPart\DirectXTex\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)3rdPart\assimp;$(SolutionDir)3rdPart\DirectXTex\lib\Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)3rdPart\pugixml\include;$(SolutionDir)3rdPart\assimp\include;$(SolutionDir)3rdPart\DirectXTex\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)3rdPart\pugixml\lib\$(PlatformTarget)\$(Configuration);$(SolutionDir)3rdPart\assimp;$(SolutionDir)3rdPart\DirectXTex\lib\Debug;$(LibraryPath)</LibraryPath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -81,7 +81,7 @@
       <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>assimp.lib;d3d11.lib;D2d1.lib;DXGI.lib;D3DCompiler.lib;DirectXTex_32.lib;Windowscodecs.lib;Dwrite.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>assimp.lib;d3d11.lib;D2d1.lib;DXGI.lib;D3DCompiler.lib;DirectXTex_32.lib;Windowscodecs.lib;Dwrite.lib;pugixml.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -200,6 +200,9 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="UILayout.xml" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

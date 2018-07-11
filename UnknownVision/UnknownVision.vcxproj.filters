@@ -31,7 +31,16 @@
     <Filter Include="UnknownVision\Shader\Utility">
       <UniqueIdentifier>{3854b410-e6ca-4df8-8fc6-c93f39691182}</UniqueIdentifier>
     </Filter>
-    <Filter Include="UnknownVision\QuadTree">
+    <Filter Include="UnknownVision\UI">
+      <UniqueIdentifier>{95e761a6-6bc5-49ad-aa93-dfcff62433e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UnknownVision\UI\Header">
+      <UniqueIdentifier>{4eec2dd1-39d8-4b4a-8a40-5ae131e6a34e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UnknownVision\UI\Source">
+      <UniqueIdentifier>{627e3248-4055-4354-86dd-9229b4d55f6a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UnknownVision\UI\QuadTree">
       <UniqueIdentifier>{86d8cef4-7a55-49ec-85d7-054007d87050}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -72,9 +81,6 @@
     <ClCompile Include="Shader.cpp">
       <Filter>UnknownVision\Scrouce</Filter>
     </ClCompile>
-    <ClCompile Include="UI.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
     <ClCompile Include="UnknownObject.cpp">
       <Filter>UnknownVision\Scrouce</Filter>
     </ClCompile>
@@ -97,7 +103,10 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="QuadTree\QTree.cpp">
-      <Filter>UnknownVision\QuadTree</Filter>
+      <Filter>UnknownVision\UI\QuadTree</Filter>
+    </ClCompile>
+    <ClCompile Include="UI.cpp">
+      <Filter>UnknownVision\UI\Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -128,9 +137,6 @@
     <ClInclude Include="Shader.h">
       <Filter>UnknownVision\Header</Filter>
     </ClInclude>
-    <ClInclude Include="UI.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
     <ClInclude Include="UnknownObject.h">
       <Filter>UnknownVision\Header</Filter>
     </ClInclude>
@@ -156,7 +162,10 @@
       <Filter>UnknownVision\Header</Filter>
     </ClInclude>
     <ClInclude Include="QuadTree\QTree.h">
-      <Filter>UnknownVision\QuadTree</Filter>
+      <Filter>UnknownVision\UI\QuadTree</Filter>
+    </ClInclude>
+    <ClInclude Include="UI.h">
+      <Filter>UnknownVision\UI\Header</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -178,5 +187,10 @@
     <FxCompile Include="shader\Utility\Utility_ShadowMapVS.hlsl">
       <Filter>UnknownVision\Shader\Utility</Filter>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="UILayout.xml">
+      <Filter>资源文件</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

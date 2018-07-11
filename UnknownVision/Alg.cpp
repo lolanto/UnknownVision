@@ -31,28 +31,36 @@ MeshFactory gMF;
 void UITest(DefaultParameters) {
 	HRESULT hr;
 
-	UISystem& uiSys = UISystem::GetInstance();
-	uiSys.Init();
-	MainClass::UserFunc.push_back([&uiSys](
-		HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-		uiSys.TaskProc(hWnd, uMsg, wParam, lParam);
-	});
-
-	BasicWindow bw1({ 0, 0, 50, 72 });
-	uiSys.Attach(&bw1);
-
-	TextCtrl text1(L"A", { 0, 0, 50, 72 });
-	uiSys.Attach(&text1, &bw1);
-
-	BasicWindow bw2({ 20, 20, 70, 100 });
-	uiSys.Attach(&bw2);
-	TextCtrl text2(L"B", { 20, 20, 70, 100 });
-	uiSys.Attach(&text2, &bw2);
+	UIRenderer& uiR = UIRenderer::GetInstance();
+	uiR.test();
 
 	mc->Run([&] {
-		uiSys.Draw();
+		uiR.test2();
 		renderer->EndRender();
 	});
+
+	//UISystem& uiSys = UISystem::GetInstance();
+	//uiSys.Init();
+	//MainClass::UserFunc.push_back([&uiSys](
+	//	HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	//	uiSys.TaskProc(hWnd, uMsg, wParam, lParam);
+	//});
+
+	//BasicWindow bw1({ 0, 0, 50, 72 });
+	//uiSys.Attach(&bw1);
+
+	//TextCtrl text1(L"A", { 0, 0, 50, 72 });
+	//uiSys.Attach(&text1, &bw1);
+
+	//BasicWindow bw2({ 20, 20, 70, 100 });
+	//uiSys.Attach(&bw2);
+	//TextCtrl text2(L"B", { 20, 20, 70, 100 });
+	//uiSys.Attach(&text2, &bw2);
+
+	//mc->Run([&] {
+	//	uiSys.Draw();
+	//	renderer->EndRender();
+	//});
 }
 
 void LTC(DefaultParameters) {

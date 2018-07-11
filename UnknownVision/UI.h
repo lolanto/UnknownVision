@@ -4,7 +4,7 @@
 #include <wrl.h>
 #include <list>
 #include <dwrite.h>
-
+#include <pugixml.hpp>
 #include "QuadTree\QTree.h"
 
 // 这只是UI的渲染器
@@ -47,14 +47,19 @@ public:
 
 	void StartRender();
 	void EndRender();
+
+	void test();
+	void test2();
 private:
 	UIRenderer();
 private:
-	bool											m_hasInit;
+	bool																	m_hasInit;
 	Microsoft::WRL::ComPtr<ID2D1Factory>			m_factory;
-	Microsoft::WRL::ComPtr<ID2D1RenderTarget>		m_renderTarget;
+	Microsoft::WRL::ComPtr<ID2D1RenderTarget>	m_renderTarget;
 	// about DirectX Write
 	Microsoft::WRL::ComPtr<IDWriteFactory>			m_writeFactory;
+
+	Microsoft::WRL::ComPtr<ID2D1BitmapRenderTarget> m_bitMapTarget;
 };
 
 class UISystem {
@@ -62,6 +67,7 @@ public:
 	static BaseUI RootUINode;
 	static UISystem& GetInstance();
 public:
+	void AnalyseXML(char* xmlFile);
 	// UI节点的增加
 	void Attach(BaseUI* child);
 	void Attach(BaseUI* child, BaseUI* parent);
@@ -99,7 +105,7 @@ public:
 	void Draw(UIRenderer*);
 };
 
-class TextCtrl : public BaseUI
+class LabelCtrl : public BaseUI
 {
 public:
 	// 字体默认格式
@@ -108,7 +114,7 @@ public:
 	static Microsoft::WRL::ComPtr<ID2D1SolidColorBrush>	DefaultBrush;
 	static bool InitTextCtrl(IDWriteFactory*, ID2D1RenderTarget*);
 public:
-	TextCtrl(std::wstring str, RectF _area);
+	LabelCtrl(std::wstring str, RectF _area);
 	std::wstring content;
 public:
 	void Draw(UIRenderer*);

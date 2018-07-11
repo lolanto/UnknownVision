@@ -83,7 +83,7 @@ void UIRenderer::Init(IDXGISurface*& sur) {
 	}
 
 	// 准备默认字体格式
-	if (!TextCtrl::InitTextCtrl(m_writeFactory.Get(), m_renderTarget.Get())) return;
+	if (!LabelCtrl::InitTextCtrl(m_writeFactory.Get(), m_renderTarget.Get())) return;
 	if (!BasicWindow::InitBasicWindow(m_writeFactory.Get(), m_renderTarget.Get())) return;
 
 	m_hasInit = true;
@@ -95,6 +95,29 @@ inline void UIRenderer::StartRender() {
 
 inline void UIRenderer::EndRender() {
 	m_renderTarget->EndDraw();
+}
+
+void UIRenderer::test()
+{
+	m_renderTarget->CreateCompatibleRenderTarget(m_bitMapTarget.ReleaseAndGetAddressOf());
+}
+
+void UIRenderer::test2()
+{
+	m_bitMapTarget->BeginDraw();
+	m_bitMapTarget->Clear({1.0, 1.0, 1.0, 0.0});
+	m_bitMapTarget->DrawRectangle({ 0, 0, 30, 30 }, BasicWindow::DefaultBrush.Get());
+	m_bitMapTarget->EndDraw();
+
+	ID2D1Bitmap* tempBit;
+	m_bitMapTarget->GetBitmap(&tempBit);
+
+	m_renderTarget->BeginDraw();
+	m_renderTarget->Clear();
+	m_renderTarget->DrawBitmap(tempBit);
+	m_renderTarget->EndDraw();
+
+	tempBit->Release();
 }
 
 inline void UIRenderer::RenderText(std::wstring& str, IDWriteTextFormat* format, RectF area, ID2D1SolidColorBrush* brush) {
@@ -257,10 +280,10 @@ void BasicWindow::Draw(UIRenderer* renderer) {
 ///////////////////////////////////   TextCtrl   //////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
-Microsoft::WRL::ComPtr<IDWriteTextFormat> TextCtrl::DefaultFormat;
-Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> TextCtrl::DefaultBrush;
+Microsoft::WRL::ComPtr<IDWriteTextFormat> LabelCtrl::DefaultFormat;
+Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> LabelCtrl::DefaultBrush;
 
-inline bool TextCtrl::InitTextCtrl(IDWriteFactory* factory, ID2D1RenderTarget* rt) {
+inline bool LabelCtrl::InitTextCtrl(IDWriteFactory* factory, ID2D1RenderTarget* rt) {
 	HRESULT hr = factory->CreateTextFormat(
 		DEFAULT_FONT_FAMILY,
 		nullptr,
@@ -283,10 +306,10 @@ inline bool TextCtrl::InitTextCtrl(IDWriteFactory* factory, ID2D1RenderTarget* r
 	return true;
 }
 
-TextCtrl::TextCtrl(std::wstring str, RectF area) 
+LabelCtrl::LabelCtrl(std::wstring str, RectF area) 
 	:BaseUI(area), content(str) {}
 
-void TextCtrl::Draw(UIRenderer* renderer) {
+void LabelCtrl::Draw(UIRenderer* renderer) {
 	renderer->RenderText(content, DefaultFormat.Get(), BaseUI::area, DefaultBrush.Get());
 }
 
