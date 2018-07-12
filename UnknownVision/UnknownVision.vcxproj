@@ -143,6 +143,7 @@
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="UI.cpp" />
+    <ClCompile Include="UIRenderer.cpp" />
     <ClCompile Include="UnknownObject.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -164,6 +165,7 @@
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="UI.h" />
+    <ClInclude Include="UIRenderer.h" />
     <ClInclude Include="UnknownObject.h" />
   </ItemGroup>
   <ItemGroup>

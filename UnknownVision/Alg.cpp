@@ -13,7 +13,7 @@
 #include "Pass.h"
 #include "Canvas.h"
 #include "Light.h"
-
+#include "UIRenderer.h"
 #include "UI.h"
 
 
@@ -32,35 +32,22 @@ void UITest(DefaultParameters) {
 	HRESULT hr;
 
 	UIRenderer& uiR = UIRenderer::GetInstance();
-	uiR.test();
-
-	mc->Run([&] {
-		uiR.test2();
-		renderer->EndRender();
+	
+	UVUI::UISystem& uiSys = UVUI::UISystem::GetInstance();
+	uiSys.Init();
+	MainClass::UserFunc.push_back([&uiSys](
+		HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+		uiSys.SysEventProc(hWnd, uMsg, wParam, lParam);
 	});
 
-	//UISystem& uiSys = UISystem::GetInstance();
-	//uiSys.Init();
-	//MainClass::UserFunc.push_back([&uiSys](
-	//	HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	//	uiSys.TaskProc(hWnd, uMsg, wParam, lParam);
-	//});
+	UVUI::Label label = UVUI::Label(L"ÄãºÃ", { 0, 0, 80, 30 }, { 1.0, 1.0, 1.0, 1.0 }, {0.5, 0.5, 0.5, 1.0f});
+	uiSys.AddUI(&label);
 
-	//BasicWindow bw1({ 0, 0, 50, 72 });
-	//uiSys.Attach(&bw1);
-
-	//TextCtrl text1(L"A", { 0, 0, 50, 72 });
-	//uiSys.Attach(&text1, &bw1);
-
-	//BasicWindow bw2({ 20, 20, 70, 100 });
-	//uiSys.Attach(&bw2);
-	//TextCtrl text2(L"B", { 20, 20, 70, 100 });
-	//uiSys.Attach(&text2, &bw2);
-
-	//mc->Run([&] {
-	//	uiSys.Draw();
-	//	renderer->EndRender();
-	//});
+	mc->Run([&] {
+		uiSys.Draw();
+		label.SetText(L"what!");
+		renderer->EndRender();
+	});
 }
 
 void LTC(DefaultParameters) {

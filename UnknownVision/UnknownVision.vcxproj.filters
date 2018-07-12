@@ -108,6 +108,9 @@
     <ClCompile Include="UI.cpp">
       <Filter>UnknownVision\UI\Source</Filter>
     </ClCompile>
+    <ClCompile Include="UIRenderer.cpp">
+      <Filter>UnknownVision\UI\Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainClass.h">
@@ -165,6 +168,9 @@
       <Filter>UnknownVision\UI\QuadTree</Filter>
     </ClInclude>
     <ClInclude Include="UI.h">
+      <Filter>UnknownVision\UI\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="UIRenderer.h">
       <Filter>UnknownVision\UI\Header</Filter>
     </ClInclude>
   </ItemGroup>

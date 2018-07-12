@@ -1,121 +1,115 @@
 #pragma once
-#include <d2d1.h>
-#include <dxgi.h>
-#include <wrl.h>
 #include <list>
 #include <dwrite.h>
-#include <pugixml.hpp>
+#include <functional>
 #include "QuadTree\QTree.h"
+#include "Canvas.h"
+#include "Pass.h"
+#include "Shader.h"
+#include <d2d1.h>
 
 // 这只是UI的渲染器
 // 还需要设计UI的结构(事件分发，响应和处理等！)
 
-const WCHAR DEFAULT_FONT_FAMILY[] = L"Georgia";
+/*=====================
+ ! Unknown Vision User Interface !
+ ====================*/
+namespace UVUI {
 
-class UIRenderer;
-class UISystem;
-enum UI_EVENT {
-	UI_EVENT_MOUSE_HOVER,
-	UI_EVENT_MOUSE_CLICK,
-	UI_EVENT_MOUSE_DCLICK,
-	UI_EVENT_MOUSE_DRAG
-};
+	enum EVENT_TYPE {
+		EVENT_IDEL = 0,
+		EVENT_MOUSE_CLICK,
+		EVENT_MOUSE_HOVER,
+		EVENT_MOUSE_DRAG
+	};
 
-class BaseUI : public QLeave {
-public:
-	BaseUI(RectF _area = {0, 0, 0, 0});
-public:
-	BaseUI*						parent;
-	std::list<BaseUI*>			childs;
-	bool						isNeedDraw;
-	UINT						zOrder;
-public:
-	virtual void EventHandle(UI_EVENT, UISystem&);
-	virtual void Draw(UIRenderer*) {};
-};
+	struct EVENT_DATA {
+		EVENT_TYPE		type;
+		PntF					mouseCurPOS; // 鼠标当前位置
+		PntF					mouseOffsetPos; // 鼠标位置偏移值
+	};
 
-class UIRenderer {
-public:
-	static UIRenderer& GetInstance();
-public:
-	void Init(IDXGISurface*&);
-	void RenderText(std::wstring&, IDWriteTextFormat*, RectF, ID2D1SolidColorBrush*);
-	void RenderRectangle(RectF&, ID2D1Brush*, float = 1.0f, ID2D1StrokeStyle* = nullptr);
-	void RenderRoundedRectangle(RectF&, ID2D1Brush*, float = 1.0f, ID2D1StrokeStyle* = nullptr);
-	void FilledRectangle(RectF&, ID2D1Brush*);
-	void FilledRoundedRectangle(RectF&, ID2D1Brush*);
+	typedef std::function<void(EVENT_DATA*)> EventFunc;
 
-	void StartRender();
-	void EndRender();
+	class RenderObject {
+	public:
+		RenderObject(bool _visible = true) :visible(visible),redraw(false)  {}
+		virtual void Draw() = 0;
+	public:
+		bool				visible;
+		bool				redraw;
+	};
 
-	void test();
-	void test2();
-private:
-	UIRenderer();
-private:
-	bool																	m_hasInit;
-	Microsoft::WRL::ComPtr<ID2D1Factory>			m_factory;
-	Microsoft::WRL::ComPtr<ID2D1RenderTarget>	m_renderTarget;
-	// about DirectX Write
-	Microsoft::WRL::ComPtr<IDWriteFactory>			m_writeFactory;
+	class EventHandler {
+	public:
+		EventHandler();
+		virtual void HandleEvent(EVENT_DATA*);
+		void SetEvent(EVENT_TYPE, EventFunc);
+	protected:
+		EventFunc		click;
+		EventFunc		hover;
+		EventFunc		drag;
+	};
 
-	Microsoft::WRL::ComPtr<ID2D1BitmapRenderTarget> m_bitMapTarget;
-};
+	class UIObject :
+		public QLeave,
+		public RenderObject,
+		public EventHandler {
+	public:
+		UIObject(RectF area, bool visible = true);
+	protected:
+		UINT id;
+		void DispatchDrawRequest();
+	};
 
-class UISystem {
-public:
-	static BaseUI RootUINode;
-	static UISystem& GetInstance();
-public:
-	void AnalyseXML(char* xmlFile);
-	// UI节点的增加
-	void Attach(BaseUI* child);
-	void Attach(BaseUI* child, BaseUI* parent);
-	// Windows事件处理函数
-	void TaskProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	// 强行重绘某个UI
-	void RedrawUI(BaseUI*);
-	// 让某个UI及其父亲节点至于顶层
-	void SetToTop(BaseUI*);
-	// 绘制UI的接口
-	void Draw();
-	// 初始化系统
-	void Init();
-private:
-	// 遍历UI树以及调用渲染方法
-	void traverseUITree(BaseUI* root, bool drawFlag, UIRenderer*);
-	// 将输入节点移到父节点的最右边
-	void moveNodeToRight(BaseUI* input);
-private:
-	QTree											m_qTree;
-	UINT											m_curZOrder;
-};
+	class Label : public UIObject {
+	public:
+		Label(std::wstring text, RectF area, D2D_COLOR_F txtColor = {1.0f, 1.0f, 1.0f, 1.0f}, 
+			D2D_COLOR_F bkgColor = {0.0f, 0.0f, 0.0f, 1.0f});
+		void SetText(std::wstring text);
+		void SetBkgColor(D2D_COLOR_F color);
+		void SetTxtColor(D2D_COLOR_F color);
+		void HandleEvent(EVENT_DATA*);
+		void Draw();
+	private:
+		std::wstring			m_text;
+		D2D_COLOR_F		m_bkgColor;
+		D2D_COLOR_F		m_txtColor;
+	};
 
-// 不同类型的UI应该对某几个UI事件做出不同类型的响应
 
-class BasicWindow 
-	:public BaseUI
-{
-public:
-	static Microsoft::WRL::ComPtr<ID2D1SolidColorBrush>	DefaultBrush;
-	static bool InitBasicWindow(IDWriteFactory*, ID2D1RenderTarget*);
-public:
-	BasicWindow(RectF _area);
-public:
-	void Draw(UIRenderer*);
-};
+	class FrameBox : public UIObject {
+	public:
+		FrameBox(RectF area);
+		void HandleEvent(EVENT_DATA*);
+		void Draw();
+	private:
+		Canvas				cvs;
+		ShadingPass		sp;
+		VertexShader	vs;
+		PixelShader		ps;
+	};
 
-class LabelCtrl : public BaseUI
-{
-public:
-	// 字体默认格式
-	static Microsoft::WRL::ComPtr<IDWriteTextFormat>	DefaultFormat;
-	// 字体颜色
-	static Microsoft::WRL::ComPtr<ID2D1SolidColorBrush>	DefaultBrush;
-	static bool InitTextCtrl(IDWriteFactory*, ID2D1RenderTarget*);
-public:
-	LabelCtrl(std::wstring str, RectF _area);
-	std::wstring content;
-public:
-	void Draw(UIRenderer*);
-};
+	class Slider : public RenderObject {
+
+	};
+
+	class CheckBox : public RenderObject {
+
+	};
+
+	class UISystem {
+	public:
+		static UISystem & GetInstance();
+		void SysEventProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		void Init();
+		void AddUI(UIObject*);
+		void AddDrawRequest(UIObject*);
+		void Draw();
+	private:
+		UISystem() {}
+	private:
+		QTree						m_qTree;
+		std::list<UIObject*>	m_drawList;
+	};
+}

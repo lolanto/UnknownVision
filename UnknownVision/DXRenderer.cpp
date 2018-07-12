@@ -8,7 +8,7 @@
 #include "Resource.h"
 #include "Texture.h"
 #include "Pass.h"
-
+#include "UIRenderer.h"
 #include <fstream>
 
 D3D11_INPUT_ELEMENT_DESC DXRenderer::Static_InputElementDesc[] = {
