@@ -59,8 +59,9 @@ private:
 	Microsoft::WRL::ComPtr<IDXGISwapChain>												m_swapChain;
 
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>											m_comInputLayout;
-	RasterState																									m_defRasterState;
+	RasterState																								m_defRasterState;
 	D3D11_VIEWPORT																						m_defViewport;
-	std::shared_ptr<RenderTargetWrapper>														m_mainRenderTarget;
+	std::shared_ptr<RenderTargetWrapper>													m_mainRenderTarget;
 	std::shared_ptr<DepthTexture>																	m_mainDepthTexture;
+
 };

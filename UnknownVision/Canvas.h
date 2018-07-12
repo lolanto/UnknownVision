@@ -20,6 +20,7 @@ public:
 	void GenMipMap(ID3D11DeviceContext*);
 	void GenArray(UINT size = 6);
 	void SetUARes(bool v = true, bool simRW = false);
+	ID3D11Texture2D* GetTex();
 private:
 	// 由于DX11.0的UAV支持读写的格式有限，故需要一些转换工作
 	bool formatCheckForUARes();

@@ -121,6 +121,11 @@ void Canvas::GenArray(UINT size) { m_arraySize = size; }
 void Canvas::SetMipmap(bool v) { m_hasMipmap = v; }
 void Canvas::SetUARes(bool ua, bool simRW) { m_isUnorderAccess = ua; m_simultaneouslyRW = simRW; }
 
+ID3D11Texture2D * Canvas::GetTex()
+{
+	return m_tex2d.Get();
+}
+
 
 /////////////////////////////////////
 // private function

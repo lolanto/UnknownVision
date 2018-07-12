@@ -99,9 +99,6 @@
     <ClCompile Include="Resource.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Pass.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="QuadTree\QTree.cpp">
       <Filter>UnknownVision\UI\QuadTree</Filter>
     </ClCompile>
@@ -110,6 +107,9 @@
     </ClCompile>
     <ClCompile Include="UIRenderer.cpp">
       <Filter>UnknownVision\UI\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Pass.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

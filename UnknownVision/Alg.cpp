@@ -31,6 +31,21 @@ MeshFactory gMF;
 void UITest(DefaultParameters) {
 	HRESULT hr;
 
+	Canvas cns = Canvas(WIDTH, HEIGHT, DXGI_FORMAT_B8G8R8A8_UNORM);
+	cns.Setup(MainDev);
+	D2D1_RENDER_TARGET_PROPERTIES props =
+		D2D1::RenderTargetProperties(
+			D2D1_RENDER_TARGET_TYPE_DEFAULT,
+			D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED),
+			96.0f, 96.0f
+		);
+	Microsoft::WRL::ComPtr<IDXGISurface> uiSurface;
+	if (FAILED(cns.GetTex()->QueryInterface(uiSurface.ReleaseAndGetAddressOf()))) {
+		MLOG(LL, "Failed!");
+		return;
+	}
+	UIRenderer::GetInstance().Init(uiSurface.Get());
+
 	UIRenderer& uiR = UIRenderer::GetInstance();
 	
 	UVUI::UISystem& uiSys = UVUI::UISystem::GetInstance();

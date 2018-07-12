@@ -16,7 +16,7 @@ UIRenderer::UIRenderer() : m_hasInit(false) {}
 ///////////////////
 // public function
 ///////////////////
-void UIRenderer::Init(IDXGISurface*& sur) {
+void UIRenderer::Init(IDXGISurface* sur) {
 	float dpiX = 0, dpiY = 0;
 	HRESULT hr = S_OK;
 	// ×¼±¸D2D Factory
@@ -34,8 +34,7 @@ void UIRenderer::Init(IDXGISurface*& sur) {
 	D2D1_RENDER_TARGET_PROPERTIES rtp;
 	ZeroMemory(&rtp, sizeof(rtp));
 	rtp.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
-	rtp.pixelFormat.format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	rtp.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+	rtp.pixelFormat = D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED);
 	rtp.dpiX = dpiX;
 	rtp.dpiY = dpiY;
 	rtp.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;

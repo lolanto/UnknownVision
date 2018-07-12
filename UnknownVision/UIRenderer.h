@@ -10,7 +10,7 @@ class UIRenderer {
 public:
 	static UIRenderer& GetInstance();
 public:
-	void Init(IDXGISurface*&);
+	void Init(IDXGISurface*);
 	void RenderText(std::wstring&, float size, RectF, D2D_COLOR_F);
 	void RenderRectangle(RectF&, ID2D1Brush*, float = 1.0f, ID2D1StrokeStyle* = nullptr);
 	void RenderRoundedRectangle(RectF&, ID2D1Brush*, float = 1.0f, ID2D1StrokeStyle* = nullptr);
@@ -19,8 +19,6 @@ public:
 
 	void StartRender();
 	void EndRender();
-
-	void Test();
 
 	PntF DPI;
 

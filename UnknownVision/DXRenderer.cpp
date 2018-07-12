@@ -85,6 +85,7 @@ bool DXRenderer::InitSys(HWND hwnd, float width, float height) {
 		MLOG(LL, __FUNCTION__, LL, "initialize failed!");
 		return false;
 	}
+
 	setInputLayout();
 
 	return true;
@@ -154,9 +155,6 @@ inline bool DXRenderer::setBackBuffer(HWND hwnd, float width, float height) {
 
 	IDXGISurface* ds = NULL;
 	backBuffer->QueryInterface(__uuidof(IDXGISurface), reinterpret_cast<void**>(&ds));
-	if (ds) {
-		UIRenderer::GetInstance().Init(ds);
-	}
 
 	if (backBuffer) backBuffer->Release();
 	if (ds) ds->Release();
