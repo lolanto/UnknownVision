@@ -45,7 +45,7 @@ public:
 		default:
 			break;
 		}
-		std::cout << t;
+		std::cout << t << ' ';
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
 		log(args...);
 	}

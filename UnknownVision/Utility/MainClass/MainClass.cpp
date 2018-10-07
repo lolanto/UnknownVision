@@ -51,6 +51,9 @@ HRESULT MainClass::CreateDesktopWindow(float width, float height) {
 		return HRESULT_FROM_WIN32(dwError);
 	}
 
+	m_width = width;
+	m_height = height;
+
 	return S_OK;
 }
 

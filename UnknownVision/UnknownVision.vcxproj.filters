@@ -22,15 +22,6 @@
     <Filter Include="UnknownVision\Scrouce">
       <UniqueIdentifier>{02584cca-9324-4602-bf5f-12c0a1d562f2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="UnknownVision\Shader">
-      <UniqueIdentifier>{d20f9a67-20e6-44fa-ac7e-95437d06f19d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="UnknownVision\Shader\LTC">
-      <UniqueIdentifier>{533bd0b8-0ba7-487f-bd14-32fc445c41b3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="UnknownVision\Shader\Utility">
-      <UniqueIdentifier>{3854b410-e6ca-4df8-8fc6-c93f39691182}</UniqueIdentifier>
-    </Filter>
     <Filter Include="UnknownVision\UI">
       <UniqueIdentifier>{95e761a6-6bc5-49ad-aa93-dfcff62433e6}</UniqueIdentifier>
     </Filter>
@@ -40,21 +31,66 @@
     <Filter Include="UnknownVision\UI\Source">
       <UniqueIdentifier>{627e3248-4055-4354-86dd-9229b4d55f6a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="UnknownVision\UI\QuadTree">
-      <UniqueIdentifier>{86d8cef4-7a55-49ec-85d7-054007d87050}</UniqueIdentifier>
+    <Filter Include="RenderSys">
+      <UniqueIdentifier>{bc8e0dc4-51ec-4d92-9338-b08dc748429b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderSys\Header">
+      <UniqueIdentifier>{34d2d83c-cabe-417c-8bcc-7fb7cd6d7445}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderSys\Source">
+      <UniqueIdentifier>{d31f1c11-6941-4006-af9a-e954acf83d9b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderSys\D3D11">
+      <UniqueIdentifier>{69eceb6c-9df3-4e10-8ae4-8cdd67cc4b1d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UISys">
+      <UniqueIdentifier>{63439117-ecd2-4423-93d6-bc992a0d9638}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UISys\UIRenderer">
+      <UniqueIdentifier>{f4264fa3-02a6-4359-b2f8-447753127a96}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UISys\Header">
+      <UniqueIdentifier>{fe3bd0f9-eec7-4e0c-815a-cc219959f2d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UISys\Source">
+      <UniqueIdentifier>{3245975c-ead9-4ddb-a642-7c1819f8c25e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UISys\UIRenderer\Header">
+      <UniqueIdentifier>{9c45240d-23ef-44d1-9c86-c90de1d43b3a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UISys\UIRenderer\Source">
+      <UniqueIdentifier>{97e155d2-649f-4324-b75e-47def00a800f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility">
+      <UniqueIdentifier>{4e948986-3b10-4cdb-b548-6ce8954b66d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UnknownVision\Scrouce\Shader">
+      <UniqueIdentifier>{d20f9a67-20e6-44fa-ac7e-95437d06f19d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UnknownVision\Scrouce\Shader\LTC">
+      <UniqueIdentifier>{533bd0b8-0ba7-487f-bd14-32fc445c41b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UnknownVision\Scrouce\Shader\Utility">
+      <UniqueIdentifier>{3854b410-e6ca-4df8-8fc6-c93f39691182}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\InfoLog">
+      <UniqueIdentifier>{b9b9175b-913c-406a-a35a-1e4e74e13130}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\QuadTree">
+      <UniqueIdentifier>{41cbc0da-9e02-4383-b58f-20e731ed31b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\MainClass">
+      <UniqueIdentifier>{b8f9c6d0-da48-4d53-b1b6-b4206b4fc790}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ResMgr">
+      <UniqueIdentifier>{9d2493bc-f9a8-442d-bb1b-ac6d02eb299b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="entry.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="MainClass.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="DXRenderer.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
-    <ClCompile Include="InfoLog.cpp">
       <Filter>UnknownVision\Scrouce</Filter>
     </ClCompile>
     <ClCompile Include="Mesh.cpp">
@@ -96,12 +132,6 @@
     <ClCompile Include="Buffer.cpp">
       <Filter>UnknownVision\Scrouce</Filter>
     </ClCompile>
-    <ClCompile Include="Resource.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="QuadTree\QTree.cpp">
-      <Filter>UnknownVision\UI\QuadTree</Filter>
-    </ClCompile>
     <ClCompile Include="UI.cpp">
       <Filter>UnknownVision\UI\Source</Filter>
     </ClCompile>
@@ -111,15 +141,36 @@
     <ClCompile Include="Pass.cpp">
       <Filter>UnknownVision\Scrouce</Filter>
     </ClCompile>
+    <ClCompile Include="Resource.cpp">
+      <Filter>UnknownVision\Scrouce</Filter>
+    </ClCompile>
+    <ClCompile Include="UISys\UIElement.cpp">
+      <Filter>UISys\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="UISys\UIPage.cpp">
+      <Filter>UISys\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSys\UVFactory.cpp">
+      <Filter>RenderSys\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSys\D3D11\DX11ResourceManager.cpp">
+      <Filter>RenderSys\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="Utility\InfoLog\InfoLog.cpp">
+      <Filter>Utility\InfoLog</Filter>
+    </ClCompile>
+    <ClCompile Include="Utility\MainClass\MainClass.cpp">
+      <Filter>Utility\MainClass</Filter>
+    </ClCompile>
+    <ClCompile Include="ResMgr\ResMgr_Imp.cpp">
+      <Filter>ResMgr</Filter>
+    </ClCompile>
+    <ClCompile Include="ResMgr\IResMgr.cpp">
+      <Filter>ResMgr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MainClass.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="DXRenderer.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="InfoLog.h">
       <Filter>UnknownVision\Header</Filter>
     </ClInclude>
     <ClInclude Include="Mesh.h">
@@ -164,34 +215,95 @@
     <ClInclude Include="Light.h">
       <Filter>UnknownVision\Header</Filter>
     </ClInclude>
-    <ClInclude Include="QuadTree\QTree.h">
-      <Filter>UnknownVision\UI\QuadTree</Filter>
-    </ClInclude>
     <ClInclude Include="UI.h">
       <Filter>UnknownVision\UI\Header</Filter>
     </ClInclude>
     <ClInclude Include="UIRenderer.h">
       <Filter>UnknownVision\UI\Header</Filter>
     </ClInclude>
+    <ClInclude Include="UVConfig.h" />
+    <ClInclude Include="UISys\UIRenderer.h">
+      <Filter>UISys\UIRenderer\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="UISys\UI_UVConfig.h">
+      <Filter>UISys</Filter>
+    </ClInclude>
+    <ClInclude Include="UISys\UIElement.h">
+      <Filter>UISys\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="UISys\UISys.h">
+      <Filter>UISys\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSys\RenderSys.h">
+      <Filter>RenderSys\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSys\Resource.h">
+      <Filter>RenderSys\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSys\ResourceManager.h">
+      <Filter>RenderSys\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSys\UVFactory.h">
+      <Filter>RenderSys\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSys\D3D11\DX11_UVConfig.h">
+      <Filter>RenderSys\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSys\D3D11\DX11ResourceManager.h">
+      <Filter>RenderSys\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSys\RenderSys_UVConfig.h">
+      <Filter>RenderSys</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\QuadTree\FreeList.h">
+      <Filter>Utility\QuadTree</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\QuadTree\QuadTree.h">
+      <Filter>Utility\QuadTree</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\InfoLog\InfoLog.h">
+      <Filter>Utility\InfoLog</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\MainClass\MainClass.h">
+      <Filter>Utility\MainClass</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSys\D3D11\DX11RenderSys.h">
+      <Filter>RenderSys\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="UISys\UIContainer.h">
+      <Filter>UISys\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="ResMgr\SmartPtr.h">
+      <Filter>ResMgr</Filter>
+    </ClInclude>
+    <ClInclude Include="ResMgr\IResMgr.h">
+      <Filter>ResMgr</Filter>
+    </ClInclude>
+    <ClInclude Include="ResMgr\ResMgr_Imp.h">
+      <Filter>ResMgr</Filter>
+    </ClInclude>
+    <ClInclude Include="ResMgr\IAlloc.h">
+      <Filter>ResMgr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shader\InputLayout.hlsl">
-      <Filter>UnknownVision\Shader</Filter>
+      <Filter>UnknownVision\Scrouce\Shader</Filter>
     </FxCompile>
     <FxCompile Include="shader\imageBasedLighting\imageBasedLightingBasicPS.hlsl">
-      <Filter>UnknownVision\Shader\LTC</Filter>
+      <Filter>UnknownVision\Scrouce\Shader\LTC</Filter>
     </FxCompile>
     <FxCompile Include="shader\imageBasedLighting\imageBasedLightingBasicVS.hlsl">
-      <Filter>UnknownVision\Shader\LTC</Filter>
+      <Filter>UnknownVision\Scrouce\Shader\LTC</Filter>
     </FxCompile>
     <FxCompile Include="shader\imageBasedLighting\imageBasedLightingRefPS.hlsl">
-      <Filter>UnknownVision\Shader\LTC</Filter>
+      <Filter>UnknownVision\Scrouce\Shader\LTC</Filter>
     </FxCompile>
     <FxCompile Include="shader\imageBasedLighting\imageBasedLightingRefVS.hlsl">
-      <Filter>UnknownVision\Shader\LTC</Filter>
+      <Filter>UnknownVision\Scrouce\Shader\LTC</Filter>
     </FxCompile>
     <FxCompile Include="shader\Utility\Utility_ShadowMapVS.hlsl">
-      <Filter>UnknownVision\Shader\Utility</Filter>
+      <Filter>UnknownVision\Scrouce\Shader\Utility</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

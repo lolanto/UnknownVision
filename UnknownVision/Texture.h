@@ -19,7 +19,7 @@ public:
 
 private:
 	Microsoft::WRL::ComPtr<ID3D11Texture2D>						m_tex2d;
-	const wchar_t*																		m_source;
+	const wchar_t*																	m_source;
 };
 
 // 通过外部文件加载HDR文件——只读

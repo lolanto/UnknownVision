@@ -124,12 +124,15 @@ public:
 	}
 	// 获取窗口句柄
 	HWND GetWindowHandle() { return m_hWnd; }
+	float		GetWindowWidth() { return m_width; }
+	float		GetWindowHeight() { return m_height; }
 	// 窗口事件处理函数
 	static LRESULT CALLBACK StaticWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static std::vector<UserDefWndFunc> UserFunc;
 	static MouseHandler MainMouse;
 private:
 	HWND m_hWnd;
+	float		m_width, m_height;
 };
 
 static HINSTANCE m_hInstance;
