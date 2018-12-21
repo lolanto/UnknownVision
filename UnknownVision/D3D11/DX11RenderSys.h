@@ -1,12 +1,14 @@
-﻿#pragma once
-#include "RenderSys_UVConfig.h"
-class Shader;
-class Buffer;
-// 渲染系统的抽象基类，声明了渲染系统的接口
-class RenderSys {
+﻿#include "../RenderSys/RenderSys.h"
+#include "DX11_UVConfig.h"
+#include <d3d11.h>
+
+class DX11_RenderSys : public RenderSys{
 public:
-	RenderSys(API_TYPE api) : API(api) {}
-	API_TYPE API;
+	DX11_RenderSys(API_TYPE type, SmartPTR<ID3D11Device>& dev,
+		SmartPTR<ID3D11DeviceContext>& devCtx,
+		SmartPTR<IDXGISwapChain>& swapChain) :
+		RenderSys(type),
+		m_dev(dev), m_devCtx(devCtx), m_swapChain(swapChain) {}
 public:
 	// Ultility
 	virtual void ResetAll() = 0;
@@ -38,4 +40,9 @@ public:
 	// Draw Call
 	virtual void DrawIndex() = 0;
 	virtual void Draw() = 0;
+
+private:
+	SmartPTR<ID3D11Device>				m_dev;
+	SmartPTR<ID3D11DeviceContext> m_devCtx;
+	SmartPTR<IDXGISwapChain>		m_swapChain;
 };

@@ -1,5 +1,5 @@
-#include "DX11ResourceManager.h"
-#include "../../Utility/InfoLog/InfoLog.h"
+﻿#include "DX11ResourceManager.h"
+#include "../Utility/InfoLog/InfoLog.h"
 
 void DX11_CanvasManager::GetResourceData(Resource* re, NameParams& param) {
 	// initialize return value

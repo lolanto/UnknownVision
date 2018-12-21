@@ -1,36 +1,20 @@
-#pragma once
+ï»¿#pragma once
 #include "RenderSys_UVConfig.h"
 #include <string>
+#include <vector>
+#include <memory>
 
-// Õë¶Ô×ÊÔ´µÄ³éÏó»ùÀà
-/* ÎŞÂÛºÎÖÖResource¶ÔÏó
-¾ù²»°üº¬×ÊÔ´¶ÔÓ¦µÄÍ¼ĞÎ¿âµÄÏà¹ØÄÚÈİ
-ÓëÍ¼ĞÎ¿âÏà¹ØµÄÄÚÈİ´æ´¢ÔÚ¹ÜÀíÆ÷ÖĞ
-×ÊÔ´¶ÔÏó½ö°üº¬×ÊÔ´µÄÊôĞÔÒÔ¹©²éÑ¯
+// é’ˆå¯¹èµ„æºçš„æŠ½è±¡åŸºç±»
+/* æ— è®ºä½•ç§Resourceå¯¹è±¡
+å‡ä¸åŒ…å«èµ„æºå¯¹åº”çš„å›¾å½¢åº“çš„ç›¸å…³å†…å®¹
+ä¸å›¾å½¢åº“ç›¸å…³çš„å†…å®¹å­˜å‚¨åœ¨ç®¡ç†å™¨ä¸­
+èµ„æºå¯¹è±¡ä»…åŒ…å«èµ„æºçš„å±æ€§ä»¥ä¾›æŸ¥è¯¢
 */
 class Resource {
 public:
 	Resource(std::string name, UINT id):Name(name), RID(id) {}
 	const std::string Name;
 	const UINT RID;
-};
-
-class Canvas : public Resource {
-public:
-	Canvas(std::string name, UINT id,
-		UINT usage, float width, float height,
-		std::string dataPath) : Resource(name, id),
-		m_usage(usage), m_width(width), m_height(height), m_dataPath(dataPath) {}
-
-public:
-	bool CanWriteTo() const { return m_usage & Canvas_Usage_Write; }
-	float GetWidth() const { return m_width; }
-	float GetHeight() const { return m_height; }
-	const char* GetDataPath() const { return m_dataPath.c_str(); }
-private:
-	UINT			m_usage;
-	float			m_width, m_height;
-	std::string	m_dataPath;
 };
 
 class Shader : public Resource {
@@ -40,9 +24,24 @@ public:
 		m_type(type), m_dataPath(dataPath) {}
 
 public:
-	Shader_Type GetType() const { return m_type; }
-	const char* GetDataPath() const { return m_dataPath.c_str(); }
+	Shader_Type Type() const { return m_type; }
+	const char* DataPath() const { return m_dataPath.c_str(); }
 private:
 	Shader_Type m_type;
 	std::string		m_dataPath;
 };
+
+class Buffer : public Resource {
+public:
+	Buffer(std::string name, UINT id,
+		Buffer_Type type, std::unique_ptr<std::vector<uint8_t> >& data)
+		: Resource(name, id) {}
+public:
+	Buffer_Type Type() const { return m_type; }
+	const std::vector<uint8_t>& Data() const { *m_data; }
+private:
+	Buffer_Type m_type;
+	std::unique_ptr<std::vector<uint8_t> > m_data;
+};
+
+class Texture : 

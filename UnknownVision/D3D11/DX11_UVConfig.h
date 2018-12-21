@@ -1,5 +1,5 @@
-#pragma once
-#include "../RenderSys_UVConfig.h"
+﻿#pragma once
+#include "../RenderSys/RenderSys_UVConfig.h"
 #include <d3d11.h>
 #include <map>
 #include <wrl.h>

@@ -1,5 +1,5 @@
-#pragma once
-#include "../ResourceManager.h"
+ï»¿#pragma once
+#include "../RenderSys/ResourceManager.h"
 #include "DX11_UVConfig.h"
 
 class DX11_CanvasManager : public CanvasManager {
@@ -9,9 +9,9 @@ public:
 		: m_dev(dev), m_devCtx(devCtx) {}
 public:
 	void GetResourceData(_In_  Resource* re, _Inout_ NameParams& param);
-	// ´ÓÖ¸¶¨Â·¾¶¼ÓÔØÍ¼Æ¬£¬²»¿ÉÉèÖÃ´óĞ¡
+	// ä»æŒ‡å®šè·¯å¾„åŠ è½½å›¾ç‰‡ï¼Œä¸å¯è®¾ç½®å¤§å°
 	Canvas Create(std::string name, UINT usage, char* path = nullptr);
-	// ´´½¨ÌØ¶¨³ß´çµÄÍ¼Æ¬»º³åÇø
+	// åˆ›å»ºç‰¹å®šå°ºå¯¸çš„å›¾ç‰‡ç¼“å†²åŒº
 	Canvas Create(std::string name, UINT usage, float width, float height);
 private:
 	SmartPTR<ID3D11Device>									m_dev;

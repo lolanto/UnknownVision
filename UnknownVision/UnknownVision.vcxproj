@@ -125,6 +125,8 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Canvas.cpp" />
     <ClCompile Include="Buffer.cpp" />
+    <ClCompile Include="D3D11\DX11RenderSys.cpp" />
+    <ClCompile Include="D3D11\DX11ResourceManager.cpp" />
     <ClCompile Include="DXRenderer.cpp" />
     <ClCompile Include="entry.cpp" />
     <ClCompile Include="Light.cpp">
@@ -135,7 +137,6 @@
     <ClCompile Include="OrbitController.cpp" />
     <ClCompile Include="Pass.cpp" />
     <ClCompile Include="RasterState.cpp" />
-    <ClCompile Include="RenderSys\D3D11\DX11ResourceManager.cpp" />
     <ClCompile Include="RenderSys\UVFactory.cpp" />
     <ClCompile Include="ResMgr\IResMgr.cpp" />
     <ClCompile Include="ResMgr\ResMgr_Imp.cpp" />
@@ -156,10 +157,10 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Canvas.h" />
     <ClInclude Include="Buffer.h" />
+    <ClInclude Include="D3D11\DX11RenderSys.h" />
+    <ClInclude Include="D3D11\DX11ResourceManager.h" />
+    <ClInclude Include="D3D11\DX11_UVConfig.h" />
     <ClInclude Include="DXRenderer.h" />
-    <ClInclude Include="RenderSys\D3D11\DX11RenderSys.h" />
-    <ClInclude Include="RenderSys\D3D11\DX11ResourceManager.h" />
-    <ClInclude Include="RenderSys\D3D11\DX11_UVConfig.h" />
     <ClInclude Include="RenderSys\RenderSys.h" />
     <ClInclude Include="RenderSys\RenderSys_UVConfig.h" />
     <ClInclude Include="RenderSys\Resource.h" />
