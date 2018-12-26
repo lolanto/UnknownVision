@@ -85,6 +85,9 @@
     <Filter Include="D3D11">
       <UniqueIdentifier>{69eceb6c-9df3-4e10-8ae4-8cdd67cc4b1d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="D3D11\Resource">
+      <UniqueIdentifier>{a490fc8d-9b3f-4dac-bf98-13583734c2b8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="entry.cpp">
@@ -159,17 +162,14 @@
     <ClCompile Include="Utility\MainClass\MainClass.cpp">
       <Filter>Utility\MainClass</Filter>
     </ClCompile>
-    <ClCompile Include="ResMgr\ResMgr_Imp.cpp">
-      <Filter>ResMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="ResMgr\IResMgr.cpp">
-      <Filter>ResMgr</Filter>
-    </ClCompile>
     <ClCompile Include="D3D11\DX11ResourceManager.cpp">
       <Filter>D3D11</Filter>
     </ClCompile>
     <ClCompile Include="D3D11\DX11RenderSys.cpp">
       <Filter>D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D11\Resource\Texture.h">
+      <Filter>D3D11\Resource</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -240,17 +240,8 @@
     <ClInclude Include="RenderSys\RenderSys.h">
       <Filter>RenderSys\Header</Filter>
     </ClInclude>
-    <ClInclude Include="RenderSys\Resource.h">
-      <Filter>RenderSys\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderSys\ResourceManager.h">
-      <Filter>RenderSys\Header</Filter>
-    </ClInclude>
     <ClInclude Include="RenderSys\UVFactory.h">
       <Filter>RenderSys\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderSys\RenderSys_UVConfig.h">
-      <Filter>RenderSys</Filter>
     </ClInclude>
     <ClInclude Include="Utility\QuadTree\FreeList.h">
       <Filter>Utility\QuadTree</Filter>
@@ -267,16 +258,7 @@
     <ClInclude Include="UISys\UIContainer.h">
       <Filter>UISys\Header</Filter>
     </ClInclude>
-    <ClInclude Include="ResMgr\SmartPtr.h">
-      <Filter>ResMgr</Filter>
-    </ClInclude>
     <ClInclude Include="ResMgr\IResMgr.h">
-      <Filter>ResMgr</Filter>
-    </ClInclude>
-    <ClInclude Include="ResMgr\ResMgr_Imp.h">
-      <Filter>ResMgr</Filter>
-    </ClInclude>
-    <ClInclude Include="ResMgr\IAlloc.h">
       <Filter>ResMgr</Filter>
     </ClInclude>
     <ClInclude Include="D3D11\DX11_UVConfig.h">
@@ -287,6 +269,12 @@
     </ClInclude>
     <ClInclude Include="D3D11\DX11ResourceManager.h">
       <Filter>D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="ResMgr\Resource.h">
+      <Filter>ResMgr</Filter>
+    </ClInclude>
+    <ClInclude Include="ResMgr\RenderSys_UVConfig.h">
+      <Filter>ResMgr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

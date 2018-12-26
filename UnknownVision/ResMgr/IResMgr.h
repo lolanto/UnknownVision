@@ -1,13 +1,27 @@
-#pragma once
+﻿#ifndef IRESOURCE_MANAGER_H
+#define IRESOURCE_MANAGER_H
 
-class ResMgr_Imp;
+#include "Resource.h"
 
-class IResMgr {
-public:
-	static IResMgr& GetInstance();
-public:
-	// Resource Manager Interface
-private:
-	IResMgr();
-	ResMgr_Imp * _ptr;
-};
+namespace UnknownVision {
+	class ResMgr {
+	};
+
+	class TextureMgr : public ResMgr {
+	public:
+		
+	};
+
+	class Texture2DMgr : public TextureMgr {
+	public:
+		virtual Texture2D & Create(float width, float height,
+			TextureFlag flag, TextureElementType type, uint8_t* data, size_t size) = 0;
+		virtual Texture2D & CreateRenderTarget(float width, float height,
+			TextureElementType type) = 0;
+		virtual Texture2D & CreateTexture(float width, float height,
+			TextureElementType type, uint8_t* data, size_t size) = 0;
+		virtual Texture2D & GetTexture(uint32_t index) = 0;
+	};
+}
+
+#endif // IRESOURCE_MANAGER_H
