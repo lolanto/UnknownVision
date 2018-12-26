@@ -121,107 +121,41 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Alg.cpp" />
-    <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="Canvas.cpp" />
-    <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="D3D11\DX11RenderSys.cpp" />
-    <ClCompile Include="D3D11\DX11ResourceManager.cpp" />
-    <ClCompile Include="DXRenderer.cpp" />
-    <ClCompile Include="entry.cpp" />
-    <ClCompile Include="Light.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    <ClCompile Include="D3D11\Resource\DX11ShaderMgr.cpp" />
+    <ClCompile Include="D3D11\Resource\DX11TextureMgr.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="UISys\UIElement.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="Mesh.cpp" />
-    <ClCompile Include="Model.cpp" />
-    <ClCompile Include="OrbitController.cpp" />
-    <ClCompile Include="Pass.cpp" />
-    <ClCompile Include="RasterState.cpp" />
-    <ClCompile Include="RenderSys\UVFactory.cpp" />
-    <ClCompile Include="Resource.cpp" />
-    <ClCompile Include="Sampler.cpp" />
-    <ClCompile Include="Shader.cpp" />
-    <ClCompile Include="Texture.cpp" />
-    <ClCompile Include="UI.cpp" />
-    <ClCompile Include="UIRenderer.cpp" />
-    <ClCompile Include="UISys\UIElement.cpp" />
-    <ClCompile Include="UISys\UIPage.cpp" />
-    <ClCompile Include="UnknownObject.cpp" />
+    <ClCompile Include="UISys\UIPage.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Utility\InfoLog\InfoLog.cpp" />
     <ClCompile Include="Utility\MainClass\MainClass.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Alg.h" />
-    <ClInclude Include="Camera.h" />
-    <ClInclude Include="Canvas.h" />
-    <ClInclude Include="Buffer.h" />
     <ClInclude Include="D3D11\DX11RenderSys.h" />
-    <ClInclude Include="D3D11\DX11ResourceManager.h" />
     <ClInclude Include="D3D11\DX11_UVConfig.h" />
-    <ClCompile Include="D3D11\Resource\Texture.h" />
-    <ClInclude Include="DXRenderer.h" />
+    <ClCompile Include="D3D11\Resource\DX11Texture.h" />
+    <ClCompile Include="D3D11\Resource\DX11ResMgr.h" />
+    <ClInclude Include="D3D11\Resource\DX11Buffer.h" />
+    <ClCompile Include="D3D11\Resource\DX11Shader.h" />
     <ClInclude Include="RenderSys\RenderSys.h" />
     <ClInclude Include="RenderSys\UVFactory.h" />
     <ClInclude Include="ResMgr\IResMgr.h" />
-    <ClInclude Include="ResMgr\RenderSys_UVConfig.h" />
+    <ClInclude Include="ResMgr\ResMgr_UVConfig.h" />
     <ClInclude Include="ResMgr\Resource.h" />
     <ClInclude Include="UISys\UIElement.h" />
     <ClInclude Include="UISys\UIContainer.h" />
     <ClInclude Include="UISys\UIRenderer.h" />
     <ClInclude Include="UISys\UISys.h" />
     <ClInclude Include="UISys\UI_UVConfig.h" />
-    <ClInclude Include="Light.h" />
-    <ClInclude Include="Mesh.h" />
-    <ClInclude Include="Model.h" />
-    <ClInclude Include="Pass.h" />
-    <ClInclude Include="RasterState.h" />
-    <ClInclude Include="Resource.h" />
-    <ClInclude Include="Sampler.h" />
-    <ClInclude Include="Shader.h" />
-    <ClInclude Include="Texture.h" />
-    <ClInclude Include="UI.h" />
-    <ClInclude Include="UIRenderer.h" />
-    <ClInclude Include="UnknownObject.h" />
     <ClInclude Include="Utility\InfoLog\InfoLog.h" />
     <ClInclude Include="Utility\MainClass\MainClass.h" />
     <ClInclude Include="Utility\QuadTree\FreeList.h" />
     <ClInclude Include="Utility\QuadTree\QuadTree.h" />
     <ClInclude Include="UVConfig.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="shader\imageBasedLighting\imageBasedLightingBasicPS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
-    </FxCompile>
-    <FxCompile Include="shader\imageBasedLighting\imageBasedLightingBasicVS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
-    </FxCompile>
-    <FxCompile Include="shader\imageBasedLighting\imageBasedLightingRefPS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
-      <DisableOptimizations Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DisableOptimizations>
-      <DisableOptimizations Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DisableOptimizations>
-      <EnableDebuggingInformation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</EnableDebuggingInformation>
-      <EnableDebuggingInformation Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</EnableDebuggingInformation>
-    </FxCompile>
-    <FxCompile Include="shader\imageBasedLighting\imageBasedLightingRefVS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
-    </FxCompile>
-    <FxCompile Include="shader\InputLayout.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
-    </FxCompile>
-    <FxCompile Include="shader\Utility\Utility_ShadowMapVS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
-    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="UILayout.xml" />

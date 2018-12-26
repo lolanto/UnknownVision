@@ -1,5 +1,5 @@
-#include "MainClass.h"
-#include "InfoLog.h"
+ï»¿#include "MainClass.h"
+#include "../InfoLog/InfoLog.h"
 #include <windowsx.h>
 
 MainClass::MainClass(const char* name) {
@@ -11,7 +11,7 @@ MainClass::~MainClass() {}
 
 HRESULT MainClass::CreateDesktopWindow(float width, float height) {
 
-	// »ñÈ¡µ±Ç°½ø³ÌÊµÀıµÄ¾ä±ú
+	// è·å–å½“å‰è¿›ç¨‹å®ä¾‹çš„å¥æŸ„
 	if (m_hInstance == NULL)
 		m_hInstance = (HINSTANCE)GetModuleHandle(NULL);
 
@@ -57,7 +57,7 @@ HRESULT MainClass::CreateDesktopWindow(float width, float height) {
 	return S_OK;
 }
 
-// ¸³Óè¿Õº¯Êı£¬ÒÔÃâÔÚ²»ÉèÖÃÊ±³ö´í
+// èµ‹äºˆç©ºå‡½æ•°ï¼Œä»¥å…åœ¨ä¸è®¾ç½®æ—¶å‡ºé”™
 std::vector<UserDefWndFunc> MainClass::UserFunc = std::vector<UserDefWndFunc>(0);
 MouseHandler MainClass::MainMouse;
 
@@ -99,7 +99,7 @@ void MouseHandler::Init(float x, float y, UINT msg) {
 	m_behavior = MOUSE_BEHAVIOR_IDEAL;
 	m_lastMsg = msg;
 
-	// ³õÊ¼»¯¸÷¸ö×´Ì¬»ú
+	// åˆå§‹åŒ–å„ä¸ªçŠ¶æ€æœº
 	m_click.SetNextState(&m_ideal);
 	m_dclick.SetNextState(&m_ideal);
 	m_down.SetNextState(&m_click, &m_drag);

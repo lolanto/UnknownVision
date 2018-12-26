@@ -13,24 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="UnknownVision">
-      <UniqueIdentifier>{d031025f-bcc3-4147-819a-8dac71824510}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="UnknownVision\Header">
-      <UniqueIdentifier>{dd2d6842-e226-497c-a8e1-e1cde91b6135}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="UnknownVision\Scrouce">
-      <UniqueIdentifier>{02584cca-9324-4602-bf5f-12c0a1d562f2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="UnknownVision\UI">
-      <UniqueIdentifier>{95e761a6-6bc5-49ad-aa93-dfcff62433e6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="UnknownVision\UI\Header">
-      <UniqueIdentifier>{4eec2dd1-39d8-4b4a-8a40-5ae131e6a34e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="UnknownVision\UI\Source">
-      <UniqueIdentifier>{627e3248-4055-4354-86dd-9229b4d55f6a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="RenderSys">
       <UniqueIdentifier>{bc8e0dc4-51ec-4d92-9338-b08dc748429b}</UniqueIdentifier>
     </Filter>
@@ -61,15 +43,6 @@
     <Filter Include="Utility">
       <UniqueIdentifier>{4e948986-3b10-4cdb-b548-6ce8954b66d1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="UnknownVision\Scrouce\Shader">
-      <UniqueIdentifier>{d20f9a67-20e6-44fa-ac7e-95437d06f19d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="UnknownVision\Scrouce\Shader\LTC">
-      <UniqueIdentifier>{533bd0b8-0ba7-487f-bd14-32fc445c41b3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="UnknownVision\Scrouce\Shader\Utility">
-      <UniqueIdentifier>{3854b410-e6ca-4df8-8fc6-c93f39691182}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Utility\InfoLog">
       <UniqueIdentifier>{b9b9175b-913c-406a-a35a-1e4e74e13130}</UniqueIdentifier>
     </Filter>
@@ -90,71 +63,11 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="entry.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="DXRenderer.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
-    <ClCompile Include="Mesh.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
-    <ClCompile Include="Model.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
-    <ClCompile Include="Camera.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
-    <ClCompile Include="Canvas.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
-    <ClCompile Include="Texture.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
-    <ClCompile Include="Light.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
-    <ClCompile Include="OrbitController.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
-    <ClCompile Include="Shader.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
-    <ClCompile Include="UnknownObject.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
-    <ClCompile Include="Sampler.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
-    <ClCompile Include="RasterState.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
-    <ClCompile Include="Alg.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
-    <ClCompile Include="Buffer.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
-    <ClCompile Include="UI.cpp">
-      <Filter>UnknownVision\UI\Source</Filter>
-    </ClCompile>
-    <ClCompile Include="UIRenderer.cpp">
-      <Filter>UnknownVision\UI\Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Pass.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
-    <ClCompile Include="Resource.cpp">
-      <Filter>UnknownVision\Scrouce</Filter>
-    </ClCompile>
     <ClCompile Include="UISys\UIElement.cpp">
       <Filter>UISys\Source</Filter>
     </ClCompile>
     <ClCompile Include="UISys\UIPage.cpp">
       <Filter>UISys\Source</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderSys\UVFactory.cpp">
-      <Filter>RenderSys\Source</Filter>
     </ClCompile>
     <ClCompile Include="Utility\InfoLog\InfoLog.cpp">
       <Filter>Utility\InfoLog</Filter>
@@ -162,68 +75,29 @@
     <ClCompile Include="Utility\MainClass\MainClass.cpp">
       <Filter>Utility\MainClass</Filter>
     </ClCompile>
-    <ClCompile Include="D3D11\DX11ResourceManager.cpp">
-      <Filter>D3D11</Filter>
-    </ClCompile>
     <ClCompile Include="D3D11\DX11RenderSys.cpp">
       <Filter>D3D11</Filter>
     </ClCompile>
-    <ClCompile Include="D3D11\Resource\Texture.h">
+    <ClCompile Include="D3D11\Resource\DX11Texture.h">
+      <Filter>D3D11\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D11\Resource\DX11ResMgr.h">
+      <Filter>D3D11\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D11\Resource\DX11Shader.h">
+      <Filter>D3D11\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D11\Resource\DX11TextureMgr.cpp">
+      <Filter>D3D11\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D11\Resource\DX11ShaderMgr.cpp">
       <Filter>D3D11\Resource</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DXRenderer.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="Mesh.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="Model.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="Canvas.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="Texture.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="UnknownObject.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="Sampler.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="RasterState.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="Alg.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="Buffer.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="Pass.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="Light.h">
-      <Filter>UnknownVision\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="UI.h">
-      <Filter>UnknownVision\UI\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="UIRenderer.h">
-      <Filter>UnknownVision\UI\Header</Filter>
-    </ClInclude>
     <ClInclude Include="UVConfig.h" />
     <ClInclude Include="UISys\UIRenderer.h">
       <Filter>UISys\UIRenderer\Header</Filter>
@@ -267,35 +141,15 @@
     <ClInclude Include="D3D11\DX11RenderSys.h">
       <Filter>D3D11</Filter>
     </ClInclude>
-    <ClInclude Include="D3D11\DX11ResourceManager.h">
-      <Filter>D3D11</Filter>
-    </ClInclude>
     <ClInclude Include="ResMgr\Resource.h">
       <Filter>ResMgr</Filter>
     </ClInclude>
-    <ClInclude Include="ResMgr\RenderSys_UVConfig.h">
+    <ClInclude Include="ResMgr\ResMgr_UVConfig.h">
       <Filter>ResMgr</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="shader\InputLayout.hlsl">
-      <Filter>UnknownVision\Scrouce\Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\imageBasedLighting\imageBasedLightingBasicPS.hlsl">
-      <Filter>UnknownVision\Scrouce\Shader\LTC</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\imageBasedLighting\imageBasedLightingBasicVS.hlsl">
-      <Filter>UnknownVision\Scrouce\Shader\LTC</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\imageBasedLighting\imageBasedLightingRefPS.hlsl">
-      <Filter>UnknownVision\Scrouce\Shader\LTC</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\imageBasedLighting\imageBasedLightingRefVS.hlsl">
-      <Filter>UnknownVision\Scrouce\Shader\LTC</Filter>
-    </FxCompile>
-    <FxCompile Include="shader\Utility\Utility_ShadowMapVS.hlsl">
-      <Filter>UnknownVision\Scrouce\Shader\Utility</Filter>
-    </FxCompile>
+    <ClInclude Include="D3D11\Resource\DX11Buffer.h">
+      <Filter>D3D11\Resource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="UILayout.xml">
