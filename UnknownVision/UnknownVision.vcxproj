@@ -122,6 +122,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="D3D11\DX11RenderSys.cpp" />
+    <ClCompile Include="D3D11\Resource\DX11BufferMgr.cpp" />
     <ClCompile Include="D3D11\Resource\DX11ShaderMgr.cpp" />
     <ClCompile Include="D3D11\Resource\DX11TextureMgr.cpp" />
     <ClCompile Include="main.cpp" />
@@ -142,7 +143,7 @@
     <ClInclude Include="D3D11\Resource\DX11Buffer.h" />
     <ClCompile Include="D3D11\Resource\DX11Shader.h" />
     <ClInclude Include="RenderSys\RenderSys.h" />
-    <ClInclude Include="RenderSys\UVFactory.h" />
+    <ClInclude Include="RenderSys\ShaderInputLayout.h" />
     <ClInclude Include="ResMgr\IResMgr.h" />
     <ClInclude Include="ResMgr\ResMgr_UVConfig.h" />
     <ClInclude Include="ResMgr\Resource.h" />
@@ -156,9 +157,18 @@
     <ClInclude Include="Utility\QuadTree\FreeList.h" />
     <ClInclude Include="Utility\QuadTree\QuadTree.h" />
     <ClInclude Include="UVConfig.h" />
+    <ClInclude Include="UVFactory.h" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="UILayout.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="shader\InputLayout.hlsl">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0_level_9_3</ShaderModel>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shader\VS_INPUT.hlsli" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

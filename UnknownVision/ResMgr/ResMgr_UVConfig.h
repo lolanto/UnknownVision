@@ -11,7 +11,11 @@ namespace UnknownVision {
 	};
 
 	enum BufferFlag : uint32_t {
-		BF_INVALID = 0
+		BF_INVALID = 0,
+		BF_CPU_WRITE = 0x00000001U, // CPU能够写
+		BF_CPU_READ = 0x00000002U, // CPU能够读
+		BF_VERTEX_BUFFER = 0x00000004U,
+		BF_CONSTANT_BUFFER = 0x00000008U
 	};
 
 	enum TextureElementType {
@@ -27,9 +31,9 @@ namespace UnknownVision {
 
 	enum TextureFlag : uint32_t {
 		TF_INVALID = 0,
-		WRITE = 0x00000001U,
-		READ = 0x00000002U,
-		DEPTH_STENCIL = 0x0000006U
+		TF_WRITE = 0x00000001U,
+		TF_ONLY_READ = 0x00000002U,
+		TF_DEPTH_STENCIL = 0x0000004U
 	};
 }
 

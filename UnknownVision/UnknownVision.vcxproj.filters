@@ -61,6 +61,9 @@
     <Filter Include="D3D11\Resource">
       <UniqueIdentifier>{a490fc8d-9b3f-4dac-bf98-13583734c2b8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="DXShaders">
+      <UniqueIdentifier>{5d411969-23fb-443c-9a8e-daa655e11b99}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="UISys\UIElement.cpp">
@@ -96,6 +99,9 @@
     <ClCompile Include="D3D11\Resource\DX11ShaderMgr.cpp">
       <Filter>D3D11\Resource</Filter>
     </ClCompile>
+    <ClCompile Include="D3D11\Resource\DX11BufferMgr.cpp">
+      <Filter>D3D11\Resource</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="UVConfig.h" />
@@ -112,9 +118,6 @@
       <Filter>UISys\Header</Filter>
     </ClInclude>
     <ClInclude Include="RenderSys\RenderSys.h">
-      <Filter>RenderSys\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderSys\UVFactory.h">
       <Filter>RenderSys\Header</Filter>
     </ClInclude>
     <ClInclude Include="Utility\QuadTree\FreeList.h">
@@ -150,10 +153,26 @@
     <ClInclude Include="D3D11\Resource\DX11Buffer.h">
       <Filter>D3D11\Resource</Filter>
     </ClInclude>
+    <ClInclude Include="UVFactory.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSys\ShaderInputLayout.h">
+      <Filter>RenderSys\Header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="UILayout.xml">
       <Filter>资源文件</Filter>
     </Xml>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="shader\InputLayout.hlsl">
+      <Filter>DXShaders</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shader\VS_INPUT.hlsli">
+      <Filter>DXShaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

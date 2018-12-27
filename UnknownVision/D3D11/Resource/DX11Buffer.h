@@ -4,13 +4,12 @@
 #include "../DX11_UVConfig.h"
 
 namespace UnknownVision {
-	class DX11_VertexBuffer : public UnknownVision::VertexBuffer {
+	class DX11_Buffer : public UnknownVision::Buffer {
 	public:
-		DX11_VertexBuffer(size_t numVtxs, size_t sizeVtx,
-			SmartPTR<ID3D11Buffer> buffer,
-			BufferFlag flag, UINT RID) : m_buffer(buffer),
-				VertexBuffer(numVtxs, sizeVtx, flag, RID) {}
-		const SmartPTR<ID3D11Buffer>& Buffer() const { return m_buffer; }
+		DX11_Buffer(size_t size, size_t numEle, uint32_t flag,
+			SmartPTR<ID3D11Buffer>& bufferPtr, uint32_t RID)
+			: m_buffer(bufferPtr), Buffer(size, numEle, flag, RID) {}
+		ID3D11Buffer* BufferPtr() const { return m_buffer.Get(); }
 	private:
 		SmartPTR<ID3D11Buffer> m_buffer;
 	};

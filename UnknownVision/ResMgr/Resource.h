@@ -17,19 +17,19 @@ namespace UnknownVision {
 
 	class Texture : public Resource {
 	public:
-		Texture(TextureFlag flag, TextureElementType type, uint32_t RID) : Resource(RID),
+		Texture(uint32_t flag, TextureElementType type, uint32_t RID) : Resource(RID),
 			m_flag(flag), m_eleType(type) {}
 		TextureElementType ElementType() const { return m_eleType; }
-		TextureFlag Flag() const { return m_flag; }
+		uint32_t Flag() const { return m_flag; }
 	protected:
 		TextureElementType m_eleType = TET_INVALID;
-		TextureFlag m_flag = TF_INVALID;
+		uint32_t m_flag = TF_INVALID;
 	};
 
 	class Texture2D : public Texture {
 	public:
 		Texture2D(float width, float height,
-			TextureFlag flag, TextureElementType type, uint32_t RID)
+			uint32_t flag, TextureElementType type, uint32_t RID)
 			: Texture(flag, type, RID) {}
 		float Width() const { return m_width; }
 		float Height() const { return m_height; }
@@ -40,33 +40,24 @@ namespace UnknownVision {
 
 	class Buffer : public Resource {
 	public:
-		Buffer(size_t size, BufferFlag flag, uint32_t RID)
-			: Resource(RID) {}
+		Buffer(size_t size, size_t numEle, uint32_t flag, uint32_t RID)
+			: m_byteSize(size), m_numEle(numEle), m_flag(flag), Resource(RID) {}
+
 		size_t ByteSize() const { return m_byteSize; }
-		BufferFlag Flag() const { return m_flag; }
+		size_t NumEle() const { return m_numEle; }
+		uint32_t Flag() const { return m_flag; }
 	protected:
 		size_t m_byteSize;
-		BufferFlag m_flag;
-	};
-
-	class VertexBuffer : public Buffer {
-	public:
-		VertexBuffer(size_t numVtxs, size_t sizeVtx,
-			BufferFlag flag, uint32_t RID)
-			: m_numVtxs(numVtxs), m_sizeVtx(sizeVtx), Buffer(numVtxs * sizeVtx, flag, RID) {}
-		size_t NumOfVertex() const { return m_numVtxs; }
-		size_t SizeOfVertex() const { return m_sizeVtx; }
-	private:
-		size_t m_numVtxs; // number of vertex
-		size_t m_sizeVtx; // size of vertex in byte
+		size_t m_numEle;
+		uint32_t m_flag;
 	};
 
 	class Shader : public Resource {
 	public:
 		Shader(ShaderType type, uint32_t RID)
-			: m_type(type), Resource(RID) {}
-	protected:
-		ShaderType m_type;
+			: Type(type), Resource(RID) {}
+
+		const ShaderType Type;
 	};
 }
 

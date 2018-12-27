@@ -21,23 +21,36 @@ namespace UnknownVision {
 
 		// For Shaders
 		virtual bool BindShader(uint32_t index);
-		virtual bool UnbindShader(uint32_t index);
+		virtual bool UnbindShader(ShaderType type);
+
+		virtual int CreateInputLayout(std::vector<SubVertexAttributeLayoutDesc>& descs,
+			int vertexShader);
+		virtual bool ActiveInputLayout(uint32_t index);
 
 		virtual bool BindVertexBuffer(uint32_t index);
+		virtual bool BindVertexBuffers(uint32_t* indices, size_t numBuf);
+		virtual bool BindConstantBuffer(uint32_t index, PipelineStage stage, uint32_t slot);
 
+		virtual bool BindDepthStencilTarget(uint32_t index);
+		virtual void UnbindDepthStencilTarget() { m_curDepthStencilView = nullptr; }
 		virtual bool BindRenderTarget(int index);
-		virtual bool UnbindRenderTarget(int index);
+		virtual void UnbindRenderTarget();
 
-		virtual bool SetPrimitiveType();
+		virtual bool SetPrimitiveType(Primitive pri);
 		// Draw Call
 		virtual void DrawIndex();
 		virtual void Draw();
+		virtual void Present() { m_swapChain->Present(0, 0); }
 
 	private:
 		SmartPTR<ID3D11Device>				m_dev;
 		SmartPTR<ID3D11DeviceContext> m_devCtx;
 		SmartPTR<IDXGISwapChain>		m_swapChain;
-		MainClass										m_mainClass;
 		SmartPTR<ID3D11RenderTargetView> m_backBufferRTV;
+		ID3D11DepthStencilView*				m_curDepthStencilView = nullptr;
+		// 当前绑定的vertex buffer包含的顶点数量
+		uint32_t										m_numVertexBufferEles = 0;
+		MainClass										m_mainClass;
+		std::vector<SmartPTR<ID3D11InputLayout>> m_inputLayouts;
 	};
 }

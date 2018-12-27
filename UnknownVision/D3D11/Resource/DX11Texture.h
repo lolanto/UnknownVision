@@ -8,14 +8,14 @@ namespace UnknownVision {
 	public:
 		DX11_Texture2D(float width, float height,
 			SmartPTR<ID3D11Texture2D> ptr,
-			TextureFlag flag, TextureElementType type, UINT RID)
+			uint32_t flag, TextureElementType type, UINT RID)
 			: m_tex(ptr), UnknownVision::Texture2D(width, height, flag, type, RID) {}
 
-		const ID3D11Texture2D* Texture() const { return m_tex.Get(); }
-		const ID3D11ShaderResourceView* ShaderResourceView() const { return m_srv.Get(); }
-		const ID3D11RenderTargetView* RenderTargetView() const { return m_rtv.Get(); }
-		const ID3D11DepthStencilView* DepthStencilView() const { return m_dsv.Get(); }
-		const ID3D11UnorderedAccessView* UnorderAccessView() const { return m_uav.Get(); }
+		ID3D11Texture2D* Texture() const { return m_tex.Get(); }
+		ID3D11ShaderResourceView* ShaderResourceView() const { return m_srv.Get(); }
+		ID3D11RenderTargetView* RenderTargetView() const { return m_rtv.Get(); }
+		ID3D11DepthStencilView* DepthStencilView() const { return m_dsv.Get(); }
+		ID3D11UnorderedAccessView* UnorderAccessView() const { return m_uav.Get(); }
 
 		void SetShaderResourceView(SmartPTR<ID3D11ShaderResourceView>& ptr) { m_srv.Swap(ptr); }
 		void SetRenderTargetView(SmartPTR<ID3D11RenderTargetView>& ptr) { m_rtv.Swap(ptr); }

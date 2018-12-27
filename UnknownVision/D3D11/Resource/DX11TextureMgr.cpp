@@ -2,7 +2,7 @@
 
 namespace UnknownVision {
 	int DX11_Texture2DMgr::Create(float width, float height,
-		TextureFlag flag, TextureElementType type, uint8_t* data, size_t size) {
+		uint32_t flag, TextureElementType type, uint8_t* data, size_t size) {
 		return -1;
 	}
 
@@ -39,7 +39,7 @@ namespace UnknownVision {
 		}
 
 		m_texs.push_back(DX11_Texture2D(width, height, texPtr,
-			TextureFlag::READ, type, 0));
+			TF_ONLY_READ, type, 0));
 		m_texs.back().SetShaderResourceView(srvPtr);
 		return m_texs.size() - 1;
 	}
@@ -68,7 +68,7 @@ namespace UnknownVision {
 		}
 
 		m_texs.push_back(DX11_Texture2D(width, height, texPtr,
-			TextureFlag::WRITE, type, 0));
+			TF_WRITE, type, 0));
 		m_texs.back().SetRenderTargetView(rtvPtr);
 		return m_texs.size() - 1;
 	}
@@ -97,7 +97,7 @@ namespace UnknownVision {
 			return -1;
 		}
 		m_texs.push_back(DX11_Texture2D(width, height, texPtr,
-			TextureFlag::DEPTH_STENCIL, type, 0));
+			TF_DEPTH_STENCIL | TF_WRITE, type, 0));
 		m_texs.back().SetDepthStencilView(dsvPtr);
 		return m_texs.size() - 1;
 	}
@@ -120,8 +120,8 @@ namespace UnknownVision {
 			assert(false);
 		}
 		desc.Format = format;
-		desc.Height = height;
-		desc.Width = width;
+		desc.Height = static_cast<UINT>(height);
+		desc.Width = static_cast<UINT>(width);
 		desc.MipLevels = 1; // 暂时不考虑mipmap
 							// texDesc.MiscFlags = 0; // 使用mipmap的时候需要设置flag，从而生成mipmap
 							// 禁止对贴图多重采样
