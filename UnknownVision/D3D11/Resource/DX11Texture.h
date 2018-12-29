@@ -1,4 +1,4 @@
-﻿#ifndef D3D11_TEXTURE_H
+#ifndef D3D11_TEXTURE_H
 #define D3D11_TEXTURE_H
 
 #include "../DX11_UVConfig.h"

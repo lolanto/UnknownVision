@@ -1,4 +1,4 @@
-﻿#ifndef UV_CONFIG_H
+#ifndef UV_CONFIG_H
 #define UV_CONFIG_H
 #include "Utility/InfoLog/InfoLog.h"
 

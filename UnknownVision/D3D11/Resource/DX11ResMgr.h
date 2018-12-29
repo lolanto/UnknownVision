@@ -1,4 +1,4 @@
-﻿#ifndef D3D11_RESOURCE_MANAGER_H
+#ifndef D3D11_RESOURCE_MANAGER_H
 #define D3D11_RESOURCE_MANAGER_H
 
 #include "../../ResMgr/IResMgr.h"

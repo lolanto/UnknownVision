@@ -1,4 +1,4 @@
-﻿#ifndef UV_FACTORY_H
+#ifndef UV_FACTORY_H
 #define UV_FACTORY_H
 #include "UVConfig.h"
 #include "./RenderSys/RenderSys.h"

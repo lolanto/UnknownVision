@@ -1,4 +1,4 @@
-﻿#ifndef RESOURCE_MANAGER_UV_CONFIG_H
+#ifndef RESOURCE_MANAGER_UV_CONFIG_H
 #define RESOURCE_MANAGER_UV_CONFIG_H
 #include "../UVConfig.h"
 

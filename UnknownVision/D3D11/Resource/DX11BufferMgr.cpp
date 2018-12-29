@@ -1,4 +1,4 @@
-﻿#include "DX11ResMgr.h"
+#include "DX11ResMgr.h"
 
 namespace UnknownVision {
 

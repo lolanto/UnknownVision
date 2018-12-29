@@ -1,4 +1,4 @@
-﻿#ifndef RESOURCE_H
+#ifndef RESOURCE_H
 #define RESOURCE_H
 #include "ResMgr_UVConfig.h"
 

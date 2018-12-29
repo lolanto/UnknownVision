@@ -1,4 +1,4 @@
-﻿#ifndef IRESOURCE_MANAGER_H
+#ifndef IRESOURCE_MANAGER_H
 #define IRESOURCE_MANAGER_H
 
 #include "Resource.h"
