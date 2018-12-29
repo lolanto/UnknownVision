@@ -1,4 +1,4 @@
-﻿#include "MainClass.h"
+#include "MainClass.h"
 #include "../InfoLog/InfoLog.h"
 #include <windowsx.h>
 
@@ -39,7 +39,7 @@ HRESULT MainClass::CreateDesktopWindow(float width, float height) {
 		m_windowClassName.c_str(),
 		WS_OVERLAPPEDWINDOW,
 		0, 0,
-		width, height,
+		static_cast<int>(width), static_cast<int>(height),
 		0,
 		0,
 		m_hInstance,

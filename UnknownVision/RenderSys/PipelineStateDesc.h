@@ -1,5 +1,5 @@
-﻿#ifndef SHADER_INPUT_LAYOUT_H
-#define SHADER_INPUT_LAYOUT_H
+#ifndef PIPELINE_STATE_DESC_H
+#define PIPELINE_STATE_DESC_H
 
 namespace UnknownVision {
 	enum VertexAttributeDataType : uint8_t {
@@ -16,7 +16,15 @@ namespace UnknownVision {
 		uint8_t byteOffset = 0;
 	};
 
+	struct ViewPortDesc {
+		float topLeftX = 0.0f;
+		float topLeftY = 0.0f;
+		float width = 0.0f;
+		float height = 0.0f;
+		float minDepth = 0.0f;
+		float maxDepth = 1.0f;
+	};
 
 } // namespace UnknownVision
 
-#endif // SHADER_INPUT_LAYOUT_H
+#endif // PIPELINE_STATE_DESC_H

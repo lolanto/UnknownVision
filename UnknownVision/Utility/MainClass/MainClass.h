@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MAIN_CLASS_H
+#define MAIN_CLASS_H
 
 #include <Windows.h>
 #include <string>
@@ -87,7 +88,7 @@ private:
 	UINT			m_lastMsg;
 
 	MouseStateNode*		m_curState;
-	// Êó±ê×´Ì¬»ú×´Ì¬¶ÔÏó
+	// é¼ æ ‡çŠ¶æ€æœºçŠ¶æ€å¯¹è±¡
 	MouseState_Click	m_click;
 	MouseState_DClick	m_dclick;
 	MouseState_Down		m_down;
@@ -99,10 +100,10 @@ class MainClass {
 public:
 	MainClass(const char* name = "MainWindow");
 	~MainClass();
-	// ´´½¨´°¿Ú
+	// åˆ›å»ºçª—å£
 	HRESULT CreateDesktopWindow( float width, float height );
-	// ´°¿ÚÃ¿Ò»Ö¡ÔËĞĞÂß¼­
-	// f: Ã¿Ò»Ö¡ÔËĞĞµÄº¯Êı
+	// çª—å£æ¯ä¸€å¸§è¿è¡Œé€»è¾‘
+	// f: æ¯ä¸€å¸§è¿è¡Œçš„å‡½æ•°
 	template<typename func>
 	HRESULT Run(func f) {
 		MSG msg;
@@ -122,11 +123,11 @@ public:
 
 		return S_OK;
 	}
-	// »ñÈ¡´°¿Ú¾ä±ú
+	// è·å–çª—å£å¥æŸ„
 	HWND GetWindowHandle() { return m_hWnd; }
 	float		GetWindowWidth() { return m_width; }
 	float		GetWindowHeight() { return m_height; }
-	// ´°¿ÚÊÂ¼ş´¦Àíº¯Êı
+	// çª—å£äº‹ä»¶å¤„ç†å‡½æ•°
 	static LRESULT CALLBACK StaticWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static std::vector<UserDefWndFunc> UserFunc;
 	static MouseHandler MainMouse;
@@ -137,3 +138,5 @@ private:
 
 static HINSTANCE m_hInstance;
 static std::string m_windowClassName;
+
+#endif // MAIN_CLASS_H

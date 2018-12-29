@@ -1,4 +1,4 @@
-﻿#ifndef D3D11_BUFFER_H
+#ifndef D3D11_BUFFER_H
 #define D3D11_BUFFER_H
 
 #include "../DX11_UVConfig.h"

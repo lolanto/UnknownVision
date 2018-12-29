@@ -1,9 +1,9 @@
-﻿#ifndef RENDER_SYS_H
+#ifndef RENDER_SYS_H
 #define RENDER_SYS_H
 
 #include "../UVConfig.h"
 #include "../ResMgr/IResMgr.h"
-#include "./ShaderInputLayout.h"
+#include "./PipelineStateDesc.h"
 #include <functional>
 namespace UnknownVision {
 	enum PipelineStage {
@@ -23,12 +23,14 @@ namespace UnknownVision {
 	public:
 		RenderSys(API_TYPE api, float width, float height) :
 			m_basicHeight(height), m_basicWidth(width), API(api) {}
-		virtual ~RenderSys() {}
+		virtual ~RenderSys() = default;
+		float Width() const { return m_basicWidth; }
+		float Height() const { return m_basicHeight; }
 		const API_TYPE API;
 	public:
 		// Ultility
 		virtual bool Init() = 0;
-		void Run(std::function<void()>& func) { func(); }
+		virtual void Run(std::function<void()>&& func) = 0;
 		virtual void ResetAll() = 0;
 		virtual void ClearAllBindingState() = 0;
 		// For Shader Resource View
@@ -53,6 +55,10 @@ namespace UnknownVision {
 			int vertexShader = -1) = 0;
 		// 激活某个输入格式
 		virtual bool ActiveInputLayout(uint32_t index) = 0;
+
+		virtual int CreateViewPort(const ViewPortDesc& desc) = 0;
+		virtual bool ActiveViewPort(uint32_t index) = 0;
+
 		virtual bool BindVertexBuffer(uint32_t index) = 0;
 		virtual bool BindVertexBuffers(uint32_t* indices, size_t numBuf) = 0;
 		virtual bool BindConstantBuffer(uint32_t index, PipelineStage stage, uint32_t slot) = 0;
@@ -62,6 +68,8 @@ namespace UnknownVision {
 		// 若index==-1 意味着使用backbuffer为RTV
 		virtual bool BindRenderTarget(int index) = 0;
 		virtual void UnbindRenderTarget() = 0;
+		// 清空RTV
+		virtual void ClearRenderTarget(int index) = 0;
 
 		//virtual bool SetInputLayout() = 0;
 		//virtual bool SetCullMode() = 0;

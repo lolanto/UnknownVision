@@ -1,4 +1,4 @@
-﻿#include "../RenderSys/RenderSys.h"
+#include "../RenderSys/RenderSys.h"
 #include "DX11_UVConfig.h"
 #include "../Utility/MainClass/MainClass.h"
 #include <d3d11.h>
@@ -18,6 +18,9 @@ namespace UnknownVision {
 		virtual bool Init();
 		virtual void ResetAll() { /*TODO*/ }
 		virtual void ClearAllBindingState() { /*TODO*/ }
+		virtual void Run(std::function<void()>&& func) {
+			m_mainClass.Run(func);
+		}
 
 		// For Shaders
 		virtual bool BindShader(uint32_t index);
@@ -27,6 +30,9 @@ namespace UnknownVision {
 			int vertexShader);
 		virtual bool ActiveInputLayout(uint32_t index);
 
+		virtual int CreateViewPort(const ViewPortDesc& desc);
+		virtual bool ActiveViewPort(uint32_t index);
+
 		virtual bool BindVertexBuffer(uint32_t index);
 		virtual bool BindVertexBuffers(uint32_t* indices, size_t numBuf);
 		virtual bool BindConstantBuffer(uint32_t index, PipelineStage stage, uint32_t slot);
@@ -35,6 +41,7 @@ namespace UnknownVision {
 		virtual void UnbindDepthStencilTarget() { m_curDepthStencilView = nullptr; }
 		virtual bool BindRenderTarget(int index);
 		virtual void UnbindRenderTarget();
+		virtual void ClearRenderTarget(int index);
 
 		virtual bool SetPrimitiveType(Primitive pri);
 		// Draw Call
@@ -52,5 +59,6 @@ namespace UnknownVision {
 		uint32_t										m_numVertexBufferEles = 0;
 		MainClass										m_mainClass;
 		std::vector<SmartPTR<ID3D11InputLayout>> m_inputLayouts;
+		std::vector<D3D11_VIEWPORT> m_viewports;
 	};
 }

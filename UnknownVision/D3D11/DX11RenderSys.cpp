@@ -1,4 +1,4 @@
-﻿#include "DX11RenderSys.h"
+#include "DX11RenderSys.h"
 #include "./Resource/DX11ResMgr.h"
 #include "../UVFactory.h"
 
@@ -126,14 +126,32 @@ namespace UnknownVision {
 		return true;
 	}
 
+	int DX11_RenderSys::CreateViewPort(const ViewPortDesc& desc) {
+		D3D11_VIEWPORT vp;
+		vp.Height = desc.height;
+		vp.Width = desc.width;
+		vp.MinDepth = desc.minDepth;
+		vp.MaxDepth = desc.maxDepth;
+		vp.TopLeftX = desc.topLeftX;
+		vp.TopLeftY = desc.topLeftY;
+		m_viewports.push_back(vp);
+		return m_viewports.size() - 1;
+	}
+
+	bool DX11_RenderSys::ActiveViewPort(uint32_t index) {
+		assert(index < m_viewports.size());
+		m_devCtx->RSSetViewports(1, &m_viewports[index]);
+		return true;
+	}
+
 	bool DX11_RenderSys::BindShader(uint32_t index) {
 		DX11_Shader* shader = reinterpret_cast<DX11_Shader*>(&m_shaderMgr->GetShader(index));
 		switch (shader->Type) {
 		case ST_Vertex_Shader:
-			m_devCtx->VSSetShader(shader->VertexShader(), nullptr, 0);
+			m_devCtx->VSSetShader(shader->VertexShader().Get(), nullptr, 0);
 			break;
 		case ST_Pixel_Shader:
-			m_devCtx->PSSetShader(shader->PixelShader(), nullptr, 0);
+			m_devCtx->PSSetShader(shader->PixelShader().Get(), nullptr, 0);
 			break;
 		default:
 			return false;
@@ -205,6 +223,19 @@ namespace UnknownVision {
 
 	void DX11_RenderSys::UnbindRenderTarget() {
 		m_devCtx->OMSetRenderTargets(0, nullptr, nullptr);
+	}
+
+	void DX11_RenderSys::ClearRenderTarget(int index) {
+		static const float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+		if (index == -1) {
+			m_devCtx->ClearRenderTargetView(m_backBufferRTV.Get(), clearColor);
+		}
+		else {
+			DX11_Texture2D* tex2d = reinterpret_cast<DX11_Texture2D*>(&m_tex2DMgr->GetTexture(index));
+			ID3D11RenderTargetView* rtv = tex2d->RenderTargetView();
+			assert(rtv != nullptr);
+			m_devCtx->ClearRenderTargetView(rtv, clearColor);
+		}
 	}
 
 	bool DX11_RenderSys::SetPrimitiveType(Primitive pri) {

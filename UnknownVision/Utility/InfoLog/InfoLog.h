@@ -1,11 +1,12 @@
-#pragma once
+#ifndef INFO_LOG_H
+#define INFO_LOG_H
 #include <string>
 #include <iostream>
 #include <Windows.h>
 
-// LL: Log_Log ÆÕÍ¨Êä³öĞÅÏ¢
-// LW: Log_Warn Êä³ö¾¯¸æĞÅÏ¢
-// LE: Log_Error Êä³ö´íÎóĞÅÏ¢
+// LL: Log_Log æ™®é€šè¾“å‡ºä¿¡æ¯
+// LW: Log_Warn è¾“å‡ºè­¦å‘Šä¿¡æ¯
+// LE: Log_Error è¾“å‡ºé”™è¯¯ä¿¡æ¯
 enum INFO_LEVEL {
 	LL,
 	LW,
@@ -54,3 +55,5 @@ public:
 #ifndef MLOG
 #define MLOG(info_level, t, ...) InfoLog::GetInstance().log(info_level, t, ##__VA_ARGS__);
 #endif // !MLOG
+
+#endif // INFO_LOG_H

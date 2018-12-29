@@ -21,13 +21,10 @@ namespace UnknownVision {
 		}
 		file.read(reinterpret_cast<char*>(byteCodePtr->GetBufferPointer()), fileSize);
 		file.seekg(0, std::ios::beg);
-		std::vector<uint8_t> byteCodes(fileSize);
-		file.read(reinterpret_cast<char*>(byteCodes.data()), fileSize);
 		file.close();
 		switch (type) {
 		case ST_Vertex_Shader:
-			//if (FAILED(m_dev->CreateVertexShader(byteCodePtr->GetBufferPointer(), byteCodePtr->GetBufferSize(), nullptr, vs.GetAddressOf()))) {
-			if (FAILED(m_dev->CreateVertexShader(byteCodes.data(), fileSize, nullptr, vs.GetAddressOf()))) {
+			if (FAILED(m_dev->CreateVertexShader(byteCodePtr->GetBufferPointer(), byteCodePtr->GetBufferSize(), nullptr, vs.GetAddressOf()))) {
 				return -1;
 			}
 			shaderPtr = vs;

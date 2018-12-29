@@ -156,7 +156,7 @@
     <ClInclude Include="UVFactory.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="RenderSys\ShaderInputLayout.h">
+    <ClInclude Include="RenderSys\PipelineStateDesc.h">
       <Filter>RenderSys\Header</Filter>
     </ClInclude>
   </ItemGroup>
@@ -167,6 +167,12 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shader\InputLayout.hlsl">
+      <Filter>DXShaders</Filter>
+    </FxCompile>
+    <FxCompile Include="VertexShader.hlsl">
+      <Filter>DXShaders</Filter>
+    </FxCompile>
+    <FxCompile Include="PixelShader.hlsl">
       <Filter>DXShaders</Filter>
     </FxCompile>
   </ItemGroup>
