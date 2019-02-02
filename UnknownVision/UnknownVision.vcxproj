@@ -80,6 +80,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
       <AdditionalDependencies>assimp.lib;d3d11.lib;D2d1.lib;DXGI.lib;D3DCompiler.lib;DirectXTex_32.lib;Windowscodecs.lib;Dwrite.lib;pugixml.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -126,6 +127,8 @@
     <ClCompile Include="D3D11\Resource\DX11BufferMgr.cpp" />
     <ClCompile Include="D3D11\Resource\DX11ShaderMgr.cpp" />
     <ClCompile Include="D3D11\Resource\DX11TextureMgr.cpp" />
+    <ClCompile Include="D3D11\Resource\DX11VertexDeclaration.h" />
+    <ClCompile Include="D3D11\Resource\DX11VertexDeclarationMgr.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="UISys\UIElement.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -133,8 +136,11 @@
     <ClCompile Include="UISys\UIPage.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Utility\FileContainer\FileContainer.cpp" />
     <ClCompile Include="Utility\InfoLog\InfoLog.cpp" />
     <ClCompile Include="Utility\MainClass\MainClass.cpp" />
+    <ClCompile Include="Utility\WindowBase\win32\WindowWin32.cpp" />
+    <ClCompile Include="Utility\WindowBase\WindowBase.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="D3D11\DX11RenderSys.h" />
@@ -144,7 +150,7 @@
     <ClInclude Include="D3D11\Resource\DX11Buffer.h" />
     <ClCompile Include="D3D11\Resource\DX11Shader.h" />
     <ClInclude Include="RenderSys\RenderSys.h" />
-    <ClInclude Include="RenderSys\PipelineStateDesc.h" />
+    <ClInclude Include="RenderSys\RenderSys_UVConfig.h" />
     <ClInclude Include="ResMgr\IResMgr.h" />
     <ClInclude Include="ResMgr\ResMgr_UVConfig.h" />
     <ClInclude Include="ResMgr\Resource.h" />
@@ -153,12 +159,16 @@
     <ClInclude Include="UISys\UIRenderer.h" />
     <ClInclude Include="UISys\UISys.h" />
     <ClInclude Include="UISys\UI_UVConfig.h" />
+    <ClInclude Include="Utility\FileContainer\FileContainer.h" />
     <ClInclude Include="Utility\InfoLog\InfoLog.h" />
     <ClInclude Include="Utility\MainClass\MainClass.h" />
     <ClInclude Include="Utility\QuadTree\FreeList.h" />
     <ClInclude Include="Utility\QuadTree\QuadTree.h" />
+    <ClInclude Include="Utility\TypeRestriction\TypeRestriction.h" />
+    <ClInclude Include="Utility\WindowBase\win32\WindowWin32.h" />
+    <ClInclude Include="Utility\WindowBase\WindowBase.h" />
     <ClInclude Include="UVConfig.h" />
-    <ClInclude Include="UVFactory.h" />
+    <ClInclude Include="UVRoot.h" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="UILayout.xml" />

@@ -1,95 +1,142 @@
-#ifndef RENDER_SYS_H
+﻿#ifndef RENDER_SYS_H
 #define RENDER_SYS_H
 
-#include "../UVConfig.h"
-#include "../ResMgr/IResMgr.h"
-#include "./PipelineStateDesc.h"
+#include "../ResMgr/ResMgr_UVConfig.h"
+#include "./RenderSys_UVConfig.h"
 #include <functional>
 namespace UnknownVision {
-	enum PipelineStage {
-		PS_InputAssemble,
-		PS_VertexProcess,
-		PS_GeometryProcess,
-		PS_TesselationProcess,
-		PS_PixelProcess,
-		PS_BlendProcess
-	};
-	enum Primitive {
-		PRI_Point,
-		PRI_Triangle
-	};
-	// 渲染系统的抽象基类，声明了渲染系统的接口
+	/// 渲染系统的抽象基类，声明了渲染系统的接口
+	/** 该类就是对管线进行抽象，所提供的接口均是
+	 * 针对管线设置以及管线控制的。实际接口需要
+	 * 依赖不同图形API的对RenderSys虚基类的继承与实现
+	 */
 	class RenderSys {
 	public:
+		/** RenderSys的构造函数，主要记录一些基本属性
+		 * @param api 管线使用的图形API类型
+		 * @param width, height 管线管理的输出窗口的大小(可以考虑去掉该信息)
+		 */
 		RenderSys(API_TYPE api, float width, float height) :
 			m_basicHeight(height), m_basicWidth(width), API(api) {}
 		virtual ~RenderSys() = default;
+		/** 返回管线管理的输出窗口的宽度 */
 		float Width() const { return m_basicWidth; }
+		/** 返回管线管理的输出窗口的高度 */
 		float Height() const { return m_basicHeight; }
-		const API_TYPE API;
+		const API_TYPE API; /**< 管线使用的图形API类型 */
 	public:
-		// Ultility
+		/// Ultility Function
+		/** 管线的初始化函数，由具体API实现 */
 		virtual bool Init() = 0;
-		virtual void Run(std::function<void()>&& func) = 0;
+		/** 重置所有之前设置的管线状态 */
 		virtual void ResetAll() = 0;
-		virtual void ClearAllBindingState() = 0;
-		// For Shader Resource View
-		//virtual bool BindTexture() = 0; // tx
-		//virtual bool UnbindTexture() = 0;
 
-		//virtual bool BindUnorderAccessData() = 0; // ux
-		//virtual bool UnbindUnorderAccessData() = 0;
-
-		//virtual bool BindSampler() = 0; // sx
-		//virtual bool UnbindSampler() = 0;
-
-		// For Shaders
-		virtual bool BindShader(uint32_t index) = 0;
+		/// For Shaders
+		/** 向管线上绑定某个Shader
+		 * @remark 当同类Shader进行绑定时，已绑定的Shader会被取代
+		 * @param index 需要绑定的Shader的索引值，从ShaderMgr中获取
+		 * @return 若绑定成功，返回true；绑定失败返回false
+		 */
+		virtual bool BindShader(ShaderIdx index) = 0;
+		/** 删除管线上某个已绑定的Shader
+		 * @param type 需要删除绑定的Shader的类型，具体查看ShaderType定义
+		 * @return 删除成功返回true；删除失败返回false
+		 */
 		virtual bool UnbindShader(ShaderType type) = 0;
 
-		// For Pipeline State
-		//virtual bool BindBuffer(Buffer&) = 0;
-		//virtual bool UnbindBuffer(Buffer&) = 0;
-		// 创建输入格式
-		virtual int CreateInputLayout(std::vector<SubVertexAttributeLayoutDesc>& descs,
-			int vertexShader = -1) = 0;
-		// 激活某个输入格式
-		virtual bool ActiveInputLayout(uint32_t index) = 0;
-
-		virtual int CreateViewPort(const ViewPortDesc& desc) = 0;
-		virtual bool ActiveViewPort(uint32_t index) = 0;
-
-		virtual bool BindVertexBuffer(uint32_t index) = 0;
-		virtual bool BindVertexBuffers(uint32_t* indices, size_t numBuf) = 0;
-		virtual bool BindConstantBuffer(uint32_t index, PipelineStage stage, uint32_t slot) = 0;
-		
-		virtual bool BindDepthStencilTarget(uint32_t index) = 0;
+		/** 激活某个输入格式
+		 * @remark 激活后的输入格式直到下次激活其它设置为止一直有效
+		 * @param index 需要激活的输入格式的索引，从VertexDeclarationMgr中检索
+		 */
+		virtual void ActiveVertexDeclaration(VertexDeclarationIdx index) = 0;
+		/** 激活某个视口设置
+		 * @remark 激活后的设置直到下次激活其它设置为止一直有效
+		 * @param desc 需要激活的视口设置描述对象的引用，
+		 * 具体设置内容查看ViewPortDesc定义
+		 */
+		virtual void ActiveViewPort(const ViewPortDesc& desc) = 0;
+		/** 绑定一个顶点缓冲区，默认绑定到0号位置
+		 * @remark多次调用会覆盖之前的设置
+		 * @param index 需要绑定的顶点缓冲区的索引
+		 * @return 绑定成功返回true，绑定失败返回false
+		 */
+		virtual bool BindVertexBuffer(BufferIdx index) = 0;
+		/** 绑定多个顶点缓冲区
+		 * 按照缓冲区在数组中的顺序，从0接口开始绑定
+		 * @remark 多次调用会覆盖之前的设置，加入之后设置的缓冲区没有之前
+		 * 的绑定的多，则之前多出来的依然会被取消绑定
+		 * @param indices 需要绑定的缓冲区的索引数组
+		 * @param numBuf 数组的大小
+		 * @return 绑定成功返回true，绑定失败返回false
+		 */
+		virtual bool BindVertexBuffers(BufferIdx* indices, size_t numBuf) = 0;
+		/** 向特定的管线阶段绑定常量缓冲区，并指定绑定的接口
+		 * @remark 多次调用，并设置相同的管线阶段以及接口编号会覆盖之前的设置
+		 * @param index 需要绑定的常量缓冲区的索引
+		 * @param stage 需要绑定的管线阶段，具体查看PipelineStage的定义
+		 * @param slot 需要绑定到的接口的编号
+		 * @return 绑定成功返回true，绑定失败返回false
+		 */
+		virtual bool BindConstantBuffer(BufferIdx index, PipelineStage stage, SlotIdx slot) = 0;
+		/** 向管线绑定索引缓冲 
+		 * @param index 索引缓冲在缓冲管理器中的索引号
+		 * @return 绑定成功返回true，绑定失败返回false
+		 */
+		virtual bool BindIndexBuffer(BufferIdx index) = 0;
+		/** 取消索引缓冲的绑定 */
+		virtual void UnbindIndexBuffer() = 0;
+		/** 向管线绑定深度模板测试缓存
+		 * @param index 深度模板缓存的索引值，供具体的Mgr检索
+		 * @return 绑定成功返回true，绑定失败返回false
+		 * @remark TODO：DepthStencil可能是不同的资源创建的，后续
+		 * 可能需要考虑该从哪个资源管理器上获取。暂时该资源只在Texture2DMgr
+		 * 中基于Texture2D资源进行创建
+		 */
+		virtual bool BindDepthStencilTarget(DepthStencilIdx index) = 0;
+		/** 取消当前管线的深度模板缓存绑定 */
 		virtual void UnbindDepthStencilTarget() = 0;
-		// 若index==-1 意味着使用backbuffer为RTV
-		virtual bool BindRenderTarget(int index) = 0;
+		/** 向管线绑定一个渲染对象，默认绑定到0号接口
+		 * @param index 需要绑定渲染对象的索引，供具体的Mgr检索
+		 * @return 绑定成功返回true，绑定失败返回false
+		 * @remark TODO：RenderTarget可以基于不同的资源创建，后续
+		 * 需要考虑如何设计，让其能从不同的管理器上获取。暂时该资源只在Texture2DMgr
+		 * 中基于Texture2D资源进行创建
+		 */
+		virtual bool BindRenderTarget(RenderTargetIdx index) = 0;
+		/** 向管线绑定多个渲染对象
+		 * @remark 绑定的顺序与渲染对象在索引数组中的顺序相同，接口从0开始
+		 * 之前绑定的所有渲染对象都将被解除绑定
+		 * @param indices 需要绑定的渲染对象的索引数组
+		 * @param numRenderTarget 索引数组中的索引总量
+		 */
+		virtual bool BindRenderTargets(RenderTargetIdx* indices, size_t numRenderTarget) = 0;
+		/** 解除当前绑定的所有渲染对象 */
 		virtual void UnbindRenderTarget() = 0;
-		// 清空RTV
-		virtual void ClearRenderTarget(int index) = 0;
+		/** 清空某个渲染对象，该对象不一定被绑定
+		 * @param index 需要清空的渲染对象的索引
+		 * @remark TODO：渲染对象可能来自不同的Mgr，后期
+		 * 需要考虑如何设计接口，从不同Mgr中获得需要的渲染对象，
+		 * 暂时渲染对象来自Texture2DMgr
+		 */
+		virtual void ClearRenderTarget(RenderTargetIdx index) = 0;
 
-		//virtual bool SetInputLayout() = 0;
-		//virtual bool SetCullMode() = 0;
-		// 设置图元类型
-		virtual bool SetPrimitiveType(Primitive pri) = 0;
-		// Draw Call
-		virtual void DrawIndex() = 0;
+		// virtual bool SetCullMode() = 0;
+		/** 设置光栅过程的图元类型
+		 * @param pri 图元类型，具体定义查看Primitive
+		 */
+		virtual void SetPrimitiveType(Primitive pri) = 0;
+		/// Draw Call
+		/** 渲染命令，由RenderSystem的具体实现绘制的方式(逐顶点/逐索引等) */
 		virtual void Draw() = 0;
+		/** 将渲染的结果进行呈现
+		 * 因为DX需要翻转BackBuffer，需要额外的调用，暂时
+		 * 不知道如何放置该调用，故设置该接口
+		 */
 		virtual void Present() = 0;
 
-		ShaderMgr& ShaderManager() const { return *m_shaderMgr.get(); }
-		BufferMgr& BufferManager() const { return *m_bufMgr.get(); }
-		Texture2DMgr& Texture2DManager() const { return *m_tex2DMgr.get(); }
-
 	protected:
-		float m_basicWidth = 0;
-		float m_basicHeight = 0;
-		std::unique_ptr<ShaderMgr> m_shaderMgr;
-		std::unique_ptr<BufferMgr> m_bufMgr;
-		std::unique_ptr<Texture2DMgr> m_tex2DMgr;
+		float m_basicWidth = 0; /**< 渲染管线管理的输出宽度 */
+		float m_basicHeight = 0; /**< 渲染管线管理的输出高度 */
 	};
 }
 

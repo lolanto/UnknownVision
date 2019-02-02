@@ -1,4 +1,4 @@
-#ifndef D3D11_SHADER_H
+﻿#ifndef D3D11_SHADER_H
 #define D3D11_SHADER_H
 
 #include "../DX11_UVConfig.h"
@@ -12,15 +12,15 @@ namespace UnknownVision {
 		ID3DBlob* ByteCode() const { return m_blob.Get(); }
 		void SetByteCode(SmartPTR<ID3DBlob>& blob) { m_blob.Swap(blob); }
 
-		SmartPTR<ID3D11VertexShader> VertexShader() const { 
+		ID3D11VertexShader* VertexShader() const { 
 			SmartPTR<ID3D11VertexShader> ret;
 			m_shader.As<ID3D11VertexShader>(&ret);
-			return ret;
+			return ret.Get();
 		}
-		SmartPTR<ID3D11PixelShader> PixelShader() const {
+		ID3D11PixelShader* PixelShader() const {
 			SmartPTR<ID3D11PixelShader> ret;
 			m_shader.As<ID3D11PixelShader>(&ret);
-			return ret;
+			return ret.Get();
 		}
 	private:
 		SmartPTR<ID3D11DeviceChild> m_shader;

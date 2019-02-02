@@ -1,11 +1,18 @@
-#include "UVFactory.h"
+﻿#include "UVRoot.h"
+#include "RenderSys/RenderSys.h"
+#include "ResMgr/IResMgr.h"
 #include <iostream>
 #include <cassert>
-using UnknownVision::UVFactory;
+using UnknownVision::Root;
 using UnknownVision::RenderSys;
 using UnknownVision::BufferMgr;
 using UnknownVision::ShaderMgr;
 using UnknownVision::Texture2DMgr;
+using UnknownVision::VertexDeclarationMgr;
+using UnknownVision::ShaderIdx;
+using UnknownVision::BufferIdx;
+using UnknownVision::VertexDeclarationIdx;
+using UnknownVision::RenderTargetIdx;
 
 int main() {
 
@@ -16,38 +23,44 @@ int main() {
 		-1.0f, 0.0f, 0.0f
 	};
 
-	UVFactory& factory = UVFactory::GetInstance();
-	if (!factory.Init(DirectX11_0, 720, 640)) return 0;
+	Root& factory = Root::GetInstance();
+	if (!factory.Init(UnknownVision::DirectX11_0, 720, 640)) return 0;
 	RenderSys& rs = factory.GetRenderSys();
-	ShaderMgr& sm = rs.ShaderManager();
-	BufferMgr& bm = rs.BufferManager();
-	Texture2DMgr& t2dm = rs.Texture2DManager();
+	rs.Init();
+	ShaderMgr& sm = factory.GetShaderMgr();
+	BufferMgr& bm = factory.GetBufferMgr();
+	VertexDeclarationMgr& vm = factory.GetVertexDeclarationMgr();
 
-	int vs = sm.CreateShaderFromBinaryFile(UnknownVision::ST_Vertex_Shader, u8"../Debug/VertexShader.cso");
-	int ps = sm.CreateShaderFromBinaryFile(UnknownVision::ST_Pixel_Shader, u8"../Debug/PixelShader.cso");
+	ShaderIdx vs = sm.CreateShaderFromBinaryFile(UnknownVision::ST_Vertex_Shader, u8"../Debug/VertexShader.cso");
+	ShaderIdx ps = sm.CreateShaderFromBinaryFile(UnknownVision::ST_Pixel_Shader, u8"../Debug/PixelShader.cso");
 	assert(vs != -1);
-	std::vector<UnknownVision::SubVertexAttributeLayoutDesc> inputLayout;
+	std::vector<UnknownVision::SubVertexAttributeDesc> inputLayout;
 	inputLayout.assign({
 		{u8"POSITION", 0, UnknownVision::VADT_FLOAT3, 0, 0},
 	});
-	int il = rs.CreateInputLayout(inputLayout, vs);
+	VertexDeclarationIdx il = vm.CreateVertexDeclaration(inputLayout, vs);
 	assert(il != -1);
-	int vb = bm.CreateVertexBuffer(3, 12, reinterpret_cast<uint8_t*>(vtxData));
+	BufferIdx vb = bm.CreateVertexBuffer(3, 12, reinterpret_cast<uint8_t*>(vtxData), UnknownVision::BufferFlag::BF_READ_BY_GPU);
 	assert(vb != -1);
-	int vp = rs.CreateViewPort({ 0, 0, rs.Width(), rs.Height(), 0.0f, 1.0f });
+	UnknownVision::ViewPortDesc vp;
+	vp.height = rs.Height(); vp.width = rs.Width(); vp.topLeftX = vp.topLeftY = 0;
+	vp.minDepth = 0.0f; vp.maxDepth = 1.0f;
 	rs.ActiveViewPort(vp);
 	// 设置渲染管线状态
 	rs.BindVertexBuffer(vb);
-	rs.ActiveInputLayout(il);
+	rs.ActiveVertexDeclaration(il);
 	rs.BindShader(vs);
 	rs.BindShader(ps);
-	rs.SetPrimitiveType(UnknownVision::PRI_Triangle);
-	rs.BindRenderTarget(-1);
-	
-	rs.Run([&rs]() {
-		rs.ClearRenderTarget(-1);
+	rs.SetPrimitiveType(UnknownVision::PRI_TriangleList);
+	rs.BindRenderTarget(RenderTargetIdx(-1));
+
+	WindowBase::MainLoop = [&rs](float) {
+		rs.ClearRenderTarget(RenderTargetIdx(-1));
 		rs.Draw();
 		rs.Present();
-	});
+	};
+
+	factory.Run();
+
 	return 0;
 }
