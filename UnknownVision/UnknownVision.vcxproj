@@ -91,10 +91,14 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <FxCompile>
       <ShaderModel>5.0</ShaderModel>
     </FxCompile>
+    <Link>
+      <AdditionalDependencies>D3D12.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -129,6 +133,7 @@
     <ClCompile Include="D3D11\Resource\DX11TextureMgr.cpp" />
     <ClCompile Include="D3D11\Resource\DX11VertexDeclaration.h" />
     <ClCompile Include="D3D11\Resource\DX11VertexDeclarationMgr.cpp" />
+    <ClCompile Include="D3D12\DX12RenderSys.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="UISys\UIElement.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -149,6 +154,9 @@
     <ClCompile Include="D3D11\Resource\DX11ResMgr.h" />
     <ClInclude Include="D3D11\Resource\DX11Buffer.h" />
     <ClCompile Include="D3D11\Resource\DX11Shader.h" />
+    <ClInclude Include="D3D12\DX12RenderSys.h" />
+    <ClInclude Include="D3D12\DX12_UVConfig.h" />
+    <ClInclude Include="DirectXHelper.h" />
     <ClInclude Include="RenderSys\RenderSys.h" />
     <ClInclude Include="RenderSys\RenderSys_UVConfig.h" />
     <ClInclude Include="ResMgr\IResMgr.h" />

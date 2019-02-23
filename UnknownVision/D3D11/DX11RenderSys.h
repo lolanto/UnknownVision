@@ -1,8 +1,7 @@
-﻿#ifndef D3D11_RENDER_SYS_H
+#ifndef D3D11_RENDER_SYS_H
 #define D3D11_RENDER_SYS_H
 #include "../RenderSys/RenderSys.h"
 #include "DX11_UVConfig.h"
-#include "../Utility/MainClass/MainClass.h"
 #include <d3d11.h>
 #include <array>
 
@@ -21,7 +20,7 @@ namespace UnknownVision {
 		 * 3. DX11中还需要创建与SwapChain密切相关的BackBuffer
 		 * @return 初始化成功返回True，失败返回False
 		 */
-		virtual bool Init();
+		virtual bool Init(WindowBase* win);
 		virtual void ResetAll() { /*TODO*/ }
 
 		/// For Shaders

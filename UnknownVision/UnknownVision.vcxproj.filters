@@ -76,6 +76,12 @@
     <Filter Include="Utility\TypeRestriction">
       <UniqueIdentifier>{5f089239-6bbf-4f38-9323-841e177971e8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="D3D12">
+      <UniqueIdentifier>{415f3f4f-70bc-46b1-a9b8-a8b029c5f77b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D12\Resource">
+      <UniqueIdentifier>{d05befdb-cb44-4182-ad77-67769d909aa8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="UISys\UIElement.cpp">
@@ -128,6 +134,9 @@
     </ClCompile>
     <ClCompile Include="Utility\WindowBase\win32\WindowWin32.cpp">
       <Filter>Utility\WindowBase\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\DX12RenderSys.cpp">
+      <Filter>D3D12</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -199,6 +208,15 @@
     </ClInclude>
     <ClInclude Include="Utility\TypeRestriction\TypeRestriction.h">
       <Filter>Utility\TypeRestriction</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\DX12_UVConfig.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectXHelper.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\DX12RenderSys.h">
+      <Filter>D3D12</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,4 +1,4 @@
-﻿#include "DX11RenderSys.h"
+#include "DX11RenderSys.h"
 #include "./Resource/DX11ResMgr.h"
 #include "../UVRoot.h"
 #include "../Utility/WindowBase/win32/WindowWin32.h"
@@ -6,6 +6,9 @@
 
 namespace UnknownVision {
 	bool Root::createDX11Env(API_TYPE api, float width, float height) {
+		std::unique_ptr<WindowWin32> win = std::make_unique<WindowWin32>("DX11 RenderSystem", width, height, false);
+		if (!win->Init()) return false;
+		m_window = std::unique_ptr<WindowBase>(reinterpret_cast<WindowBase*>(win.release()));
 		m_renderSys = std::make_unique<DX11_RenderSys>(api, width, height);
 		m_shaderMgr = std::make_unique<DX11_ShaderMgr>();
 		m_bufferMgr = std::make_unique<DX11_BufferMgr>();
@@ -13,9 +16,7 @@ namespace UnknownVision {
 		return true;
 	}
 
-	bool DX11_RenderSys::Init() {
-		std::unique_ptr<WindowWin32> win = std::make_unique<WindowWin32>("DX11 RenderSystem", m_basicWidth, m_basicHeight, false);
-		if (!win->Init()) return false;
+	bool DX11_RenderSys::Init(WindowBase* win) {
 		HRESULT hr = S_OK;
 		DXGI_SWAP_CHAIN_DESC sd; // 交换链描述
 		D3D_FEATURE_LEVEL feature;
@@ -36,7 +37,7 @@ namespace UnknownVision {
 		sd.BufferDesc.RefreshRate.Numerator = 60;
 		sd.BufferDesc.RefreshRate.Denominator = 1;
 		sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		sd.OutputWindow = win->hWnd();
+		sd.OutputWindow = reinterpret_cast<WindowWin32*>(win)->hWnd();
 		// 不使用抗锯齿
 		sd.SampleDesc.Count = 1;
 		sd.SampleDesc.Quality = 0;
@@ -71,8 +72,6 @@ namespace UnknownVision {
 		hr = m_dev->CreateRenderTargetView(backBuffer, 0, m_backBufferRTV.GetAddressOf());
 		assert(hr >= 0);
 		backBuffer->Release();
-
-		Root::GetInstance().SetWindow(win.release());
 		return true;
 	}
 

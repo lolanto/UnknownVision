@@ -1,21 +1,9 @@
-﻿#ifndef RENDER_SYS_UV_CONFIG_H
+#ifndef RENDER_SYS_UV_CONFIG_H
 #define RENDER_SYS_UV_CONFIG_H
 #include "../Utility/TypeRestriction/TypeRestriction.h"
 #include "../UVConfig.h"
 
 namespace UnknownVision {
-	const uint32_t UV_MAX_RENDER_TARGET = 8; /**< 可绑定的渲染对象的上限 */
-	const uint32_t UV_MAX_VERTEX_BUFFER = 16; /**< 可绑定的顶点缓冲的上限 */
-
-	/** 视口设置描述对象 */
-	struct ViewPortDesc {
-		float topLeftX = 0.0f; /**< 视口的左上角横坐标，单位为像素 */
-		float topLeftY = 0.0f; /**< 视口的左上角纵坐标，单位为像素 */
-		float width = 0.0f; /**< 视口的宽度，单位为像素 */
-		float height = 0.0f; /**< 视口的高度，单位为像素 */
-		float minDepth = 0.0f; /**< 深度值最小值，范围0~1 */
-		float maxDepth = 1.0f; /**< 深度值最大值，范围0~1*/
-	};
 
 	/** 标记管线不同部分的枚举值
 	* 凡涉及对特定管线部分进行状态设置的
@@ -33,6 +21,7 @@ namespace UnknownVision {
 	/** 图元类型的枚举值，与光栅化相关
 	*/
 	enum Primitive {
+		PRI_INVALID, /**< 无效图元类型 */
 		PRI_Point, /**< 点图元 */
 		PRI_TriangleList /**< 三角形列表图元 */
 	};

@@ -1,4 +1,4 @@
-﻿#ifndef RESOURCE_H
+#ifndef RESOURCE_H
 #define RESOURCE_H
 #include "ResMgr_UVConfig.h"
 
@@ -17,19 +17,19 @@ namespace UnknownVision {
 
 	class Texture : public Resource {
 	public:
-		Texture(uint32_t flag, TextureElementType type, uint32_t RID) : Resource(RID),
+		Texture(uint32_t flag, DataFormatType type, uint32_t RID) : Resource(RID),
 			m_flag(flag), m_eleType(type) {}
-		TextureElementType ElementType() const { return m_eleType; }
+		DataFormatType ElementType() const { return m_eleType; }
 		TextureFlagCombination Flag() const { return m_flag; }
 	protected:
-		TextureElementType m_eleType = TET_INVALID;
-		TextureFlagCombination m_flag = TF_INVALID;
+		DataFormatType m_eleType = DFT_INVALID;
+		TextureFlagCombination m_flag = DFT_INVALID;
 	};
 
 	class Texture2D : public Texture {
 	public:
 		Texture2D(float width, float height,
-			uint32_t flag, TextureElementType type, uint32_t RID)
+			uint32_t flag, DataFormatType type, uint32_t RID)
 			: Texture(flag, type, RID) {}
 		float Width() const { return m_width; }
 		float Height() const { return m_height; }
@@ -68,6 +68,38 @@ namespace UnknownVision {
 		VertexDeclaration(uint32_t RID)
 			: Resource(RID) {}
 	};
+
+	/** 描述管线状态的结构，具体可设置状态查看具体属性
+	该结构被用于PipelineState创建相关函数*/
+	struct PipelineStateDesc {
+		ShaderIdx vs; /**< 顶点着色器下标 */
+		ShaderIdx ps; /**< 像素着色器下标 */
+		ViewPortDesc viewport; /**< 视口描述对象 */
+		VertexDeclarationIdx vertexDeclaration; /**< 顶点缓冲区描述对象的下标 */
+		Primitive primitiveType; /**< 图元类型 */
+		DataFormatType DSVFormat; /**< 深度模板缓存的元素格式 */
+		DataFormatType RTVFormat[UV_MAX_RENDER_TARGET]; /**< 各个渲染对象的元素格式 */
+		/** 构造一个包含默认设置的描述对象，默认值为：
+		 * @param vs = -1, 用户必须设置
+		 * @param ps = -1, 用户必须设置
+		 * @param viewport 查看ViewPortDesc定义
+		 * @param vertexDeclaration = -1, 用户必须定义
+		 * @param primitiveType = INVALID 用户必须定义
+		 * @param DSVFormat = D24_UNORM_S8_UINT 常用类型
+		 * @param RTVFormats = R8G8B8A8_UNORM 常用类型 */
+		PipelineStateDesc() : vs(-1), ps(-1), vertexDeclaration(-1), primitiveType(PRI_INVALID),
+			DSVFormat(DFT_D24_UNORM_S8_UINT), viewport(ViewPortDesc()) {
+			for (DataFormatType& rtvfs : RTVFormat)
+				rtvfs = DFT_R8G8B8A8_UNORM;
+		}
+	};
+
+	/** 承载管线对象的虚基类 */
+	class PipelineState : public Resource {
+	public:
+		PipelineState(uint32_t RID) : Resource(RID) {}
+	};
+
 }
 
 #endif // RESOURCE_H

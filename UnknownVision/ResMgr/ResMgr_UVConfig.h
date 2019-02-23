@@ -1,9 +1,19 @@
-﻿#ifndef RESOURCE_MANAGER_UV_CONFIG_H
+#ifndef RESOURCE_MANAGER_UV_CONFIG_H
 #define RESOURCE_MANAGER_UV_CONFIG_H
 #include "../UVConfig.h"
 #include "../Utility/TypeRestriction/TypeRestriction.h"
 
 namespace UnknownVision {
+	/** 视口设置描述对象 */
+	struct ViewPortDesc {
+		float topLeftX = 0.0f; /**< 视口的左上角横坐标，单位为像素 */
+		float topLeftY = 0.0f; /**< 视口的左上角纵坐标，单位为像素 */
+		float width = 0.0f; /**< 视口的宽度，单位为像素 */
+		float height = 0.0f; /**< 视口的高度，单位为像素 */
+		float minDepth = 0.0f; /**< 深度值最小值，范围0~1 */
+		float maxDepth = 1.0f; /**< 深度值最大值，范围0~1*/
+	};
+
 	enum ShaderType {
 		ST_Vertex_Shader,
 		ST_Pixel_Shader,
@@ -25,18 +35,6 @@ namespace UnknownVision {
 		BT_CONSTANT_BUFFER
 	};
 
-	enum TextureElementType : uint32_t {
-		TET_INVALID = 0,
-		UNORM_R8G8B8,
-		UNORM_R8G8B8A8,
-		UNORM_R16G16B16,
-		UNORM_R16G16B16A16,
-		UNORM_R32G32B32,
-		UNORM_R32G32B32A32,
-		// 深度模板测试缓存专用的数据类型
-		UNORM_D24_UINT_S8
-	};
-
 	enum TextureFlag : uint32_t {
 		TF_INVALID = 0x00000000U,
 		TF_READ_BY_GPU = 0x00000001U,
@@ -51,13 +49,8 @@ namespace UnknownVision {
 	ALIAS_INDEX(int32_t, ShaderIdx);
 	ALIAS_INDEX(int32_t, BufferIdx);
 	ALIAS_INDEX(int32_t, VertexDeclarationIdx);
+	ALIAS_INDEX(int32_t, PipelineStateIdx);
 
-	//using Texture2DIdx = int32_t;
-	//using RenderTargetIdx = int32_t;
-	//using DepthStencilIdx = int32_t;
-	//using ShaderIdx = int32_t;
-	//using BufferIdx = int32_t;
-	//using VertexDeclarationIdx = int32_t;
 	using TextureFlagCombination = uint32_t;
 	using BufferFlagCombination = uint32_t;
 }

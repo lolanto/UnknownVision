@@ -1,4 +1,4 @@
-﻿#ifndef UV_ROOT_H
+#ifndef UV_ROOT_H
 #define UV_ROOT_H
 #include "UVConfig.h"
 #include "Utility/WindowBase/WindowBase.h"
@@ -36,7 +36,7 @@ namespace UnknownVision {
 		Texture2DMgr& GetTexture2DMgr() const { return *m_tex2dMgr; }
 		VertexDeclarationMgr& GetVertexDeclarationMgr() const { return *m_vtxDeclMgr; }
 
-		void SetWindow(WindowBase* ptr) { m_window = std::unique_ptr<WindowBase>(ptr); }
+		void SetWindow(WindowBase* ptr) {  }
 	private:
 		bool createDX11Env(API_TYPE api, float width, float height);
 

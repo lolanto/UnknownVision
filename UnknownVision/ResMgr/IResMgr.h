@@ -1,4 +1,4 @@
-﻿#ifndef IRESOURCE_MANAGER_H
+#ifndef IRESOURCE_MANAGER_H
 #define IRESOURCE_MANAGER_H
 
 #include "ResMgr_UVConfig.h"
@@ -45,7 +45,7 @@ namespace UnknownVision {
 			创建失败返回-1
 		**/
 		virtual Texture2DIdx CreateTexture(float width, float height,
-			TextureFlagCombination flag, TextureElementType type, uint8_t* data, size_t bytePerLine) = 0;
+			TextureFlagCombination flag, DataFormatType type, uint8_t* data, size_t bytePerLine) = 0;
 		/* 从纹理出发创建渲染对象
 		@param index
 			需要创建RenderTarget的基础纹理的索引
@@ -127,6 +127,22 @@ namespace UnknownVision {
 		virtual VertexDeclarationIdx CreateVertexDeclaration(const std::vector<SubVertexAttributeDesc>& verAttDescs, ShaderIdx shaderIndex) = 0;
 		/** 通过|index|从管理器中索引顶点属性描述对象 */
 		virtual VertexDeclaration& GetVertexDeclaration(VertexDeclarationIdx index) = 0;
+	};
+
+	class PipelineStateMgr : public ResMgr {
+	public:
+		PipelineStateMgr() : ResMgr(MT_PIPELINE_STATE_MANAGER) {}
+		virtual ~PipelineStateMgr() {}
+	public:
+		/** 利用管线状态描述结构创建管线状态对象 
+		 * @param desc 管线状态描述结构的引用，具体查看PipelineStateDesc的定义
+		 * @return 创建成功，返回状态对象的索引，创建失败返回 -1 */
+		virtual PipelineStateIdx CreatePipelineState(const PipelineStateDesc& desc) = 0;
+		/** 根据输入的管线状态索引，返回其描述结构
+		 * @param index 需要查询的管线状态的索引
+		 * @return 返回对应的状态描述结构
+		 * @remark 对返回结构的修改不影响已创建的对象 */
+		virtual PipelineStateDesc GetDesc(PipelineStateIdx index) = 0;
 	};
 
 }

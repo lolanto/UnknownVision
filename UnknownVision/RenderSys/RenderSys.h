@@ -1,4 +1,4 @@
-﻿#ifndef RENDER_SYS_H
+#ifndef RENDER_SYS_H
 #define RENDER_SYS_H
 
 #include "../ResMgr/ResMgr_UVConfig.h"
@@ -10,6 +10,7 @@ namespace UnknownVision {
 	 * 针对管线设置以及管线控制的。实际接口需要
 	 * 依赖不同图形API的对RenderSys虚基类的继承与实现
 	 */
+	class WindowBase;
 	class RenderSys {
 	public:
 		/** RenderSys的构造函数，主要记录一些基本属性
@@ -26,8 +27,10 @@ namespace UnknownVision {
 		const API_TYPE API; /**< 管线使用的图形API类型 */
 	public:
 		/// Ultility Function
-		/** 管线的初始化函数，由具体API实现 */
-		virtual bool Init() = 0;
+		/** 管线的初始化函数，由具体API实现
+		 * @param win 用于显示渲染结果的系统窗口
+		 * @return 初始化成功返回true，失败返回false */
+		virtual bool Init(WindowBase* win) = 0;
 		/** 重置所有之前设置的管线状态 */
 		virtual void ResetAll() = 0;
 
@@ -36,30 +39,30 @@ namespace UnknownVision {
 		 * @remark 当同类Shader进行绑定时，已绑定的Shader会被取代
 		 * @param index 需要绑定的Shader的索引值，从ShaderMgr中获取
 		 * @return 若绑定成功，返回true；绑定失败返回false
-		 */
+		 * @remark 不要在DX12中使用 */
 		virtual bool BindShader(ShaderIdx index) = 0;
 		/** 删除管线上某个已绑定的Shader
 		 * @param type 需要删除绑定的Shader的类型，具体查看ShaderType定义
 		 * @return 删除成功返回true；删除失败返回false
-		 */
+		 * @remark 不要在DX12中使用 */
 		virtual bool UnbindShader(ShaderType type) = 0;
 
 		/** 激活某个输入格式
 		 * @remark 激活后的输入格式直到下次激活其它设置为止一直有效
 		 * @param index 需要激活的输入格式的索引，从VertexDeclarationMgr中检索
-		 */
+		 * @remark 不要在DX12中使用 */
 		virtual void ActiveVertexDeclaration(VertexDeclarationIdx index) = 0;
 		/** 激活某个视口设置
 		 * @remark 激活后的设置直到下次激活其它设置为止一直有效
 		 * @param desc 需要激活的视口设置描述对象的引用，
 		 * 具体设置内容查看ViewPortDesc定义
-		 */
+		 * @remark 不要在DX12中使用 */
 		virtual void ActiveViewPort(const ViewPortDesc& desc) = 0;
 		/** 绑定一个顶点缓冲区，默认绑定到0号位置
 		 * @remark多次调用会覆盖之前的设置
 		 * @param index 需要绑定的顶点缓冲区的索引
 		 * @return 绑定成功返回true，绑定失败返回false
-		 */
+		 * @remark 不要在DX12中使用 */
 		virtual bool BindVertexBuffer(BufferIdx index) = 0;
 		/** 绑定多个顶点缓冲区
 		 * 按照缓冲区在数组中的顺序，从0接口开始绑定
@@ -68,7 +71,7 @@ namespace UnknownVision {
 		 * @param indices 需要绑定的缓冲区的索引数组
 		 * @param numBuf 数组的大小
 		 * @return 绑定成功返回true，绑定失败返回false
-		 */
+		 * @remark 不要在DX12中使用 */
 		virtual bool BindVertexBuffers(BufferIdx* indices, size_t numBuf) = 0;
 		/** 向特定的管线阶段绑定常量缓冲区，并指定绑定的接口
 		 * @remark 多次调用，并设置相同的管线阶段以及接口编号会覆盖之前的设置
@@ -76,14 +79,15 @@ namespace UnknownVision {
 		 * @param stage 需要绑定的管线阶段，具体查看PipelineStage的定义
 		 * @param slot 需要绑定到的接口的编号
 		 * @return 绑定成功返回true，绑定失败返回false
-		 */
+		 * @remark 不要在DX12中使用 */
 		virtual bool BindConstantBuffer(BufferIdx index, PipelineStage stage, SlotIdx slot) = 0;
 		/** 向管线绑定索引缓冲 
 		 * @param index 索引缓冲在缓冲管理器中的索引号
 		 * @return 绑定成功返回true，绑定失败返回false
-		 */
+		 * @remark 不要在DX12中使用 */
 		virtual bool BindIndexBuffer(BufferIdx index) = 0;
-		/** 取消索引缓冲的绑定 */
+		/** 取消索引缓冲的绑定
+		 * @remark 不要在DX12中使用 */
 		virtual void UnbindIndexBuffer() = 0;
 		/** 向管线绑定深度模板测试缓存
 		 * @param index 深度模板缓存的索引值，供具体的Mgr检索
@@ -91,9 +95,10 @@ namespace UnknownVision {
 		 * @remark TODO：DepthStencil可能是不同的资源创建的，后续
 		 * 可能需要考虑该从哪个资源管理器上获取。暂时该资源只在Texture2DMgr
 		 * 中基于Texture2D资源进行创建
-		 */
+		 * @remark 不要在DX12中使用 */
 		virtual bool BindDepthStencilTarget(DepthStencilIdx index) = 0;
-		/** 取消当前管线的深度模板缓存绑定 */
+		/** 取消当前管线的深度模板缓存绑定
+		* @remark 不要在DX12中使用 */
 		virtual void UnbindDepthStencilTarget() = 0;
 		/** 向管线绑定一个渲染对象，默认绑定到0号接口
 		 * @param index 需要绑定渲染对象的索引，供具体的Mgr检索
@@ -101,29 +106,30 @@ namespace UnknownVision {
 		 * @remark TODO：RenderTarget可以基于不同的资源创建，后续
 		 * 需要考虑如何设计，让其能从不同的管理器上获取。暂时该资源只在Texture2DMgr
 		 * 中基于Texture2D资源进行创建
-		 */
+		 * @remark 不要在DX12中使用 */
 		virtual bool BindRenderTarget(RenderTargetIdx index) = 0;
 		/** 向管线绑定多个渲染对象
 		 * @remark 绑定的顺序与渲染对象在索引数组中的顺序相同，接口从0开始
 		 * 之前绑定的所有渲染对象都将被解除绑定
 		 * @param indices 需要绑定的渲染对象的索引数组
 		 * @param numRenderTarget 索引数组中的索引总量
-		 */
+		 * @remark 不要在DX12中使用 */
 		virtual bool BindRenderTargets(RenderTargetIdx* indices, size_t numRenderTarget) = 0;
-		/** 解除当前绑定的所有渲染对象 */
+		/** 解除当前绑定的所有渲染对象
+		 * @remark 不要在DX12中使用 */
 		virtual void UnbindRenderTarget() = 0;
 		/** 清空某个渲染对象，该对象不一定被绑定
 		 * @param index 需要清空的渲染对象的索引
 		 * @remark TODO：渲染对象可能来自不同的Mgr，后期
 		 * 需要考虑如何设计接口，从不同Mgr中获得需要的渲染对象，
 		 * 暂时渲染对象来自Texture2DMgr
-		 */
+		 * @remark 不要在DX12中使用 */
 		virtual void ClearRenderTarget(RenderTargetIdx index) = 0;
 
 		// virtual bool SetCullMode() = 0;
 		/** 设置光栅过程的图元类型
 		 * @param pri 图元类型，具体定义查看Primitive
-		 */
+		 * @remark 不要在DX12中使用 */
 		virtual void SetPrimitiveType(Primitive pri) = 0;
 		/// Draw Call
 		/** 渲染命令，由RenderSystem的具体实现绘制的方式(逐顶点/逐索引等) */
