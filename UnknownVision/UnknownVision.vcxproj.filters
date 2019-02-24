@@ -138,6 +138,9 @@
     <ClCompile Include="D3D12\DX12RenderSys.cpp">
       <Filter>D3D12</Filter>
     </ClCompile>
+    <ClCompile Include="D3D12\Resource\DX12BufferMgr.cpp">
+      <Filter>D3D12\Resource</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="UISys\UIRenderer.h">
@@ -217,6 +220,12 @@
     </ClInclude>
     <ClInclude Include="D3D12\DX12RenderSys.h">
       <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\Resource\DX12ResMgr.h">
+      <Filter>D3D12\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\Resource\DX12Buffer.h">
+      <Filter>D3D12\Resource</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

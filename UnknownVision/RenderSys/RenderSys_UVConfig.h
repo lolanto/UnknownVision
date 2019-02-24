@@ -1,4 +1,4 @@
-#ifndef RENDER_SYS_UV_CONFIG_H
+﻿#ifndef RENDER_SYS_UV_CONFIG_H
 #define RENDER_SYS_UV_CONFIG_H
 #include "../Utility/TypeRestriction/TypeRestriction.h"
 #include "../UVConfig.h"
@@ -17,13 +17,6 @@ namespace UnknownVision {
 		PS_RasterizationProcess, /**< 光栅处理阶段 */
 		PS_PixelProcess, /**< 像素处理阶段 */
 		PS_OutpuProcess /**< 管线输出处理阶段 */
-	};
-	/** 图元类型的枚举值，与光栅化相关
-	*/
-	enum Primitive {
-		PRI_INVALID, /**< 无效图元类型 */
-		PRI_Point, /**< 点图元 */
-		PRI_TriangleList /**< 三角形列表图元 */
 	};
 
 	struct SamplerDesc {

@@ -1,4 +1,4 @@
-#ifndef D3D12_RENDER_SYS_H
+﻿#ifndef D3D12_RENDER_SYS_H
 #define D3D12_RENDER_SYS_H
 
 #include "DX12_UVConfig.h"
@@ -14,6 +14,9 @@ namespace UnknownVision {
 		 * @param win 显示渲染结果的系统窗口
 		 * @return 初始化成功返回true，失败返回false */
 		virtual bool Init(WindowBase* win);
+	public:
+		/** 返回设备，用于资源创建等函数 */
+		ID3D12Device5* GetDevice() const { return m_device.Get(); }
 	private:
 		SmartPTR<IDXGIFactory6> m_factory; /** DXGI基本工厂，初始化所依赖 */
 		SmartPTR<ID3D12Device5> m_device; /**< 当前选择的Adapter的代表 */

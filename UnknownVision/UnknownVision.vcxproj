@@ -134,6 +134,7 @@
     <ClCompile Include="D3D11\Resource\DX11VertexDeclaration.h" />
     <ClCompile Include="D3D11\Resource\DX11VertexDeclarationMgr.cpp" />
     <ClCompile Include="D3D12\DX12RenderSys.cpp" />
+    <ClCompile Include="D3D12\Resource\DX12BufferMgr.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="UISys\UIElement.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -156,6 +157,8 @@
     <ClCompile Include="D3D11\Resource\DX11Shader.h" />
     <ClInclude Include="D3D12\DX12RenderSys.h" />
     <ClInclude Include="D3D12\DX12_UVConfig.h" />
+    <ClInclude Include="D3D12\Resource\DX12Buffer.h" />
+    <ClInclude Include="D3D12\Resource\DX12ResMgr.h" />
     <ClInclude Include="DirectXHelper.h" />
     <ClInclude Include="RenderSys\RenderSys.h" />
     <ClInclude Include="RenderSys\RenderSys_UVConfig.h" />

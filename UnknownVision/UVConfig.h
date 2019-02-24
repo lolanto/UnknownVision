@@ -1,4 +1,4 @@
-#ifndef UV_CONFIG_H
+﻿#ifndef UV_CONFIG_H
 #define UV_CONFIG_H
 #include "Utility/InfoLog/InfoLog.h"
 #include <cstdint>
@@ -34,6 +34,14 @@ namespace UnknownVision {
 		MT_BUFFER_MANAGER,
 		MT_VERTEX_DECLARATION_MANAGER,
 		MT_PIPELINE_STATE_MANAGER
+	};
+
+	/** 图元类型的枚举值，与光栅化相关
+*/
+	enum Primitive {
+		PRI_INVALID, /**< 无效图元类型 */
+		PRI_Point, /**< 点图元 */
+		PRI_TriangleList /**< 三角形列表图元 */
 	};
 
 	enum API_TYPE {

@@ -1,4 +1,4 @@
-#ifndef IRESOURCE_MANAGER_H
+﻿#ifndef IRESOURCE_MANAGER_H
 #define IRESOURCE_MANAGER_H
 
 #include "ResMgr_UVConfig.h"
@@ -9,6 +9,7 @@ namespace UnknownVision {
 	class Buffer;
 	class Shader;
 	class VertexDeclaration;
+	class PipelineStateDesc;
 
 	class ResMgr {
 	public:
@@ -76,20 +77,25 @@ namespace UnknownVision {
 		BufferMgr() : ResMgr(MT_BUFFER_MANAGER) {}
 		virtual ~BufferMgr() {}
 	public:
-		/* 创建顶点缓冲
-			@param numVtx
-				缓冲中顶点的数量，设置后不能修改
-			@param vtxSize
-				缓冲中一个顶点的字节大小
-			@param data
-				顶点缓冲的初始数据
-			@param flags
-				缓冲区的特性，详细内容见BufferFlag定义
-			@ret
-				创建成功，返回缓冲区的索引；创建失败返回-1
-		**/
+		/** 创建顶点缓冲
+		 * @param numVtx 缓冲中顶点的数量，设置后不能修改
+		 * @param vtxSize 缓冲中一个顶点的字节大小
+		 * @param data 顶点缓冲的初始数据
+		 * @param flags 缓冲区的特性，详细内容见BufferFlag定义
+		 * @return 创建成功，返回缓冲区的索引；创建失败返回-1 */
 		virtual BufferIdx CreateVertexBuffer(size_t numVtxs, size_t vtxSize, uint8_t* data, BufferFlagCombination flags) = 0;
+		/** 创建常量缓冲区 
+		 * @param byteSize 常量缓冲区的大小
+		 * @param data 用于初始化常量缓冲区的数据
+		 * @param flags 缓冲区的额外设置
+		 * @return 创建成功，返回索引；否则返回-1 */
 		virtual BufferIdx CreateConstantBuffer(size_t byteSize, uint8_t* data, BufferFlagCombination flags) = 0;
+		/** 创建索引缓存
+		 * @param numIdxs 缓冲中索引的数量
+		 * @param IdxSize 一个索引元素的大小
+		 * @param data 用于初始化索引缓冲区的数据
+		 * @param flags 缓冲区的额外设置
+		 * @return 创建成功返回缓冲索引，否则返回-1 */
 		virtual BufferIdx CreateIndexBuffer(size_t numIdxs, size_t IdxSize, uint8_t* data, BufferFlagCombination flags) = 0;
 		virtual Buffer& GetBuffer(BufferIdx index) = 0;
 	};
@@ -140,9 +146,10 @@ namespace UnknownVision {
 		virtual PipelineStateIdx CreatePipelineState(const PipelineStateDesc& desc) = 0;
 		/** 根据输入的管线状态索引，返回其描述结构
 		 * @param index 需要查询的管线状态的索引
-		 * @return 返回对应的状态描述结构
+		 * @param output 输出索引到的描述结构
+		 * @return 若index没有对应的描述对象，则返回false，否则返回true
 		 * @remark 对返回结构的修改不影响已创建的对象 */
-		virtual PipelineStateDesc GetDesc(PipelineStateIdx index) = 0;
+		virtual bool GetDesc(PipelineStateIdx index, PipelineStateDesc& output) = 0;
 	};
 
 }
