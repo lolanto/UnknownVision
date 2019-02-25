@@ -10,7 +10,8 @@
 enum INFO_LEVEL {
 	LL,
 	LW,
-	LE
+	LE,
+	LEW
 };
 
 class InfoLog {
@@ -30,7 +31,10 @@ public:
 		default:
 			break;
 		}
-		std::cout << t << std::endl;
+		if (level == LEW)
+			std::wcout << t << '\n';
+		else
+			std::cout << t << '\n';
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
 	}
 	template<typename T, typename... Args>
@@ -46,7 +50,10 @@ public:
 		default:
 			break;
 		}
-		std::cout << t << ' ';
+		if (level == LEW)
+			std::wcout << t << ' ';
+		else 
+			std::cout << t << ' ';
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
 		log(args...);
 	}
