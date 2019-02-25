@@ -141,22 +141,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="D3D11\DX11RenderSys.cpp" />
-    <ClCompile Include="D3D11\Resource\DX11BufferMgr.cpp" />
-    <ClCompile Include="D3D11\Resource\DX11ShaderMgr.cpp" />
-    <ClCompile Include="D3D11\Resource\DX11TextureMgr.cpp" />
-    <ClCompile Include="D3D11\Resource\DX11VertexDeclaration.h" />
-    <ClCompile Include="D3D11\Resource\DX11VertexDeclarationMgr.cpp" />
     <ClCompile Include="D3D12\DX12RenderSys.cpp" />
-    <ClCompile Include="D3D12\Resource\DX12BufferMgr.cpp" />
-    <ClCompile Include="LuaEngine\LuaEngine.cpp" />
+    <ClCompile Include="D3D12\Resource\DX12BufferMgr.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="LuaEngine\LuaEngine.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="UISys\UIElement.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="UISys\UIPage.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="Utility\FileContainer\FileContainer.cpp" />
     <ClCompile Include="Utility\InfoLog\InfoLog.cpp" />
     <ClCompile Include="Utility\MainClass\MainClass.cpp" />
@@ -164,12 +156,6 @@
     <ClCompile Include="Utility\WindowBase\WindowBase.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="D3D11\DX11RenderSys.h" />
-    <ClInclude Include="D3D11\DX11_UVConfig.h" />
-    <ClCompile Include="D3D11\Resource\DX11Texture.h" />
-    <ClCompile Include="D3D11\Resource\DX11ResMgr.h" />
-    <ClInclude Include="D3D11\Resource\DX11Buffer.h" />
-    <ClCompile Include="D3D11\Resource\DX11Shader.h" />
     <ClInclude Include="D3D12\DX12RenderSys.h" />
     <ClInclude Include="D3D12\DX12_UVConfig.h" />
     <ClInclude Include="D3D12\Resource\DX12Buffer.h" />
@@ -181,16 +167,12 @@
     <ClInclude Include="ResMgr\IResMgr.h" />
     <ClInclude Include="ResMgr\ResMgr_UVConfig.h" />
     <ClInclude Include="ResMgr\Resource.h" />
-    <ClInclude Include="UISys\UIElement.h" />
-    <ClInclude Include="UISys\UIContainer.h" />
-    <ClInclude Include="UISys\UIRenderer.h" />
-    <ClInclude Include="UISys\UISys.h" />
-    <ClInclude Include="UISys\UI_UVConfig.h" />
     <ClInclude Include="Utility\FileContainer\FileContainer.h" />
     <ClInclude Include="Utility\InfoLog\InfoLog.h" />
     <ClInclude Include="Utility\MainClass\MainClass.h" />
     <ClInclude Include="Utility\QuadTree\FreeList.h" />
     <ClInclude Include="Utility\QuadTree\QuadTree.h" />
+    <ClInclude Include="Utility\TextEncode\TextEncode.h" />
     <ClInclude Include="Utility\TypeRestriction\TypeRestriction.h" />
     <ClInclude Include="Utility\WindowBase\win32\WindowWin32.h" />
     <ClInclude Include="Utility\WindowBase\WindowBase.h" />
@@ -199,28 +181,6 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="UILayout.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="PixelShader.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-    </FxCompile>
-    <FxCompile Include="shader\InputLayout.hlsl">
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-    </FxCompile>
-    <FxCompile Include="VertexShader.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-    </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="shader\VS_INPUT.hlsli" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

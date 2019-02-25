@@ -1,13 +1,18 @@
 #include "DX12RenderSys.h"
 #include "../Utility/WindowBase/win32/WindowWin32.h"
+#include "../UVRoot.h"
 
 namespace UnknownVision {
 	bool DX12_RenderSys::Init(WindowBase* win) {
 		HRESULT hr = S_OK;
 		/** 创建DXGI工厂!  该过程可用于激活Debug Layer */
 		UINT factoryFlag = 0;
-#ifdef DEBUG
-		factoryFlag |= DXGI_CREATE_FACTORY_DEBUG;
+#ifdef _DEBUG
+		SmartPTR<ID3D12Debug3> debugController;
+		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))) {
+			debugController->EnableDebugLayer();
+			factoryFlag |= DXGI_CREATE_FACTORY_DEBUG;
+		}
 #endif // DEBUG
 		if (FAILED(CreateDXGIFactory2(factoryFlag, IID_PPV_ARGS(&m_factory)))) {
 			MLOG(LE, "create dxgi factory failed!");
@@ -21,9 +26,10 @@ namespace UnknownVision {
 				reinterpret_cast<IDXGIAdapter**>(adapter.ReleaseAndGetAddressOf())) != DXGI_ERROR_NOT_FOUND; ++adapterIdx) {
 				DXGI_ADAPTER_DESC3 adapterDesc;
 				adapter->GetDesc3(&adapterDesc);
+				MLOG(LEW, adapterDesc.Description);
 				if (adapterDesc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) continue; /**< 不使用软件模拟的设备 */
 				/** 检查该设备是否支持dx12 */
-				if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, __uuidof(ID3D12Device5), nullptr))) {
+				if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, __uuidof(ID3D12Device), nullptr))) {
 					succeed = true;
 					break;
 				}
@@ -57,8 +63,8 @@ namespace UnknownVision {
 			swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT; /**< 交换链缓冲的用途，默认已有backbuffer */
 			swapChainDesc.Flags = 0; /**< 不进行特殊设置 */
 			swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-			swapChainDesc.Height = static_cast<UINT>(m_basicHeight);
-			swapChainDesc.Width = static_cast<UINT>(m_basicWidth);
+			swapChainDesc.Height = m_height;
+			swapChainDesc.Width = m_width;
 			/** 不进行多重采样 */
 			swapChainDesc.SampleDesc.Count = 1;
 			swapChainDesc.SampleDesc.Quality = 0;

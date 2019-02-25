@@ -23,10 +23,16 @@ namespace UnknownVision {
 		void Run() {
 			if (m_window) m_window->Run();
 		}
-		bool Init(API_TYPE api, float width, float height) {
+		/** 初始化整个系统
+		 * @param api 渲染系统使用的API类型 
+		 * @param width 渲染主窗口的宽度
+		 * @param height 渲染主窗口的高度 */
+		bool Init(API_TYPE api, uint32_t width, uint32_t height) {
 			switch (api) {
 			case DirectX11_0:
 				return createDX11Env(api, width, height);
+			case DirectX12_0:
+				return createDX12Env(api, width, height);
 			}
 			return false;
 		}
@@ -38,8 +44,8 @@ namespace UnknownVision {
 
 		void SetWindow(WindowBase* ptr) {  }
 	private:
-		bool createDX11Env(API_TYPE api, float width, float height);
-
+		bool createDX11Env(API_TYPE api, uint32_t width, uint32_t height);
+		bool createDX12Env(API_TYPE api, uint32_t width, uint32_t height);
 	private:
 		API_TYPE										m_apiType;
 		bool												m_hasInit;

@@ -4,13 +4,14 @@
 #include "../ResMgr/ResMgr_UVConfig.h"
 #include "./RenderSys_UVConfig.h"
 #include <functional>
+
+class WindowBase;
 namespace UnknownVision {
 	/// 渲染系统的抽象基类，声明了渲染系统的接口
 	/** 该类就是对管线进行抽象，所提供的接口均是
 	 * 针对管线设置以及管线控制的。实际接口需要
 	 * 依赖不同图形API的对RenderSys虚基类的继承与实现
 	 */
-	class WindowBase;
 	class RenderSys {
 	public:
 		/** RenderSys的构造函数，主要记录一些基本属性
@@ -143,6 +144,36 @@ namespace UnknownVision {
 	protected:
 		float m_basicWidth = 0; /**< 渲染管线管理的输出宽度 */
 		float m_basicHeight = 0; /**< 渲染管线管理的输出高度 */
+	};
+
+	/// 针对新API，重新设计的渲染系统基类
+	/** 渲染系统仅作为DrawCall的发起器，提供的接口
+	 * 包括初始化必要组建，接收渲染管线状态，启动管线。其它的设置内容由资源
+	 * 自己完成 */
+	class RenderSys2 {
+	public:
+		/** RenderSys2的构造函数，进行基础数据成员的初始化
+		 * @param api 当前实现Render Sys的api类型
+		 * @param width 当前渲染窗口的总宽度
+		 * @param height 当前渲染窗口的总高度 */
+		RenderSys2(API_TYPE api, uint32_t width, uint32_t height) :
+			m_height(height), m_width(width), m_api(api) {}
+		virtual ~RenderSys2() = default;
+	public:
+		uint32_t Width() const { return m_width; }
+		uint32_t Height() const { return m_height; }
+		API_TYPE API() const { return m_api; }
+	public:
+		/// Ultility Function
+		/** 管线的初始化函数，由具体API实现
+		* @param win 用于显示渲染结果的系统窗口
+		* @return 初始化成功返回true，失败返回false */
+		virtual bool Init(WindowBase* win) = 0;
+	protected:
+		/** 一下宽高与主要的backbuffer设置相关 */
+		uint32_t m_width; /**< 渲染窗口的总宽度 */
+		uint32_t m_height; /**< 渲染窗口的总高度 */
+		API_TYPE m_api; /**< 当前渲染系统代表的API类型 */
 	};
 }
 
