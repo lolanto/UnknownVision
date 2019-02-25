@@ -70,9 +70,21 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)3rdPart\pugixml\include;$(SolutionDir)3rdPart\assimp\include;$(SolutionDir)3rdPart\DirectXTex\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)3rdPart\pugixml\lib\$(PlatformTarget)\$(Configuration);$(SolutionDir)3rdPart\assimp;$(SolutionDir)3rdPart\DirectXTex\lib\Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>../3rdPart/lua/include;$(IncludePath)</IncludePath>
+    <LibraryPath>../3rdPart/lua/lib/$(PlatformTarget)/$(Configuration);$(LibraryPath)</LibraryPath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>../3rdPart/lua/include;$(IncludePath)</IncludePath>
+    <LibraryPath>../3rdPart/lua/lib/$(PlatformTarget)/$(Configuration);$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>../3rdPart/lua/include;$(IncludePath)</IncludePath>
+    <LibraryPath>../3rdPart/lua/lib/$(PlatformTarget)/$(Configuration);$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>../3rdPart/lua/include;$(IncludePath)</IncludePath>
+    <LibraryPath>../3rdPart/lua/lib/$(PlatformTarget)/$(Configuration);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -83,7 +95,7 @@
       <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>assimp.lib;d3d11.lib;D2d1.lib;DXGI.lib;D3DCompiler.lib;DirectXTex_32.lib;Windowscodecs.lib;Dwrite.lib;pugixml.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Lua.lib;d3d12.lib;d3d11.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -97,7 +109,7 @@
       <ShaderModel>5.0</ShaderModel>
     </FxCompile>
     <Link>
-      <AdditionalDependencies>D3D12.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Lua.lib;d3d12.lib;d3d11.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -111,6 +123,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>Lua.lib;d3d12.lib;d3d11.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -124,6 +137,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>Lua.lib;d3d12.lib;d3d11.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -135,6 +149,7 @@
     <ClCompile Include="D3D11\Resource\DX11VertexDeclarationMgr.cpp" />
     <ClCompile Include="D3D12\DX12RenderSys.cpp" />
     <ClCompile Include="D3D12\Resource\DX12BufferMgr.cpp" />
+    <ClCompile Include="LuaEngine\LuaEngine.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="UISys\UIElement.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -160,6 +175,7 @@
     <ClInclude Include="D3D12\Resource\DX12Buffer.h" />
     <ClInclude Include="D3D12\Resource\DX12ResMgr.h" />
     <ClInclude Include="DirectXHelper.h" />
+    <ClInclude Include="LuaEngine\LuaEngine.h" />
     <ClInclude Include="RenderSys\RenderSys.h" />
     <ClInclude Include="RenderSys\RenderSys_UVConfig.h" />
     <ClInclude Include="ResMgr\IResMgr.h" />

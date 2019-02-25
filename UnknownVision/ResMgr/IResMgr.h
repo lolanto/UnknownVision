@@ -9,7 +9,7 @@ namespace UnknownVision {
 	class Buffer;
 	class Shader;
 	class VertexDeclaration;
-	class PipelineStateDesc;
+	struct PipelineStateDesc;
 
 	class ResMgr {
 	public:

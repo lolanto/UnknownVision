@@ -16,7 +16,7 @@ namespace UnknownVision {
 
 		D3D12_HEAP_PROPERTIES heapProp; /**< 描述存储该缓冲的堆的属性 */
 		heapProp.Type = (flag & BF_WRITE_BY_CPU) ? 
-			D3D12_HEAP_TYPE_DEFAULT : D3D12_HEAP_TYPE_UPLOAD; /**< 假如CPU可以写，则使用Default类型的堆；否则使用upload的 */
+			D3D12_HEAP_TYPE_UPLOAD : D3D12_HEAP_TYPE_DEFAULT; /**< 假如CPU可以写，则使用Default类型的堆；否则使用upload的 */
 		/** 抽象堆类型必须的默认值 */
 		heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
 		heapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;

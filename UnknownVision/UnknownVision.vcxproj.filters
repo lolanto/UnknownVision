@@ -82,6 +82,9 @@
     <Filter Include="D3D12\Resource">
       <UniqueIdentifier>{d05befdb-cb44-4182-ad77-67769d909aa8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="LuaEngine">
+      <UniqueIdentifier>{0ab9e3ac-c108-4482-8dbd-93b6d43a395c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="UISys\UIElement.cpp">
@@ -140,6 +143,9 @@
     </ClCompile>
     <ClCompile Include="D3D12\Resource\DX12BufferMgr.cpp">
       <Filter>D3D12\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="LuaEngine\LuaEngine.cpp">
+      <Filter>LuaEngine</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -226,6 +232,9 @@
     </ClInclude>
     <ClInclude Include="D3D12\Resource\DX12Buffer.h">
       <Filter>D3D12\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaEngine\LuaEngine.h">
+      <Filter>LuaEngine</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
