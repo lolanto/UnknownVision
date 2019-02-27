@@ -61,6 +61,9 @@
     <Filter Include="Utility\TextEncode">
       <UniqueIdentifier>{e9add619-b85e-4826-86af-42051fca48bf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Utility\CommandBuffer">
+      <UniqueIdentifier>{a59dde36-45d8-491f-88b8-a623c9c13cc9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Utility\InfoLog\InfoLog.cpp">
@@ -157,6 +160,12 @@
     </ClInclude>
     <ClInclude Include="Utility\TextEncode\TextEncode.h">
       <Filter>Utility\TextEncode</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSys\RenderGraph.h">
+      <Filter>RenderSys\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\CommandBuffer\CommandBuffer.hpp">
+      <Filter>Utility\CommandBuffer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

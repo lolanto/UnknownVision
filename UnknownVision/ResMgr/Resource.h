@@ -1,6 +1,7 @@
 #ifndef RESOURCE_H
 #define RESOURCE_H
 #include "ResMgr_UVConfig.h"
+#include <vector>
 
 // 针对资源的抽象基类
 /* 无论何种Resource对象
@@ -67,6 +68,31 @@ namespace UnknownVision {
 	public:
 		VertexDeclaration(uint32_t RID)
 			: Resource(RID) {}
+	};
+
+	/** 描述一个Entry的类型 */
+	enum DescriptorType : uint8_t {
+		DT_INLINE_CONSTANT_VALUE, /**< 该Entry为常量值 */
+		DT_INLINE_DESCRIPTOR, /**< 该Entry为一个描述符 */
+		DT_DESCRIPTOR_TABLE /**< 该Entry为多个描述符的集合 */
+	};
+	/** 一项Entry存储的所有描述符对应的寄存器类型 */
+	enum RegisterType : uint8_t {
+		RT_TEXTURE_REGISTER,
+		RT_CONSTANT_BUFFER_REGISTER,
+		RT_UNORDER_ACCESS_REGISTER
+	};
+
+	struct DescriptorLayoutEntry{
+		DescriptorType descriptortype; /**< 该Entry存储描述符的方式(单个/集合) */
+		RegisterType registerType; /**< 该Entry存储的描述符对应Shader的寄存器类型 */
+		uint8_t basedIndex; /**< 该Entry描述符对应的寄存器的基本编号 */
+		uint8_t numberOfDescriptor; /**< 当该Entry是描述符集合时，指明描述符的数量 */
+	};
+
+	/** 描述符的布局描述结构 */
+	struct DescriptorLayout {
+		std::vector<DescriptorLayoutEntry> entries; /**< 存储各项描述符，要注意存储的顺序 */
 	};
 
 	/** 描述管线状态的结构，具体可设置状态查看具体属性

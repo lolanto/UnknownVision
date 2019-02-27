@@ -162,11 +162,13 @@
     <ClInclude Include="D3D12\Resource\DX12ResMgr.h" />
     <ClInclude Include="DirectXHelper.h" />
     <ClInclude Include="LuaEngine\LuaEngine.h" />
+    <ClInclude Include="RenderSys\RenderGraph.h" />
     <ClInclude Include="RenderSys\RenderSys.h" />
     <ClInclude Include="RenderSys\RenderSys_UVConfig.h" />
     <ClInclude Include="ResMgr\IResMgr.h" />
     <ClInclude Include="ResMgr\ResMgr_UVConfig.h" />
     <ClInclude Include="ResMgr\Resource.h" />
+    <ClInclude Include="Utility\CommandBuffer\CommandBuffer.hpp" />
     <ClInclude Include="Utility\FileContainer\FileContainer.h" />
     <ClInclude Include="Utility\InfoLog\InfoLog.h" />
     <ClInclude Include="Utility\MainClass\MainClass.h" />

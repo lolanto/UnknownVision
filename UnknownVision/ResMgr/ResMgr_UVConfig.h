@@ -1,7 +1,6 @@
 #ifndef RESOURCE_MANAGER_UV_CONFIG_H
 #define RESOURCE_MANAGER_UV_CONFIG_H
 #include "../UVConfig.h"
-#include "../Utility/TypeRestriction/TypeRestriction.h"
 
 namespace UnknownVision {
 	/** 视口设置描述对象 */
@@ -42,14 +41,6 @@ namespace UnknownVision {
 		TF_READ_BY_CPU = 0x00000004U,
 		TF_WRITE_BY_CPU = 0x00000008U
 	};
-
-	ALIAS_INDEX(int32_t, Texture2DIdx);
-	ALIAS_INDEX(int32_t, RenderTargetIdx);
-	ALIAS_INDEX(int32_t, DepthStencilIdx);
-	ALIAS_INDEX(int32_t, ShaderIdx);
-	ALIAS_INDEX(int32_t, BufferIdx);
-	ALIAS_INDEX(int32_t, VertexDeclarationIdx);
-	ALIAS_INDEX(int32_t, PipelineStateIdx);
 
 	using TextureFlagCombination = uint32_t;
 	using BufferFlagCombination = uint32_t;

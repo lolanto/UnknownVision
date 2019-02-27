@@ -1,5 +1,6 @@
-﻿#ifndef UV_CONFIG_H
+#ifndef UV_CONFIG_H
 #define UV_CONFIG_H
+#include "Utility/TypeRestriction/TypeRestriction.h"
 #include "Utility/InfoLog/InfoLog.h"
 #include <cstdint>
 
@@ -48,5 +49,16 @@ namespace UnknownVision {
 		DirectX11_0 = 0,
 		DirectX12_0 = 1
 	};
+
+	/** 为索引值设置别名，加强类型检查 */
+	ALIAS_INDEX(int32_t, Texture2DIdx);
+	ALIAS_INDEX(int32_t, RenderTargetIdx);
+	ALIAS_INDEX(int32_t, DepthStencilIdx);
+	ALIAS_INDEX(int32_t, ShaderIdx);
+	ALIAS_INDEX(int32_t, BufferIdx);
+	ALIAS_INDEX(int32_t, VertexDeclarationIdx);
+	ALIAS_INDEX(int32_t, PipelineStateIdx);
+	ALIAS_INDEX(int32_t, ResourceIdx);
+	ALIAS_INDEX(int32_t, DescriptorLayoutIdx);
 }
 #endif // UV_CONFIG_H
