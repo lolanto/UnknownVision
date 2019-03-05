@@ -1,4 +1,4 @@
-﻿#include "FileContainer.h"
+#include "FileContainer.h"
 #include "../InfoLog/InfoLog.h"
 
 FileContainer::FileContainer(const char* filePath, std::ios_base::openmode mode) {
@@ -29,6 +29,25 @@ bool FileContainer::ReadFile(uint32_t byteOffset, uint32_t bytes, char* outputDa
 	m_file.seekg(0, std::ios::beg);
 	m_file.seekg(byteOffset);
 	m_file.read(outputData, bytes);
-	if (m_file.fail()) return false;
+	if (m_file.fail()) {
+		MLOG(LE, __FUNCTION__, LL, "something wrong happened!");
+		return false;
+	}
 	return true;
+}
+
+bool FileContainer::WriteFile(uint32_t byteOffset, uint32_t bytes, const char * inputData)
+{
+	if (!m_file.is_open()) {
+		MLOG(LE, __FUNCTION__, LL, "file was not opened!");
+		return false;
+	}
+	m_file.seekp(0, std::ios::beg);
+	m_file.seekp(byteOffset);
+	m_file.write(inputData, bytes);
+	if (m_file.fail()) {
+		MLOG(LE, __FUNCTION__, LL, "something wrong happend!");
+		return false;
+	}
+	return false;
 }

@@ -18,3 +18,4 @@
 *.cso
 UnknownVision/x64/
 x64/
+*.lld

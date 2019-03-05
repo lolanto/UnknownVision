@@ -64,6 +64,9 @@
     <Filter Include="Utility\CommandBuffer">
       <UniqueIdentifier>{a59dde36-45d8-491f-88b8-a623c9c13cc9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Utility\DXILCompilerHelper">
+      <UniqueIdentifier>{6b34d2c5-799a-4c82-ad78-9ce3d83e9149}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Utility\InfoLog\InfoLog.cpp">
@@ -92,6 +95,12 @@
     </ClCompile>
     <ClCompile Include="LuaEngine\LuaEngine.cpp">
       <Filter>LuaEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSys\RenderGraph.cpp">
+      <Filter>RenderSys\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Utility\DXILCompilerHelper\DXILCompilerHelper.cpp">
+      <Filter>Utility\DXILCompilerHelper</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -166,6 +175,9 @@
     </ClInclude>
     <ClInclude Include="Utility\CommandBuffer\CommandBuffer.hpp">
       <Filter>Utility\CommandBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\DXILCompilerHelper\DXILCompilerHelper.h">
+      <Filter>Utility\DXILCompilerHelper</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
