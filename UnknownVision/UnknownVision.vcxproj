@@ -95,7 +95,7 @@
       <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Lua.lib;d3d12.lib;d3d11.lib;dxgi.lib;dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Lua.lib;d3d12.lib;d3d11.lib;dxgi.lib;dxcompiler.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -109,7 +109,7 @@
       <ShaderModel>5.0</ShaderModel>
     </FxCompile>
     <Link>
-      <AdditionalDependencies>Lua.lib;d3d12.lib;d3d11.lib;dxgi.lib;dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Lua.lib;d3d12.lib;d3d11.lib;dxgi.lib;dxcompiler.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -123,7 +123,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Lua.lib;d3d12.lib;d3d11.lib;dxgi.lib;dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Lua.lib;d3d12.lib;d3d11.lib;dxgi.lib;dxcompiler.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -137,7 +137,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Lua.lib;d3d12.lib;d3d11.lib;dxgi.lib;dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Lua.lib;d3d12.lib;d3d11.lib;dxgi.lib;dxcompiler.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -150,7 +150,8 @@
     </ClCompile>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="RenderSys\RenderGraph.cpp" />
-    <ClCompile Include="Utility\DXILCompilerHelper\DXILCompilerHelper.cpp" />
+    <ClCompile Include="RenderSys\ShaderDescription.cpp" />
+    <ClCompile Include="Utility\DXILCompilerHelper\DXCompilerHelper.cpp" />
     <ClCompile Include="Utility\FileContainer\FileContainer.cpp" />
     <ClCompile Include="Utility\InfoLog\InfoLog.cpp" />
     <ClCompile Include="Utility\MainClass\MainClass.cpp" />
@@ -167,11 +168,12 @@
     <ClInclude Include="RenderSys\RenderGraph.h" />
     <ClInclude Include="RenderSys\RenderSys.h" />
     <ClInclude Include="RenderSys\RenderSys_UVConfig.h" />
+    <ClInclude Include="RenderSys\ShaderDescription.h" />
     <ClInclude Include="ResMgr\IResMgr.h" />
     <ClInclude Include="ResMgr\ResMgr_UVConfig.h" />
     <ClInclude Include="ResMgr\Resource.h" />
     <ClInclude Include="Utility\CommandBuffer\CommandBuffer.hpp" />
-    <ClInclude Include="Utility\DXILCompilerHelper\DXILCompilerHelper.h" />
+    <ClInclude Include="Utility\DXILCompilerHelper\DXCompilerHelper.h" />
     <ClInclude Include="Utility\FileContainer\FileContainer.h" />
     <ClInclude Include="Utility\InfoLog\InfoLog.h" />
     <ClInclude Include="Utility\MainClass\MainClass.h" />

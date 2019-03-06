@@ -8,12 +8,16 @@
 #include <wrl.h> /**< 提供COM智能指针支持的 */
 #include <vector>
 
-class DXILCompilerHelper {
+namespace UnknownVision {
+	struct ShaderDescription;
+}
+
+class DXCompilerHelper {
 public:
 	/** 构造函数，用于初始化编译辅助结构的必要组建
 	 * @param err 若该指针不为空，则在初始化失败时记录错误信息 */
-	DXILCompilerHelper(std::vector<char>* err = nullptr);
-	~DXILCompilerHelper() = default;
+	DXCompilerHelper(std::vector<char>* err = nullptr);
+	~DXCompilerHelper() = default;
 public:
 	/** 从Shader源文件编译产生字节码供Shader生成使用
 	 * @param srcFilePath Shader源文件路径
@@ -24,6 +28,14 @@ public:
 	 * @return 编译成功返回true，编译失败返回false */
 	bool CompileToByteCode(const char* srcFilePath, const char* profile,
 		std::vector<uint8_t>& outputBuffer, bool outputDebugInfo = false, std::vector<char>* err = nullptr);
+	/** 从ByteCode中提取该shader的描述信息
+	 * @param byteCodes 存储DXC编译后，shader的字节码
+	 * @param outputDescription 存储shader描述信息的结构体的引用
+	 * @param err 若该指针不为空，则会在处理失败时记录错误信息
+	 * @return 获取成功返回true，获取失败返回false */
+	bool RetrieveShaderDescriptionFromByteCode(std::vector<uint8_t>& byteCodes,
+		UnknownVision::ShaderDescription& outputDescription,
+		std::vector<char>* err = nullptr);
 private:
 	Microsoft::WRL::ComPtr<IDxcLibrary> m_library; /**< 负责加载文档的对象，同时提供缓冲区创建方法 */
 	Microsoft::WRL::ComPtr<IDxcCompiler2> m_compiler; /**< 负责提供编译方法的对象 */

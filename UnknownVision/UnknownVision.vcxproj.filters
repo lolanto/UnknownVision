@@ -99,8 +99,11 @@
     <ClCompile Include="RenderSys\RenderGraph.cpp">
       <Filter>RenderSys\Source</Filter>
     </ClCompile>
-    <ClCompile Include="Utility\DXILCompilerHelper\DXILCompilerHelper.cpp">
+    <ClCompile Include="Utility\DXILCompilerHelper\DXCompilerHelper.cpp">
       <Filter>Utility\DXILCompilerHelper</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSys\ShaderDescription.cpp">
+      <Filter>RenderSys\Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -176,7 +179,10 @@
     <ClInclude Include="Utility\CommandBuffer\CommandBuffer.hpp">
       <Filter>Utility\CommandBuffer</Filter>
     </ClInclude>
-    <ClInclude Include="Utility\DXILCompilerHelper\DXILCompilerHelper.h">
+    <ClInclude Include="RenderSys\ShaderDescription.h">
+      <Filter>RenderSys\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\DXILCompilerHelper\DXCompilerHelper.h">
       <Filter>Utility\DXILCompilerHelper</Filter>
     </ClInclude>
   </ItemGroup>
