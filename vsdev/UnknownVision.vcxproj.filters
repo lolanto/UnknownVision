@@ -1,0 +1,215 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Utility">
+      <UniqueIdentifier>{4e948986-3b10-4cdb-b548-6ce8954b66d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\InfoLog">
+      <UniqueIdentifier>{b9b9175b-913c-406a-a35a-1e4e74e13130}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\QuadTree">
+      <UniqueIdentifier>{41cbc0da-9e02-4383-b58f-20e731ed31b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\FileContainer">
+      <UniqueIdentifier>{770fc2c0-d26f-476c-93e8-b3cd0f9ad22f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\MainClass">
+      <UniqueIdentifier>{b8f9c6d0-da48-4d53-b1b6-b4206b4fc790}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\WindowBase">
+      <UniqueIdentifier>{45e0949b-0b3a-4a3f-9863-c69d2938f3c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\WindowBase\Win32">
+      <UniqueIdentifier>{6471e108-a616-4af8-89dc-3512cc29488f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\TypeRestriction">
+      <UniqueIdentifier>{5f089239-6bbf-4f38-9323-841e177971e8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D12">
+      <UniqueIdentifier>{415f3f4f-70bc-46b1-a9b8-a8b029c5f77b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D12\Resource">
+      <UniqueIdentifier>{d05befdb-cb44-4182-ad77-67769d909aa8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="LuaEngine">
+      <UniqueIdentifier>{0ab9e3ac-c108-4482-8dbd-93b6d43a395c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\CommandBuffer">
+      <UniqueIdentifier>{a59dde36-45d8-491f-88b8-a623c9c13cc9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\DXILCompilerHelper">
+      <UniqueIdentifier>{6b34d2c5-799a-4c82-ad78-9ce3d83e9149}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ResourceManager">
+      <UniqueIdentifier>{9d2493bc-f9a8-442d-bb1b-ac6d02eb299b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{b2427597-5269-473a-8581-40e8e701101f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderSystem">
+      <UniqueIdentifier>{bc8e0dc4-51ec-4d92-9338-b08dc748429b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderSystem\Header">
+      <UniqueIdentifier>{34d2d83c-cabe-417c-8bcc-7fb7cd6d7445}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderSystem\Source">
+      <UniqueIdentifier>{d31f1c11-6941-4006-af9a-e954acf83d9b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\D3D12\DX12RenderSys.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\Resource\DX12BufferMgr.cpp">
+      <Filter>D3D12\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\LuaEngine\LuaEngine.cpp">
+      <Filter>LuaEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RenderSystem\RenderGraph.cpp">
+      <Filter>RenderSystem\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Resource\ShaderDescription.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Utility\DXILCompilerHelper\DXCompilerHelper.cpp">
+      <Filter>Utility\DXILCompilerHelper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Utility\FileContainer\FileContainer.cpp">
+      <Filter>Utility\FileContainer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Utility\InfoLog\InfoLog.cpp">
+      <Filter>Utility\InfoLog</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Utility\MainClass\MainClass.cpp">
+      <Filter>Utility\MainClass</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Utility\WindowBase\WindowBase.cpp">
+      <Filter>Utility\WindowBase</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Utility\WindowBase\win32\WindowWin32.cpp">
+      <Filter>Utility\WindowBase\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\D3D12\DX12_UVConfig.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12RenderSys.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\Resource\DX12Buffer.h">
+      <Filter>D3D12\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\Resource\DX12ResMgr.h">
+      <Filter>D3D12\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\LuaEngine\LuaEngine.h">
+      <Filter>LuaEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RenderSystem\RenderGraph.h">
+      <Filter>RenderSystem\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RenderSystem\RenderSys.h">
+      <Filter>RenderSystem\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RenderSystem\RenderSys_UVConfig.h">
+      <Filter>RenderSystem\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Resource\Buffer.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Resource\Resource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Resource\ResourceConfig.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Resource\Shader.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Resource\ShaderDescription.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Resource\Texture.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ResourceManager\BufferManager.h">
+      <Filter>ResourceManager</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ResourceManager\FreeList.h">
+      <Filter>ResourceManager</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ResourceManager\ResourceMananger.h">
+      <Filter>ResourceManager</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ResourceManager\ResourceManangerConfig.h">
+      <Filter>ResourceManager</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ResourceManager\ShaderManager.h">
+      <Filter>ResourceManager</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ResourceManager\TextureManager.h">
+      <Filter>ResourceManager</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Utility\CommandBuffer\CommandBuffer.hpp">
+      <Filter>Utility\CommandBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Utility\DXILCompilerHelper\DXCompilerHelper.h">
+      <Filter>Utility\DXILCompilerHelper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Utility\FileContainer\FileContainer.h">
+      <Filter>Utility\FileContainer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Utility\InfoLog\InfoLog.h">
+      <Filter>Utility\InfoLog</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Utility\MainClass\MainClass.h">
+      <Filter>Utility\MainClass</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Utility\QuadTree\FreeList.h">
+      <Filter>Utility\QuadTree</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Utility\QuadTree\QuadTree.h">
+      <Filter>Utility\QuadTree</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Utility\TypeRestriction\TypeRestriction.h">
+      <Filter>Utility\TypeRestriction</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Utility\WindowBase\WindowBase.h">
+      <Filter>Utility\WindowBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Utility\WindowBase\win32\WindowWin32.h">
+      <Filter>Utility\WindowBase\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\UVConfig.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\UVRoot.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\DirectXHelper.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="UILayout.xml">
+      <Filter>资源文件</Filter>
+    </Xml>
+  </ItemGroup>
+</Project>

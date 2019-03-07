@@ -1,6 +1,0 @@
-<?xml version="1.0"?>
-<Root>
-  <window title="Debug" width="320" height="240">
-    <label width="20" height="30">hello world</label>
-  </window>
-</Root>

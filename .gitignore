@@ -19,3 +19,5 @@
 UnknownVision/x64/
 x64/
 *.lld
+vsdev/.vs/
+vsdev/Debug/
