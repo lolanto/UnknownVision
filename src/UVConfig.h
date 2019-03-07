@@ -61,10 +61,10 @@ namespace UnknownVision {
 	};
 
 	enum ShaderType {
-		ST_Vertex_Shader,
-		ST_Pixel_Shader,
-		ST_Geometry_Shader,
-		ST_Compute_Shader
+		SHADER_TYPE_VERTEX_SHADER,
+		SHADER_TYPE_PIXEL_SHADER,
+		SHADER_TYPE_GEOMETRY_SHADER,
+		SHADER_TYPE_COMPUTE_SHADER
 	};
 
 	enum BufferFlag : uint32_t {

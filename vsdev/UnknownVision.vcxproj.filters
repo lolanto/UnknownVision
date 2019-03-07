@@ -49,9 +49,6 @@
     <Filter Include="Utility\CommandBuffer">
       <UniqueIdentifier>{a59dde36-45d8-491f-88b8-a623c9c13cc9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Utility\DXILCompilerHelper">
-      <UniqueIdentifier>{6b34d2c5-799a-4c82-ad78-9ce3d83e9149}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ResourceManager">
       <UniqueIdentifier>{9d2493bc-f9a8-442d-bb1b-ac6d02eb299b}</UniqueIdentifier>
     </Filter>
@@ -67,13 +64,16 @@
     <Filter Include="RenderSystem\Source">
       <UniqueIdentifier>{d31f1c11-6941-4006-af9a-e954acf83d9b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="D3D12\ResourceMananger">
+      <UniqueIdentifier>{f2895313-63a1-4555-a47a-71657a1ce36c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\DXCompilerHelper">
+      <UniqueIdentifier>{6b34d2c5-799a-4c82-ad78-9ce3d83e9149}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\D3D12\DX12RenderSys.cpp">
       <Filter>D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\D3D12\Resource\DX12BufferMgr.cpp">
-      <Filter>D3D12\Resource</Filter>
     </ClCompile>
     <ClCompile Include="..\src\LuaEngine\LuaEngine.cpp">
       <Filter>LuaEngine</Filter>
@@ -83,9 +83,6 @@
     </ClCompile>
     <ClCompile Include="..\src\Resource\ShaderDescription.cpp">
       <Filter>Resource</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\Utility\DXILCompilerHelper\DXCompilerHelper.cpp">
-      <Filter>Utility\DXILCompilerHelper</Filter>
     </ClCompile>
     <ClCompile Include="..\src\Utility\FileContainer\FileContainer.cpp">
       <Filter>Utility\FileContainer</Filter>
@@ -105,30 +102,36 @@
     <ClCompile Include="..\src\main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\D3D12\ResourceManager\DX12BufferManager.cpp">
+      <Filter>D3D12\ResourceMananger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\Resource\DX12Shader.cpp">
+      <Filter>D3D12\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\DX12Config.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Utility\DXCompilerHelper\DXCompilerHelper.cpp">
+      <Filter>Utility\DXCompilerHelper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\ResourceManager\DX12ShaderManager.cpp">
+      <Filter>D3D12\ResourceMananger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ResourceManager\ResourceMananger.cpp">
+      <Filter>ResourceManager</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\D3D12\DX12_UVConfig.h">
-      <Filter>D3D12</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\D3D12\DX12RenderSys.h">
       <Filter>D3D12</Filter>
     </ClInclude>
     <ClInclude Include="..\src\D3D12\Resource\DX12Buffer.h">
       <Filter>D3D12\Resource</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\D3D12\Resource\DX12ResMgr.h">
-      <Filter>D3D12\Resource</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\LuaEngine\LuaEngine.h">
       <Filter>LuaEngine</Filter>
     </ClInclude>
     <ClInclude Include="..\src\RenderSystem\RenderGraph.h">
-      <Filter>RenderSystem\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\RenderSystem\RenderSys.h">
-      <Filter>RenderSystem\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\RenderSystem\RenderSys_UVConfig.h">
       <Filter>RenderSystem\Header</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Resource\Buffer.h">
@@ -152,9 +155,6 @@
     <ClInclude Include="..\src\ResourceManager\BufferManager.h">
       <Filter>ResourceManager</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ResourceManager\FreeList.h">
-      <Filter>ResourceManager</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\ResourceManager\ResourceMananger.h">
       <Filter>ResourceManager</Filter>
     </ClInclude>
@@ -169,9 +169,6 @@
     </ClInclude>
     <ClInclude Include="..\src\Utility\CommandBuffer\CommandBuffer.hpp">
       <Filter>Utility\CommandBuffer</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Utility\DXILCompilerHelper\DXCompilerHelper.h">
-      <Filter>Utility\DXILCompilerHelper</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Utility\FileContainer\FileContainer.h">
       <Filter>Utility\FileContainer</Filter>
@@ -206,10 +203,32 @@
     <ClInclude Include="..\src\DirectXHelper.h">
       <Filter>头文件</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <Xml Include="UILayout.xml">
-      <Filter>资源文件</Filter>
-    </Xml>
+    <ClInclude Include="..\src\RenderSystem\RenderSystem.h">
+      <Filter>RenderSystem\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RenderSystem\RenderSystemConfig.h">
+      <Filter>RenderSystem\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\ResourceManager\DX12BufferMananger.h">
+      <Filter>D3D12\ResourceMananger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\ResourceManager\DX12ShaderManager.h">
+      <Filter>D3D12\ResourceMananger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\Resource\DX12Shader.h">
+      <Filter>D3D12\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12Config.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Utility\DXCompilerHelper\DXCompilerHelper.h">
+      <Filter>Utility\DXCompilerHelper</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="resource1.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

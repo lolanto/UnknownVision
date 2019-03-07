@@ -1,8 +1,8 @@
 #ifndef RENDER_SYS_H
 #define RENDER_SYS_H
 
-#include "../ResMgr/ResMgr_UVConfig.h"
-#include "./RenderSys_UVConfig.h"
+#include "../ResourceManager/ResourceManangerConfig.h"
+#include "RenderSystemConfig.h"
 #include <functional>
 
 class WindowBase;

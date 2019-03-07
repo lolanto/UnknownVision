@@ -1,7 +1,8 @@
-﻿#ifndef D3D12_BUFFER_H
-#define D3D12_BUFFER_H
+#ifndef UV_D3D12_BUFFER_H
+#define UV_D3D12_BUFFER_H
 
-#include "../DX12_UVConfig.h"
+#include "../DX12Config.h"
+#include "../../Resource/Buffer.h"
 
 namespace UnknownVision {
 	class DX12_Buffer : public Buffer {
@@ -22,4 +23,4 @@ namespace UnknownVision {
 	};
 }
 
-#endif // D3D12_BUFFER_H
+#endif // UV_D3D12_BUFFER_H

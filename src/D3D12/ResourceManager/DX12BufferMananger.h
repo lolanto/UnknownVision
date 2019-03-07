@@ -1,8 +1,9 @@
-﻿#ifndef D3D12_RESOURCE_MANAGER_H
-#define D3D12_RESOURCE_MANAGER_H
+#ifndef UV_D3D12_RESOURCE_MANAGER_H
+#define UV_D3D12_RESOURCE_MANAGER_H
 
-#include "../DX12_UVConfig.h"
-#include "DX12Buffer.h"
+#include "../DX12Config.h"
+#include "../../ResourceManager/BufferManager.h"
+#include "../Resource/DX12Buffer.h"
 #include <vector>
 
 namespace UnknownVision {
@@ -23,4 +24,4 @@ namespace UnknownVision {
 	};
 }
 
-#endif // D3D12_RESOURCE_MANAGER_H
+#endif // UV_D3D12_RESOURCE_MANAGER_H

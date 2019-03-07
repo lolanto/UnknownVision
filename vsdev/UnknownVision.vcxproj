@@ -141,13 +141,32 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\D3D12\DX12RenderSys.cpp" />
-    <ClCompile Include="..\src\D3D12\Resource\DX12BufferMgr.cpp" />
-    <ClCompile Include="..\src\LuaEngine\LuaEngine.cpp" />
+    <ClCompile Include="..\src\D3D12\DX12Config.cpp" />
+    <ClCompile Include="..\src\D3D12\DX12RenderSys.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\ResourceManager\DX12BufferManager.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\ResourceManager\DX12ShaderManager.cpp" />
+    <ClCompile Include="..\src\D3D12\Resource\DX12Shader.cpp" />
+    <ClCompile Include="..\src\LuaEngine\LuaEngine.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\RenderSystem\RenderGraph.cpp" />
+    <ClCompile Include="..\src\ResourceManager\ResourceMananger.cpp" />
     <ClCompile Include="..\src\Resource\ShaderDescription.cpp" />
-    <ClCompile Include="..\src\Utility\DXILCompilerHelper\DXCompilerHelper.cpp" />
+    <ClCompile Include="..\src\Utility\DXCompilerHelper\DXCompilerHelper.cpp" />
     <ClCompile Include="..\src\Utility\FileContainer\FileContainer.cpp" />
     <ClCompile Include="..\src\Utility\InfoLog\InfoLog.cpp" />
     <ClCompile Include="..\src\Utility\MainClass\MainClass.cpp" />
@@ -156,16 +175,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\D3D12\DX12RenderSys.h" />
-    <ClInclude Include="..\src\D3D12\DX12_UVConfig.h" />
+    <ClInclude Include="..\src\D3D12\DX12Config.h" />
+    <ClInclude Include="..\src\D3D12\ResourceManager\DX12BufferMananger.h" />
+    <ClInclude Include="..\src\D3D12\ResourceManager\DX12ShaderManager.h" />
     <ClInclude Include="..\src\D3D12\Resource\DX12Buffer.h" />
-    <ClInclude Include="..\src\D3D12\Resource\DX12ResMgr.h" />
+    <ClInclude Include="..\src\D3D12\Resource\DX12Shader.h" />
     <ClInclude Include="..\src\DirectXHelper.h" />
     <ClInclude Include="..\src\LuaEngine\LuaEngine.h" />
     <ClInclude Include="..\src\RenderSystem\RenderGraph.h" />
-    <ClInclude Include="..\src\RenderSystem\RenderSys.h" />
-    <ClInclude Include="..\src\RenderSystem\RenderSys_UVConfig.h" />
+    <ClInclude Include="..\src\RenderSystem\RenderSystem.h" />
+    <ClInclude Include="..\src\RenderSystem\RenderSystemConfig.h" />
     <ClInclude Include="..\src\ResourceManager\BufferManager.h" />
-    <ClInclude Include="..\src\ResourceManager\FreeList.h" />
     <ClInclude Include="..\src\ResourceManager\ResourceMananger.h" />
     <ClInclude Include="..\src\ResourceManager\ResourceManangerConfig.h" />
     <ClInclude Include="..\src\ResourceManager\ShaderManager.h" />
@@ -177,7 +197,7 @@
     <ClInclude Include="..\src\Resource\ShaderDescription.h" />
     <ClInclude Include="..\src\Resource\Texture.h" />
     <ClInclude Include="..\src\Utility\CommandBuffer\CommandBuffer.hpp" />
-    <ClInclude Include="..\src\Utility\DXILCompilerHelper\DXCompilerHelper.h" />
+    <ClInclude Include="..\src\Utility\DXCompilerHelper\DXCompilerHelper.h" />
     <ClInclude Include="..\src\Utility\FileContainer\FileContainer.h" />
     <ClInclude Include="..\src\Utility\InfoLog\InfoLog.h" />
     <ClInclude Include="..\src\Utility\MainClass\MainClass.h" />
@@ -188,9 +208,8 @@
     <ClInclude Include="..\src\Utility\WindowBase\WindowBase.h" />
     <ClInclude Include="..\src\UVConfig.h" />
     <ClInclude Include="..\src\UVRoot.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Xml Include="UILayout.xml" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="resource1.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,6 +1,6 @@
 #include "DXCompilerHelper.h"
 #include "../FileContainer/FileContainer.h"
-#include "../../ResMgr/ShaderDescription.h"
+#include "../../Resource/ShaderDescription.h"
 
 #include <d3d12shader.h>
 #include <d3dcompiler.h>
@@ -54,7 +54,7 @@ DXCompilerHelper::DXCompilerHelper(std::vector<char>* err) {
 }
 
 bool DXCompilerHelper::CompileToByteCode(const char* srcFilePath, const char* profile,
-	std::vector<uint8_t>& outputBuffer, 
+	SmartPtr<ID3DBlob>& outputBuffer, 
 	bool outputDebugInfo, std::vector<char>* err) {
 	if (m_compiler.Get() == nullptr) {
 		if (err) {
@@ -121,8 +121,7 @@ bool DXCompilerHelper::CompileToByteCode(const char* srcFilePath, const char* pr
 	SmartPtr<IDxcBlob> byteCodes;
 	compileOpResult->GetResult(byteCodes.ReleaseAndGetAddressOf());
 	
-	outputBuffer.resize(byteCodes->GetBufferSize());
-	memcpy(outputBuffer.data(), byteCodes->GetBufferPointer(), byteCodes->GetBufferSize());
+	byteCodes.As(&outputBuffer);
 	if (outputDebugInfo) {
 		std::vector<char>&& df = fromWideCharToUTF8(suggestDebugInfoFileName);
 		FileContainer debugInfoFile(df.data(), std::ios::out | std::ios::trunc);
@@ -131,20 +130,17 @@ bool DXCompilerHelper::CompileToByteCode(const char* srcFilePath, const char* pr
 	return true;
 }
 
-bool DXCompilerHelper::RetrieveShaderDescriptionFromByteCode(std::vector<uint8_t>& byteCodes,
+bool DXCompilerHelper::RetrieveShaderDescriptionFromByteCode(SmartPtr<ID3DBlob>& byteCodes,
 	UnknownVision::ShaderDescription& outputDescription,
 	std::vector<char>* err) {
 	/** 加载byte code并创建用于获取shader描述信息的对象 */
-	SmartPtr<ID3DBlob> blob;
-	D3DCreateBlob(byteCodes.size(), blob.ReleaseAndGetAddressOf());
 	SmartPtr<IDxcBlob> dxcBlob;
-	if (FAILED(blob.As(&dxcBlob))) {
+	if (FAILED(byteCodes.As(&dxcBlob))) {
 		if (err) {
 			setupErrMsg("create blob failed!", err);
 		}
 		return false;
 	}
-	memcpy(dxcBlob->GetBufferPointer(), byteCodes.data(), byteCodes.size());
 	SmartPtr<IDxcContainerReflection> reflection;
 	uint32_t shaderIdx;
 	DxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&reflection));

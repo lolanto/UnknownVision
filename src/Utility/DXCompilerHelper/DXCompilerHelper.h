@@ -1,11 +1,12 @@
-#ifndef DXIL_COMPILER_HELPER_H
-#define DXIL_COMPILER_HELPER_H
+#ifndef UV_DXC_COMPILER_HELPER_H
+#define UV_DXC_COMPILER_HELPER_H
 
 /** 该文件提供对DXIL编译器的封装支持 */
 
 #include <Windows.h> /**< 提供com操作支持的 */
 #include <dxcapi.h> /**< 提供DXIL API支持的 */
 #include <wrl.h> /**< 提供COM智能指针支持的 */
+#include <d3dcommon.h>
 #include <vector>
 
 namespace UnknownVision {
@@ -27,13 +28,13 @@ public:
 	 * @param err 若该指针不为空，则会在编译失败时记录错误信息
 	 * @return 编译成功返回true，编译失败返回false */
 	bool CompileToByteCode(const char* srcFilePath, const char* profile,
-		std::vector<uint8_t>& outputBuffer, bool outputDebugInfo = false, std::vector<char>* err = nullptr);
+		Microsoft::WRL::ComPtr<ID3DBlob>& outputBuffer, bool outputDebugInfo = false, std::vector<char>* err = nullptr);
 	/** 从ByteCode中提取该shader的描述信息
 	 * @param byteCodes 存储DXC编译后，shader的字节码
 	 * @param outputDescription 存储shader描述信息的结构体的引用
 	 * @param err 若该指针不为空，则会在处理失败时记录错误信息
 	 * @return 获取成功返回true，获取失败返回false */
-	bool RetrieveShaderDescriptionFromByteCode(std::vector<uint8_t>& byteCodes,
+	bool RetrieveShaderDescriptionFromByteCode(Microsoft::WRL::ComPtr<ID3DBlob>& byteCodes,
 		UnknownVision::ShaderDescription& outputDescription,
 		std::vector<char>* err = nullptr);
 private:
@@ -41,4 +42,4 @@ private:
 	Microsoft::WRL::ComPtr<IDxcCompiler2> m_compiler; /**< 负责提供编译方法的对象 */
 };
 
-#endif // DXIL_COMPILER_HELPER_H
+#endif // UV_DXC_COMPILER_HELPER_H
