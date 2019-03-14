@@ -1,8 +1,8 @@
 #ifndef D3D12_RENDER_SYS_H
 #define D3D12_RENDER_SYS_H
 
-#include "DX12_UVConfig.h"
-#include "../RenderSys/RenderSys.h"
+#include "DX12Config.h"
+#include "../RenderSystem/RenderSystem.h"
 
 namespace UnknownVision {
 	/** @remark 暂不考虑multi-adapter */

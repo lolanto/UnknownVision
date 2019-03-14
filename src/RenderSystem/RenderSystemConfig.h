@@ -1,4 +1,4 @@
-﻿#ifndef RENDER_SYS_UV_CONFIG_H
+#ifndef RENDER_SYS_UV_CONFIG_H
 #define RENDER_SYS_UV_CONFIG_H
 #include "../Utility/TypeRestriction/TypeRestriction.h"
 #include "../UVConfig.h"
