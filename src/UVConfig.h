@@ -8,6 +8,14 @@ namespace UnknownVision {
 	const uint32_t UV_MAX_RENDER_TARGET = 8; /**< 可绑定的渲染对象的上限 */
 	const uint32_t UV_MAX_VERTEX_BUFFER = 16; /**< 可绑定的顶点缓冲的上限 */
 
+	/** 资源记录的类型 */
+	enum ResourceRecordType : uint8_t {
+		RESOURCE_RECORD_TYPE_READ = 0,
+		RESOURCE_RECORD_TYPE_WRITE,
+		RESOURCE_RECORD_TYPE_CREATE,
+		RESOURCE_RECORD_TYPE_PERMANENT /**< 该资源是持久性的 */
+	};
+
 	enum DataFormatType : uint8_t {
 		/** 以下格式可以等价为float1, float2, float3以及float4 */
 		DFT_R32_FLOAT = 0,

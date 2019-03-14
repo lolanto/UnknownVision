@@ -78,9 +78,6 @@
     <ClCompile Include="..\src\LuaEngine\LuaEngine.cpp">
       <Filter>LuaEngine</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\RenderSystem\RenderGraph.cpp">
-      <Filter>RenderSystem\Source</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\Resource\ShaderDescription.cpp">
       <Filter>Resource</Filter>
     </ClCompile>
@@ -120,6 +117,9 @@
     <ClCompile Include="..\src\ResourceManager\ResourceMananger.cpp">
       <Filter>ResourceManager</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\RenderSystem\RenderGraph.cpp">
+      <Filter>RenderSystem\Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\D3D12\DX12RenderSys.h">
@@ -130,9 +130,6 @@
     </ClInclude>
     <ClInclude Include="..\src\LuaEngine\LuaEngine.h">
       <Filter>LuaEngine</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\RenderSystem\RenderGraph.h">
-      <Filter>RenderSystem\Header</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Resource\Buffer.h">
       <Filter>Resource</Filter>
@@ -224,11 +221,11 @@
     <ClInclude Include="..\src\Utility\DXCompilerHelper\DXCompilerHelper.h">
       <Filter>Utility\DXCompilerHelper</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\RenderSystem\RenderGraph.h">
+      <Filter>RenderSystem\Header</Filter>
     </ClInclude>
-    <ClInclude Include="resource1.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\src\RenderSystem\RenderGraphRaw.h">
+      <Filter>RenderSystem\Header</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

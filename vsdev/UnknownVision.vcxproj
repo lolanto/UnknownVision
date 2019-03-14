@@ -93,6 +93,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <PreprocessToFile>false</PreprocessToFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>Lua.lib;d3d12.lib;d3d11.lib;dxgi.lib;dxcompiler.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -104,6 +105,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <FxCompile>
       <ShaderModel>5.0</ShaderModel>
@@ -119,6 +121,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -133,6 +136,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -183,6 +187,7 @@
     <ClInclude Include="..\src\DirectXHelper.h" />
     <ClInclude Include="..\src\LuaEngine\LuaEngine.h" />
     <ClInclude Include="..\src\RenderSystem\RenderGraph.h" />
+    <ClInclude Include="..\src\RenderSystem\RenderGraphRaw.h" />
     <ClInclude Include="..\src\RenderSystem\RenderSystem.h" />
     <ClInclude Include="..\src\RenderSystem\RenderSystemConfig.h" />
     <ClInclude Include="..\src\ResourceManager\BufferManager.h" />
@@ -208,8 +213,6 @@
     <ClInclude Include="..\src\Utility\WindowBase\WindowBase.h" />
     <ClInclude Include="..\src\UVConfig.h" />
     <ClInclude Include="..\src\UVRoot.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="resource1.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
