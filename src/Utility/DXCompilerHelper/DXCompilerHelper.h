@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace UnknownVision {
-	struct ShaderDescription;
+	class ShaderDescription;
 }
 
 class DXCompilerHelper {

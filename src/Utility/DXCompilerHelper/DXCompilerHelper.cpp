@@ -174,10 +174,6 @@ bool DXCompilerHelper::RetrieveShaderDescriptionFromByteCode(SmartPtr<ID3DBlob>&
 	}
 	/** 开始填充描述结构体 */
 	{
-		ShaderDescription::ResourceDescriptorMap cbMap;
-		ShaderDescription::ResourceDescriptorMap srMap;
-		ShaderDescription::ResourceDescriptorMap spMap;
-		ShaderDescription::ResourceDescriptorMap uaMap;
 		for (uint32_t resIdx = 0; resIdx < shaderDesc.BoundResources; ++resIdx) {
 			ResourceDescriptor resDesc;
 			D3D12_SHADER_INPUT_BIND_DESC inputDesc;
@@ -192,19 +188,15 @@ bool DXCompilerHelper::RetrieveShaderDescriptionFromByteCode(SmartPtr<ID3DBlob>&
 			switch (inputDesc.Type) {
 			case D3D_SIT_CBUFFER:
 				resDesc.type = ResourceDescriptor::REGISTER_TYPE_CONSTANT_BUFFER;
-				cbMap.insert(std::make_pair(resDesc.name, resDesc));
 				break;
 			case D3D_SIT_TEXTURE:
 				resDesc.type = ResourceDescriptor::REGISTER_TYPE_SHADER_RESOURCE;
-				srMap.insert(std::make_pair(resDesc.name, resDesc));
 				break;
 			case D3D_SIT_SAMPLER:
 				resDesc.type = ResourceDescriptor::REGISTER_TYPE_SAMPLER;
-				spMap.insert(std::make_pair(resDesc.name, resDesc));
 				break;
 			case D3D_SIT_UAV_RWTYPED:
 				resDesc.type = ResourceDescriptor::REGISTER_TYPE_UNORDER_ACCESS;
-				uaMap.insert(std::make_pair(resDesc.name, resDesc));
 				break;
 			default:
 				if (err) {
@@ -212,11 +204,8 @@ bool DXCompilerHelper::RetrieveShaderDescriptionFromByteCode(SmartPtr<ID3DBlob>&
 				}
 				return false;
 			}
+			outputDescription.InsertResourceDescription(resDesc);
 		}
-		outputDescription.constantBuffers.swap(cbMap);
-		outputDescription.samplers.swap(spMap);
-		outputDescription.shaderResources.swap(srMap);
-		outputDescription.unorderAccessBuffers.swap(uaMap);
 	}
 
 	return true;

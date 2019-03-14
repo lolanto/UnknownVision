@@ -11,6 +11,15 @@ namespace UnknownVision {
 	 * 没有意义。其次，arraySize设置为UNBOUNDED_ARRAY
 	 * 表示该数组类型的资源边界由外部决定 */
 	struct ResourceDescriptor {
+		const ResourceDescriptor& operator=(const ResourceDescriptor& rhs) {
+			type = rhs.type;
+			slot = rhs.slot;
+			isArray = rhs.isArray;
+			arraySize = rhs.arraySize;
+			space = rhs.space;
+			name = rhs.name;
+			return *this;
+		}
 		const uint8_t UNBOUNDED_ARRAY = UINT8_MAX; /**< 表示该数组边界由外部决定 */
 		enum RegisterType : uint8_t {
 			REGISTER_TYPE_CONSTANT_BUFFER = 0,
@@ -26,22 +35,35 @@ namespace UnknownVision {
 		uint8_t space; /**< 该资源的逻辑空间 */
 	};
 
-	/** 存储shader描述信息的结构体 */
-	struct ShaderDescription {
-		using ResourceDescriptorMap = std::map<std::string, ResourceDescriptor>;
-		ResourceDescriptorMap constantBuffers; /**< 存储该shader的所有constant buffer描述 */
-		ResourceDescriptorMap shaderResources; /**< 存储该shader的所有shader resource描述 */
-		ResourceDescriptorMap samplers; /**< 存储该shader的所有sampler描述 */
-		ResourceDescriptorMap unorderAccessBuffers; /**< 存储该shader的所有unorder access buffer描述 */
+	/** 存储shader描述信息的对象 */
+	class ShaderDescription {
+	public:
+		ShaderDescription() : m_numOfConstantBuffers(0), m_numOfSamplers(0),
+			m_numOfShaderResources(0), m_numOfUnoderAccessBuffers(0) {}
+	public:
+		/** 将shader描述信息格式化打印到控制台
+		 * @param desc 需要打印的shader描述信息结构体引用 */
+		void PrintShaderDescriptionToConsole();
 		/** 辅助函数 */
-		inline uint32_t NumberOfConstantBuffers() const { return static_cast<uint32_t>(constantBuffers.size()); }
-		inline uint32_t NumberOfShaderResources() const { return static_cast<uint32_t>(shaderResources.size()); }
-		inline uint32_t NumberOfSamplers() const { return static_cast<uint32_t>(samplers.size()); }
-		inline uint32_t NumberOfUnoderAccessBuffers() const { return static_cast<uint32_t>(unorderAccessBuffers.size()); }
+		inline uint8_t NumberOfConstantBuffers() const { return m_numOfConstantBuffers; }
+		inline uint8_t NumberOfShaderResources() const { return m_numOfShaderResources; }
+		inline uint8_t NumberOfSamplers() const { return m_numOfSamplers; }
+		inline uint8_t NumberOfUnoderAccessBuffers() const { return m_numOfUnoderAccessBuffers; }
+		/** 向描述体中存储新的资源描述信息
+		 * @param desc 需要增加的资源描述信息
+		 * @remark 重复增加相同名称的描述信息会覆盖原有信息*/
+		void InsertResourceDescription(const ResourceDescriptor& desc);
+		/** 获取指定资源的描述信息
+		 * @param name 需要获取的资源的名称
+		 * @return 获取成功返回对应资源的描述信息引用，获取失败抛出std::out_of_range*/
+		const ResourceDescriptor& GetResourceDescription(const std::string& name);
+	private:
+		using ResourceDescriptorMap = std::map<std::string, ResourceDescriptor>;
+		ResourceDescriptorMap m_resourceDescriptiors; /** 以资源名称为索引，存储各个资源的描述信息 */
+		uint8_t m_numOfConstantBuffers;
+		uint8_t m_numOfShaderResources;
+		uint8_t m_numOfSamplers;
+		uint8_t m_numOfUnoderAccessBuffers;
 	};
-
-	/** 将shader描述信息格式化打印到控制台
-	 * @param desc 需要打印的shader描述信息结构体引用 */
-	void PrintShaderDescriptionToConsole(const ShaderDescription& desc);
 }
 #endif // SHADER_DESCRIPTOR_H
