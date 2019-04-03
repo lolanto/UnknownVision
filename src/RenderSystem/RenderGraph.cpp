@@ -5,28 +5,30 @@
 #include <algorithm>
 
 namespace UnknownVision {
-	void* ResourceRecordContainer::Push(ResourceRecordType type, Pass * pass, const ResourceOperationInfo & opInfo)
+	void* ResourceRecordContainer::Push(ResourceRecordType type, Pass * pass, ResourceOperationInfo&& opInfo)
 	{
-		const ResourceOperationInfo* newInfoPtr = nullptr; /**< 指向放入m_opInfo容器的 新操作记录 对象的指针 */
+		/** 向RecordContainer中插入operationInfo
+		 * @param opinfo 需要插入的operation Info
+		 * @return 一旦对应的info已经存在，则返回已存在的指针；若不存在，则返回插入后的Info指针 */
+		auto insertResourceOperationInfoLambda = [this](ResourceOperationInfo&& opInfo) -> const ResourceOperationInfo*
 		{
-			ResourceOperationInfo newInfo = opInfo;
-			newInfo.container = this;
+			opInfo.container = this;
 			{
-				auto& curIter = m_opInfo.find(newInfo);
+				auto& curIter = m_opInfo.find(opInfo);
 				if (curIter == m_opInfo.end()) {
 					/** 该操作记录尚未存入m_opInfo中 */
-					auto& iterAndErr = m_opInfo.insert(std::move(newInfo));
-					if (!iterAndErr.second) {
+					auto [iter, isSucceed] = m_opInfo.insert(std::move(opInfo));
+					if (!isSucceed) {
 						/** 插入失败 */
 						return nullptr;
 					}
-					newInfoPtr = (&iterAndErr.first.operator*());
+					return (&iter.operator*());
 				}
 				else {
-					newInfoPtr = (&curIter.operator*());
+					return (&curIter.operator*());
 				}
 			}
-		}
+		};
 		switch (type) {
 		case RESOURCE_RECORD_TYPE_PERMANENT:
 			if (m_isTransient == true /**< 该资源是短暂资源，不允许有长期状态 */
@@ -34,7 +36,7 @@ namespace UnknownVision {
 				) {
 				return nullptr;
 			}
-			m_permanentInfo = newInfoPtr;
+			m_permanentInfo = insertResourceOperationInfoLambda(std::move(opInfo));
 			return this;
 		case RESOURCE_RECORD_TYPE_CREATE:
 			if (m_creator != nullptr /** 该资源已经有创建记录了 */
@@ -60,7 +62,7 @@ namespace UnknownVision {
 				tmp->next = end;
 				end->last = tmp;
 			}
-			end->info = newInfoPtr;
+			end->info = insertResourceOperationInfoLambda(std::move(opInfo));
 			return end;
 		}
 		default:
@@ -136,8 +138,8 @@ namespace UnknownVision {
 				/** 新资源数据插入失败 */
 				return false;
 			}
-			ResourceOperationInfo&& optInfo = constructResourceOperationInfo(resource);
-			if (!iter->second.Push(RESOURCE_RECORD_TYPE_PERMANENT, nullptr, optInfo)) {
+			if (!iter->second.Push(RESOURCE_RECORD_TYPE_PERMANENT, nullptr, 
+				constructResourceOperationInfo(resource))) {
 				/** 记录插入失败 */
 				return false;
 			}
@@ -153,7 +155,6 @@ namespace UnknownVision {
 			{
 				/** 处理所有的资源创建记录 */
 				for (const auto& create : passData->createRecords) {
-					ResourceOperationInfo&& optInfo = constructResourceOperationInfo(&create);
 					auto& resIter = m_resources.find(create.name); /**< 尝试在已有资源中寻找当前所需资源 */
 					if (resIter != m_resources.end()) {
 						/** 重复的资源创建指令 */
@@ -161,14 +162,15 @@ namespace UnknownVision {
 					}
 					/** 加入新的资源操作记录容器
 					 * @remark 暂时认为pass主动创建的资源都是临时资源，在group外不可访问*/
-					auto& iterAndRes = m_resources.insert(std::make_pair(create.name,
+					auto [iter, isSucceed] = m_resources.insert(std::make_pair(create.name,
 						ResourceRecordContainer(create.name.c_str(), true)));
-					if (!iterAndRes.second) {
+					if (!isSucceed) {
 						/** 插入新资源记录结构体失败 */
 						return false;
 					}
 					ResourceRecordContainer* newRec = reinterpret_cast<ResourceRecordContainer*>(
-						iterAndRes.first->second.Push(RESOURCE_RECORD_TYPE_CREATE, &newPass, optInfo));
+						iter->second.Push(RESOURCE_RECORD_TYPE_CREATE, &newPass,
+							constructResourceOperationInfo(&create)));
 					if (newRec == nullptr) {
 						/** “创建”记录插入失败，清理刚插入的pass并返回 */
 						m_passes.pop_back();
@@ -182,7 +184,6 @@ namespace UnknownVision {
 				auto readWriteProcessLambda =
 					[this, &newPass](const ResourceRawOperation& opt, ResourceRecordType type)->bool
 				{
-					ResourceOperationInfo&& optInfo = constructResourceOperationInfo(&opt);
 					auto& resIter = m_resources.find(opt.name); /**< 尝试在已有资源中寻找当前所需资源 */
 					if (resIter == m_resources.end()) {
 						/** 资源尚未被创建，清理刚插入的pass并返回 */
@@ -190,7 +191,8 @@ namespace UnknownVision {
 						return false;
 					}
 					ResourceRecordNode* newRec = reinterpret_cast<ResourceRecordNode*>(
-						resIter->second.Push(type, &newPass, optInfo));
+						resIter->second.Push(type, &newPass,
+							constructResourceOperationInfo(&opt)));
 					if (newRec == nullptr) {
 						/** 记录插入失败，清理刚才插入的pass并返回 */
 						m_passes.pop_back();

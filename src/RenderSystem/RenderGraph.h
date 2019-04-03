@@ -19,6 +19,12 @@ namespace UnknownVision {
 
 	struct ResourceOperationInfo {
 		ResourceOperationInfo() : container(nullptr) {}
+		ResourceOperationInfo(const ResourceOperationInfo&) = delete;
+		ResourceOperationInfo(ResourceOperationInfo&& rhs)
+			: type(rhs.type), usage(rhs.usage), width(rhs.width), height(rhs.height),
+			depth(rhs.depth), container(rhs.container) {
+			initData.swap(rhs.initData);
+		}
 		uint64_t hashHelper() const {
 			uint64_t hashValue = reinterpret_cast<uintptr_t>(container);
 			return hashValue;
@@ -27,7 +33,10 @@ namespace UnknownVision {
 		bool operator<(const ResourceOperationInfo& rhs) const {
 			return hashHelper() < rhs.hashHelper();
 		}
-
+		ResourceType type; /**< 资源的大致类型 */
+		ResourceUsage usage; /**< 资源的使用情况(/可以被如何使用) */
+		uint32_t width, height, depth;
+		std::vector<uint8_t> initData; /**< 可选! 资源的初始数据 */
 		ResourceRecordContainer* container;
 	};
 
@@ -62,7 +71,12 @@ namespace UnknownVision {
 		ResourceRecordContainer(const ResourceRecordContainer& rhs) = delete;
 
 	public:
-		void* Push(ResourceRecordType type, Pass* pass, const ResourceOperationInfo& opInfo);
+		/** 向容器中插入新的操作信息
+		 * @param type 需要插入的记录类型
+		 * @param pass 产生操作的pass
+		 * @param opInfo 操作记录的具体信息 
+		 * @return 假如记录类型是permanent或create则返回的是conainter本身，否则返回RecordNode*/
+		void* Push(ResourceRecordType type, Pass* pass, ResourceOperationInfo&& opInfo);
 		void CleanUpNodes();
 		bool IsNecessary();
 		bool IsTransient() const { return m_isTransient; }
@@ -73,14 +87,14 @@ namespace UnknownVision {
 		void moveHelper(ResourceRecordContainer&& rhs);
 	private:
 		const bool m_isTransient; /**< 该资源是否短暂存在 */
-		std::string m_name;
-		ResourceRecordNode* m_head;
+		std::string m_name; /**< 资源的名称 */
+		ResourceRecordNode* m_head; /**< 资源的操作记录链表 */
 		union {
-			Pass* m_creator;
-			const ResourceOperationInfo* m_permanentInfo;
+			Pass* m_creator; /**< 资源创建者 */
+			const ResourceOperationInfo* m_permanentInfo; /**< 资源长期存在，没有创建者，只有初始状态 */
 		};
 		/** value一旦放入set中则不可以再被修改 */
-		std::set<ResourceOperationInfo> m_opInfo;
+		std::set<ResourceOperationInfo> m_opInfo; /**< 资源的具体使用方式 */
 	};
 
 	class Pass {
