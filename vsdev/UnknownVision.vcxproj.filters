@@ -43,9 +43,6 @@
     <Filter Include="D3D12\Resource">
       <UniqueIdentifier>{d05befdb-cb44-4182-ad77-67769d909aa8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="LuaEngine">
-      <UniqueIdentifier>{0ab9e3ac-c108-4482-8dbd-93b6d43a395c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Utility\CommandBuffer">
       <UniqueIdentifier>{a59dde36-45d8-491f-88b8-a623c9c13cc9}</UniqueIdentifier>
     </Filter>
@@ -70,13 +67,16 @@
     <Filter Include="Utility\DXCompilerHelper">
       <UniqueIdentifier>{6b34d2c5-799a-4c82-ad78-9ce3d83e9149}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ScriptEngine">
+      <UniqueIdentifier>{0ab9e3ac-c108-4482-8dbd-93b6d43a395c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ScriptEngine\LUA">
+      <UniqueIdentifier>{d5efd25e-b552-47d0-8959-f30b92afa65c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\D3D12\DX12RenderSys.cpp">
       <Filter>D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\LuaEngine\LuaEngine.cpp">
-      <Filter>LuaEngine</Filter>
     </ClCompile>
     <ClCompile Include="..\src\Resource\ShaderDescription.cpp">
       <Filter>Resource</Filter>
@@ -120,6 +120,12 @@
     <ClCompile Include="..\src\RenderSystem\RenderGraph.cpp">
       <Filter>RenderSystem\Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\ScriptEngine\Lua\LuaEngine.cpp">
+      <Filter>ScriptEngine\LUA</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ScriptEngine\Lua\LuaFunctions.cpp">
+      <Filter>ScriptEngine\LUA</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\D3D12\DX12RenderSys.h">
@@ -127,9 +133,6 @@
     </ClInclude>
     <ClInclude Include="..\src\D3D12\Resource\DX12Buffer.h">
       <Filter>D3D12\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\LuaEngine\LuaEngine.h">
-      <Filter>LuaEngine</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Resource\Buffer.h">
       <Filter>Resource</Filter>
@@ -226,6 +229,15 @@
     </ClInclude>
     <ClInclude Include="..\src\RenderSystem\RenderGraphRaw.h">
       <Filter>RenderSystem\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ScriptEngine\ScirptEngine.h">
+      <Filter>ScriptEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ScriptEngine\Lua\LuaEngine.h">
+      <Filter>ScriptEngine\LUA</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ScriptEngine\Lua\LuaFunctions.h">
+      <Filter>ScriptEngine\LUA</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

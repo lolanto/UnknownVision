@@ -160,16 +160,12 @@
     </ClCompile>
     <ClCompile Include="..\src\D3D12\ResourceManager\DX12ShaderManager.cpp" />
     <ClCompile Include="..\src\D3D12\Resource\DX12Shader.cpp" />
-    <ClCompile Include="..\src\LuaEngine\LuaEngine.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\RenderSystem\RenderGraph.cpp" />
     <ClCompile Include="..\src\ResourceManager\ResourceMananger.cpp" />
     <ClCompile Include="..\src\Resource\ShaderDescription.cpp" />
+    <ClCompile Include="..\src\ScriptEngine\Lua\LuaEngine.cpp" />
+    <ClCompile Include="..\src\ScriptEngine\Lua\LuaFunctions.cpp" />
     <ClCompile Include="..\src\Utility\DXCompilerHelper\DXCompilerHelper.cpp" />
     <ClCompile Include="..\src\Utility\FileContainer\FileContainer.cpp" />
     <ClCompile Include="..\src\Utility\InfoLog\InfoLog.cpp" />
@@ -185,7 +181,6 @@
     <ClInclude Include="..\src\D3D12\Resource\DX12Buffer.h" />
     <ClInclude Include="..\src\D3D12\Resource\DX12Shader.h" />
     <ClInclude Include="..\src\DirectXHelper.h" />
-    <ClInclude Include="..\src\LuaEngine\LuaEngine.h" />
     <ClInclude Include="..\src\RenderSystem\RenderGraph.h" />
     <ClInclude Include="..\src\RenderSystem\RenderGraphRaw.h" />
     <ClInclude Include="..\src\RenderSystem\RenderSystem.h" />
@@ -201,6 +196,9 @@
     <ClInclude Include="..\src\Resource\Shader.h" />
     <ClInclude Include="..\src\Resource\ShaderDescription.h" />
     <ClInclude Include="..\src\Resource\Texture.h" />
+    <ClInclude Include="..\src\ScriptEngine\Lua\LuaEngine.h" />
+    <ClInclude Include="..\src\ScriptEngine\Lua\LuaFunctions.h" />
+    <ClInclude Include="..\src\ScriptEngine\ScirptEngine.h" />
     <ClInclude Include="..\src\Utility\CommandBuffer\CommandBuffer.hpp" />
     <ClInclude Include="..\src\Utility\DXCompilerHelper\DXCompilerHelper.h" />
     <ClInclude Include="..\src\Utility\FileContainer\FileContainer.h" />
