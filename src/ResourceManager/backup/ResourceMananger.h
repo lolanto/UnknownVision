@@ -1,4 +1,4 @@
-#ifndef UV_RESOURCE_MANAGER_H
+﻿#ifndef UV_RESOURCE_MANAGER_H
 #define UV_RESOURCE_MANAGER_H
 
 #include "ResourceManangerConfig.h"
@@ -17,8 +17,6 @@ namespace UnknownVision {
 		virtual ~ResourceMgr() {}
 		const ManagerType Type;
 	};
-
-	
 	
 	class VertexDeclarationMgr : public ResourceMgr {
 	public:

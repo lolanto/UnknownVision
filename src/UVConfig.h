@@ -1,40 +1,101 @@
-#ifndef UV_CONFIG_H
-#define UV_CONFIG_H
+﻿#pragma once
 #include "Utility/TypeRestriction/TypeRestriction.h"
-#include "Utility/InfoLog/InfoLog.h"
 #include <cstdint>
 
-namespace UnknownVision {
+#define allow_logical_operation
+#define PROJECT_NAME_SPACE UnknownVision
+#define BEG_NAME_SPACE namespace PROJECT_NAME_SPACE {
+#define END_NAME_SPACE }
+
+#define thread_safe
+#define thread_safe_const const
+
+BEG_NAME_SPACE
 	const uint32_t UV_MAX_RENDER_TARGET = 8; /**< 可绑定的渲染对象的上限 */
 	const uint32_t UV_MAX_VERTEX_BUFFER = 16; /**< 可绑定的顶点缓冲的上限 */
+
+	enum PassType : uint8_t {
+		PASS_TYPE_GRAPHIC = 0,
+		PASS_TYPE_COMPUTE = 1
+	};
 
 	/** 资源记录的类型 */
 	enum ResourceRecordType : uint8_t {
 		RESOURCE_RECORD_TYPE_READ = 0x01U,
 		RESOURCE_RECORD_TYPE_WRITE = 0x02U,
 		RESOURCE_RECORD_TYPE_CREATE = 0x04U,
-		RESOURCE_RECORD_TYPE_PERMANENT = 0x08U /**< 该资源是持久性的 */
+		RESOURCE_RECORD_TYPE_PERMANENT = 0x08U /**< 该资源是持久性的，与create相对 */
 	};
 
 	/** 资源大致类型 */
 	enum ResourceType : uint8_t {
-		RESOURCE_TYPE_BUFFER = 0,
-		RESOURCE_TYPE_TEXTURE1D,
-		RESOURCE_TYPE_TEXTURE2D,
-		RESOURCE_TYPE_TEXTURE3D,
+		RESOURCE_TYPE_BUFFER = 0x01U,
+		RESOURCE_TYPE_TEXTURE1D = 0x02U,
+		RESOURCE_TYPE_TEXTURE2D = 0x04U,
+		RESOURCE_TYPE_TEXTURE3D = 0x08U,
+		RESOURCE_TYPE_TRANSIENT = 0x80U /**< 该资源是临时存在的 */
 	};
 
 	/** 资源的使用方式，通常用于显式规定资源的用途 */
-	enum ResourceUsage : uint8_t {
-		RESOURCE_USAGE_AUTO = 0, /** 表示由应用自动推导相关使用方式 */
-		RESOURCE_USAGE_VERTEX_DATA = 0x01U,
-		RESOURCE_USAGE_INDEX_DATA = 0x02U,
+	allow_logical_operation enum ResourceUsage : uint8_t {
+		RESOURCE_USAGE_INVALID = 0X00U,
+		RESOURCE_USAGE_VERTEX_BUFFER = 0x01U,
+		RESOURCE_USAGE_INDEX_BUFFER = 0x02U,
 		RESOURCE_USAGE_DEPTH = 0x04U,
 		RESOURCE_USAGE_RENDER_TARGET = 0x08U,
 		RESOURCE_USAGE_SHADER_RESOURCE = 0x10U,
-		RESOURCE_USAGE_CONSTANT_DATA = 0x20U,
+		RESOURCE_USAGE_CONSTANT_BUFFER = 0x20U,
 		RESOURCE_USAGE_UNORDER_ACCESS = 0x40U
 	};
+
+	allow_logical_operation enum ResourceFlag : uint8_t {
+		RESOURCE_FLAG_INVALID = 0x00U,
+		RESOURCE_FLAG_STABLY = 0x01U, /**< CPU will never read / write */
+		RESOURCE_FLAG_ONCE = 0x02U, /**< CPU will write per frame */
+		RESOURCE_FLAG_FREQUENTLY = 0x04U, /**< CPU will write multiple time per frame */
+		RESOURCE_FLAG_READ_BACK = 0x08U, /**< CPU will read it */
+	};
+
+	enum ResourceState : uint8_t {
+		RESOURCE_STATE_INVALID = 0,
+		RESOURCE_STATE_CONSTANT_BUFFER,
+		RESOURCE_STATE_VERTEX_BUFFER,
+		RESOURCE_STATE_GENERIC_READ, /** 这是DX12创建Uploadheap上的资源使用的，需要考虑如何去除，让它更通用 */
+		RESOURCE_STATE_COPY_DEST,
+		RESOURCE_STATE_COPY_SRC
+	};
+
+#define CanBe(x, X) inline bool canBe##x() const { return usage & RESOURCE_USAGE_##X; }
+#define IsFlag(x, X) inline bool is##x() const { return flag & RESOURCE_FLAG_##X; }
+#define IsInState(x, X) inline bool isInStateOf##x() const { return state == RESOURCE_STATE_##X; }
+	struct ResourceStatus {
+		ResourceUsage usage = RESOURCE_USAGE_INVALID;
+		ResourceState state = RESOURCE_STATE_INVALID;
+		ResourceFlag flag = RESOURCE_FLAG_INVALID;
+
+		ResourceStatus() = default;
+		ResourceStatus(ResourceUsage usage, ResourceState state, ResourceFlag flag)
+			:usage(usage), state(state), flag(flag) {}
+		/** helper functions */
+		inline bool isInvalid() const { 
+			return usage == RESOURCE_USAGE_INVALID ||
+				state == RESOURCE_STATE_INVALID ||
+				flag == RESOURCE_FLAG_INVALID; }
+		IsInState(ConstantBuffer, CONSTANT_BUFFER)
+		IsInState(VertexBuffer, VERTEX_BUFFER)
+		IsInState(CopyDest, COPY_DEST)
+		IsInState(CopySrc, COPY_SRC)
+		IsFlag(Stably, STABLY)
+		IsFlag(Once, ONCE)
+		IsFlag(Frequently, FREQUENTLY)
+		IsFlag(ReadBack, READ_BACK)
+		CanBe(VertexBuffer, VERTEX_BUFFER)
+		CanBe(IndexBuffer, INDEX_BUFFER)
+		CanBe(ConstantBuffer, CONSTANT_BUFFER)
+	};
+#undef IsInState
+#undef IsFlag
+#undef CanBe
 
 	enum DataFormatType : uint8_t {
 		/** 以下格式可以等价为float1, float2, float3以及float4 */
@@ -57,13 +118,6 @@ namespace UnknownVision {
 		uint8_t byteOffset = 0;
 	};
 
-	enum ManagerType {
-		MT_TEXTURE2D_MANAGER,
-		MT_SHADER_MANAGER,
-		MT_BUFFER_MANAGER,
-		MT_VERTEX_DECLARATION_MANAGER,
-		MT_PIPELINE_STATE_MANAGER
-	};
 
 	/** 图元类型的枚举值，与光栅化相关
 */
@@ -131,5 +185,5 @@ namespace UnknownVision {
 	ALIAS_INDEX(int32_t, ResourceIdx);
 	ALIAS_INDEX(int32_t, DescriptorLayoutIdx);
 	ALIAS_INDEX(int32_t, GraphPassIdx);
-}
-#endif // UV_CONFIG_H
+
+	END_NAME_SPACE

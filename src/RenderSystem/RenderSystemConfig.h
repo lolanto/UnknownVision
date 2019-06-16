@@ -1,30 +1,51 @@
-#ifndef RENDER_SYS_UV_CONFIG_H
-#define RENDER_SYS_UV_CONFIG_H
-#include "../Utility/TypeRestriction/TypeRestriction.h"
+﻿#pragma once
 #include "../UVConfig.h"
+#include <vector>
 
-namespace UnknownVision {
+BEG_NAME_SPACE
 
-	/** 标记管线不同部分的枚举值
-	* 凡涉及对特定管线部分进行状态设置的
-	* 函数均需要提供该枚举值，说明需要设置的部分
-	*/
-	enum PipelineStage {
-		PS_InputProcess, /**< 管线输入阶段 */
-		PS_VertexProcess, /**< 顶点处理阶段 */
-		PS_GeometryProcess, /**< 几何处理阶段 */
-		PS_TesselationProcess, /**< 细分处理阶段 */
-		PS_RasterizationProcess, /**< 光栅处理阶段 */
-		PS_PixelProcess, /**< 像素处理阶段 */
-		PS_OutpuProcess /**< 管线输出处理阶段 */
+	ALIAS_INDEX(uint64_t, BufferHandle);
+	ALIAS_INDEX(uint16_t, TextureHandle);
+	ALIAS_INDEX(uint16_t, ProgramHandle);
+
+	struct Handle {
+		enum Type: uint8_t {
+			HANDLE_TYPE_INVALID = 0x00U,
+			HANDLE_TYPE_BUFFER = 0x01U,
+			HANDLE_TYPE_TEXTURE = 0x02U,
+			HANDLE_TYPE_PROGRAM = 0x04U
+		};
+		Type type;
+		union
+		{
+			BufferHandle buffer;
+			TextureHandle texture;
+			ProgramHandle program;
+		};
+		Handle() : type(HANDLE_TYPE_INVALID) {}
+		Handle(BufferHandle handle) : type(HANDLE_TYPE_BUFFER), buffer(handle) {}
+		Handle(TextureHandle handle) : type(HANDLE_TYPE_TEXTURE), texture(handle) {}
+		Handle(ProgramHandle handle) : type(HANDLE_TYPE_PROGRAM), program(handle) {}
 	};
 
-	struct SamplerDesc {
-
+	enum ParameterType : uint8_t {
+		PARAMETER_TYPE_INVALID = 0x00U,
+		PARAMETER_TYPE_BUFFER = 0x01U,
+		PARAMETER_TYPE_TEXTURE = 0x02U
 	};
 
-	ALIAS_INDEX(uint32_t, SlotIdx);
+	struct Parameter {
+		union
+		{
+			BufferHandle buffer;
+			TextureHandle texture;
+		};
+		ParameterType type = PARAMETER_TYPE_INVALID;
+		bool IsBuffer() const { return type == PARAMETER_TYPE_BUFFER; }
+		bool IsTexture() const { return type == PARAMETER_TYPE_TEXTURE; }
+	};
 
-} // namespace UnknownVision
+	using ProgramParameters = std::vector<Parameter>;
+	//ALIAS_INDEX(uint32_t, SlotIdx);
 
-#endif // RENDER_SYS_UV_CONFIG_H
+END_NAME_SPACE

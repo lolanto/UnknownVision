@@ -94,6 +94,7 @@
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <PreprocessToFile>false</PreprocessToFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>Lua.lib;d3d12.lib;d3d11.lib;dxgi.lib;dxcompiler.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -106,6 +107,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <FxCompile>
       <ShaderModel>5.0</ShaderModel>
@@ -122,6 +124,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -137,6 +140,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -145,24 +149,27 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\D3D12\DX12ResourceManager.cpp" />
     <ClCompile Include="..\src\D3D12\DX12Config.cpp" />
+    <ClCompile Include="..\src\D3D12\DX12RenderBackend.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\DX12RenderBasic.cpp" />
+    <ClCompile Include="..\src\D3D12\DX12RenderDevice.cpp" />
     <ClCompile Include="..\src\D3D12\DX12RenderSys.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\src\D3D12\ResourceManager\DX12BufferManager.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\src\D3D12\ResourceManager\DX12ShaderManager.cpp" />
-    <ClCompile Include="..\src\D3D12\Resource\DX12Shader.cpp" />
     <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\RenderSystem\Order.cpp" />
     <ClCompile Include="..\src\RenderSystem\RenderGraph.cpp" />
-    <ClCompile Include="..\src\ResourceManager\ResourceMananger.cpp" />
+    <ClCompile Include="..\src\RenderSystem\Task.cpp" />
+    <ClCompile Include="..\src\ResourceManager\ResourceFactory.cpp" />
     <ClCompile Include="..\src\Resource\ShaderDescription.cpp" />
     <ClCompile Include="..\src\ScriptEngine\Lua\LuaEngine.cpp" />
     <ClCompile Include="..\src\ScriptEngine\Lua\LuaFunctions.cpp" />
@@ -174,22 +181,22 @@
     <ClCompile Include="..\src\Utility\WindowBase\WindowBase.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\D3D12\d3dx12.h" />
+    <ClInclude Include="..\src\D3D12\DX12HeapManager.h" />
+    <ClInclude Include="..\src\D3D12\DX12RenderBasic.h" />
     <ClInclude Include="..\src\D3D12\DX12RenderSys.h" />
     <ClInclude Include="..\src\D3D12\DX12Config.h" />
-    <ClInclude Include="..\src\D3D12\ResourceManager\DX12BufferMananger.h" />
-    <ClInclude Include="..\src\D3D12\ResourceManager\DX12ShaderManager.h" />
-    <ClInclude Include="..\src\D3D12\Resource\DX12Buffer.h" />
-    <ClInclude Include="..\src\D3D12\Resource\DX12Shader.h" />
+    <ClInclude Include="..\src\D3D12\DX12ResourceManager.h" />
     <ClInclude Include="..\src\DirectXHelper.h" />
+    <ClInclude Include="..\src\RenderSystem\Order.h" />
+    <ClInclude Include="..\src\RenderSystem\TaskProcessor.h" />
+    <ClInclude Include="..\src\RenderSystem\RenderBasic.h" />
     <ClInclude Include="..\src\RenderSystem\RenderGraph.h" />
     <ClInclude Include="..\src\RenderSystem\RenderGraphRaw.h" />
     <ClInclude Include="..\src\RenderSystem\RenderSystem.h" />
     <ClInclude Include="..\src\RenderSystem\RenderSystemConfig.h" />
-    <ClInclude Include="..\src\ResourceManager\BufferManager.h" />
-    <ClInclude Include="..\src\ResourceManager\ResourceMananger.h" />
-    <ClInclude Include="..\src\ResourceManager\ResourceManangerConfig.h" />
-    <ClInclude Include="..\src\ResourceManager\ShaderManager.h" />
-    <ClInclude Include="..\src\ResourceManager\TextureManager.h" />
+    <ClInclude Include="..\src\RenderSystem\Task.h" />
+    <ClInclude Include="..\src\ResourceManager\ResourceFactory.h" />
     <ClInclude Include="..\src\Resource\Buffer.h" />
     <ClInclude Include="..\src\Resource\Resource.h" />
     <ClInclude Include="..\src\Resource\ResourceConfig.h" />
@@ -204,6 +211,7 @@
     <ClInclude Include="..\src\Utility\FileContainer\FileContainer.h" />
     <ClInclude Include="..\src\Utility\InfoLog\InfoLog.h" />
     <ClInclude Include="..\src\Utility\MainClass\MainClass.h" />
+    <ClInclude Include="..\src\Utility\optimisticLock\OptimisticLock.hpp" />
     <ClInclude Include="..\src\Utility\QuadTree\FreeList.h" />
     <ClInclude Include="..\src\Utility\QuadTree\QuadTree.h" />
     <ClInclude Include="..\src\Utility\TypeRestriction\TypeRestriction.h" />
@@ -211,6 +219,9 @@
     <ClInclude Include="..\src\Utility\WindowBase\WindowBase.h" />
     <ClInclude Include="..\src\UVConfig.h" />
     <ClInclude Include="..\src\UVRoot.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

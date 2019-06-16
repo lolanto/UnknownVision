@@ -1,42 +1,51 @@
-//#include "D3D12/DX12RenderSys.h"
-//#include "Utility/WindowBase/win32/WindowWin32.h"
+﻿#include "D3D12/DX12RenderBasic.h"
+#include "D3D12/DX12ResourceManager.h"
+#include "Utility/WindowBase/win32/WindowWin32.h"
 #include <iostream>
-#include <cassert>
-#include <d3d12shader.h>
-#include <d3dcompiler.h>
+#include <random>
+#include <stack>
+#include "RenderSystem/Task.h"
 
-#include "Utility/DXILCompilerHelper/DXCompilerHelper.h"
-#include "Utility/FileContainer/FileContainer.h"
-#include "RenderSys/ShaderDescription.h"
+using namespace PROJECT_NAME_SPACE;
 
-using UnknownVision::ShaderDescription;
+ResourceFlag genFlagFromInt(size_t value) {
+	switch (value) {
+	case 0:
+		return RESOURCE_FLAG_INVALID;
+	case 1:
+		return RESOURCE_FLAG_ONCE;
+	case 2:
+		return RESOURCE_FLAG_STABLY;
+	case 3:
+		return RESOURCE_FLAG_FREQUENTLY;
+	case 4:
+		return RESOURCE_FLAG_READ_BACK;
+	default:
+		return RESOURCE_FLAG_INVALID;
+	}
+	return RESOURCE_FLAG_INVALID;
+}
+
+std::mutex stMutex;
+struct OPRcd {
+	ID3D12Resource* ptr;
+	size_t size;
+};
+std::stack<OPRcd> reqStack;
+size_t totalReq = 0;
+size_t totalRev = 0;
 
 int main() {
-
-	// 测试使用的顶点数据
-	float vtxData[] = {
-		0.0f, 1.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		-1.0f, 0.0f, 0.0f
-	};
-
-	//WindowWin32 win("default", 300, 300, true);
-	//win.Init();
-	//UnknownVision::DX12_RenderSys rd(DirectX12_0, 300, 300);
-	//rd.Init(&win);
-	DXCompilerHelper helper;
-	std::vector<uint8_t> byteCodes;
-	std::vector<char> err;
-	if (!helper.CompileToByteCode("PixelShader.hlsl", "ps_6_0", byteCodes, false,&err)) {
-		std::cout << err.data();
-	}
-	FileContainer fc("VertexShader.cso", std::ios::out | std::ios::trunc);
-	fc.WriteFile(0, byteCodes.size(), reinterpret_cast<char*>(byteCodes.data()));
-	Microsoft::WRL::ComPtr<ID3D12ShaderReflection> shrReflect;
-	ShaderDescription desc;
-	if (helper.RetrieveShaderDescriptionFromByteCode(byteCodes, desc)) {
-		UnknownVision::PrintShaderDescriptionToConsole(desc);
-	}
-	system("pause");
+	WindowWin32 win("test", 100, 100, true);
+	win.Init();
+	DX12RenderBackend rb;
+	rb.Initialize();
+	BackendUsedData bud = { &win, 100, 100 };
+	DX12RenderDevice* rd = (DX12RenderDevice*)rb.CreateDevice(&bud);
+	rd->Initialize("");
+	
+	DX12ResourceManager rmgr(rd->GetDevice());
+	
+	std::cin.get();
 	return 0;
 }

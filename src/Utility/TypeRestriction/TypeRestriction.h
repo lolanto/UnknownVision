@@ -4,6 +4,9 @@
  * 相比直接使用using 或者 typedef，该方式可以防止数据的误传递
  * (参考自google的Draco，draco_index_type.h)
  */
+
+#include <limits>
+
 #define ALIAS_INDEX(basicType, name) \
  struct name##tag_name {}; \
  using name = AliasIndex<basicType, name##tag_name>;
@@ -15,6 +18,7 @@ public:
 	using ValueType = basicType;
 public:
 	constexpr AliasIndex() : m_value(ValueType()) {}
+	static constexpr AliasIndex InvalidIndex() { return AliasIndex(std::numeric_limits<ValueType>::max()); }
 	constexpr explicit AliasIndex(ValueType value) : m_value(value) {}
 	/** 获取实际值 */
 	constexpr ValueType value() const { return m_value; }

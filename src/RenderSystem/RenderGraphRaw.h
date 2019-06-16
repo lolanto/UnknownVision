@@ -1,4 +1,4 @@
-#ifndef UV_RENDER_GRAPH_RAW_H
+﻿#ifndef UV_RENDER_GRAPH_RAW_H
 #define UV_RENDER_GRAPH_RAW_H
 
 #include "RenderSystemConfig.h"
@@ -30,6 +30,7 @@ namespace UnknownVision {
 		std::vector<ResourceRawOperation> writeRecords;
 		std::vector<ResourceRawOperation> readRecords;
 		std::vector<ResourceRawOperation> createRecords;
+		PassType type;
 	};
 }
 

@@ -40,9 +40,6 @@
     <Filter Include="D3D12">
       <UniqueIdentifier>{415f3f4f-70bc-46b1-a9b8-a8b029c5f77b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="D3D12\Resource">
-      <UniqueIdentifier>{d05befdb-cb44-4182-ad77-67769d909aa8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Utility\CommandBuffer">
       <UniqueIdentifier>{a59dde36-45d8-491f-88b8-a623c9c13cc9}</UniqueIdentifier>
     </Filter>
@@ -61,9 +58,6 @@
     <Filter Include="RenderSystem\Source">
       <UniqueIdentifier>{d31f1c11-6941-4006-af9a-e954acf83d9b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="D3D12\ResourceMananger">
-      <UniqueIdentifier>{f2895313-63a1-4555-a47a-71657a1ce36c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Utility\DXCompilerHelper">
       <UniqueIdentifier>{6b34d2c5-799a-4c82-ad78-9ce3d83e9149}</UniqueIdentifier>
     </Filter>
@@ -72,6 +66,9 @@
     </Filter>
     <Filter Include="ScriptEngine\LUA">
       <UniqueIdentifier>{d5efd25e-b552-47d0-8959-f30b92afa65c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\OptimisticLock">
+      <UniqueIdentifier>{8b3ba271-14b3-4093-be39-5dc90ba4aeb4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -99,23 +96,11 @@
     <ClCompile Include="..\src\main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\D3D12\ResourceManager\DX12BufferManager.cpp">
-      <Filter>D3D12\ResourceMananger</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\D3D12\Resource\DX12Shader.cpp">
-      <Filter>D3D12\Resource</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\D3D12\DX12Config.cpp">
       <Filter>D3D12</Filter>
     </ClCompile>
     <ClCompile Include="..\src\Utility\DXCompilerHelper\DXCompilerHelper.cpp">
       <Filter>Utility\DXCompilerHelper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\D3D12\ResourceManager\DX12ShaderManager.cpp">
-      <Filter>D3D12\ResourceMananger</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\ResourceManager\ResourceMananger.cpp">
-      <Filter>ResourceManager</Filter>
     </ClCompile>
     <ClCompile Include="..\src\RenderSystem\RenderGraph.cpp">
       <Filter>RenderSystem\Source</Filter>
@@ -126,13 +111,31 @@
     <ClCompile Include="..\src\ScriptEngine\Lua\LuaFunctions.cpp">
       <Filter>ScriptEngine\LUA</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\ResourceManager\ResourceFactory.cpp">
+      <Filter>ResourceManager</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RenderSystem\Order.cpp">
+      <Filter>RenderSystem\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\DX12RenderBackend.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\DX12RenderDevice.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\DX12RenderBasic.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\DX12ResourceManager.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RenderSystem\Task.cpp">
+      <Filter>RenderSystem\Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\D3D12\DX12RenderSys.h">
       <Filter>D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\D3D12\Resource\DX12Buffer.h">
-      <Filter>D3D12\Resource</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Resource\Buffer.h">
       <Filter>Resource</Filter>
@@ -151,21 +154,6 @@
     </ClInclude>
     <ClInclude Include="..\src\Resource\Texture.h">
       <Filter>Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ResourceManager\BufferManager.h">
-      <Filter>ResourceManager</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ResourceManager\ResourceMananger.h">
-      <Filter>ResourceManager</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ResourceManager\ResourceManangerConfig.h">
-      <Filter>ResourceManager</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ResourceManager\ShaderManager.h">
-      <Filter>ResourceManager</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ResourceManager\TextureManager.h">
-      <Filter>ResourceManager</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Utility\CommandBuffer\CommandBuffer.hpp">
       <Filter>Utility\CommandBuffer</Filter>
@@ -209,15 +197,6 @@
     <ClInclude Include="..\src\RenderSystem\RenderSystemConfig.h">
       <Filter>RenderSystem\Header</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\D3D12\ResourceManager\DX12BufferMananger.h">
-      <Filter>D3D12\ResourceMananger</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\D3D12\ResourceManager\DX12ShaderManager.h">
-      <Filter>D3D12\ResourceMananger</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\D3D12\Resource\DX12Shader.h">
-      <Filter>D3D12\Resource</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\D3D12\DX12Config.h">
       <Filter>D3D12</Filter>
     </ClInclude>
@@ -239,5 +218,38 @@
     <ClInclude Include="..\src\ScriptEngine\Lua\LuaFunctions.h">
       <Filter>ScriptEngine\LUA</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\RenderSystem\Order.h">
+      <Filter>RenderSystem\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ResourceManager\ResourceFactory.h">
+      <Filter>ResourceManager</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RenderSystem\RenderBasic.h">
+      <Filter>RenderSystem\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12RenderBasic.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\d3dx12.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12ResourceManager.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12HeapManager.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RenderSystem\Task.h">
+      <Filter>RenderSystem\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RenderSystem\TaskProcessor.h">
+      <Filter>RenderSystem\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Utility\optimisticLock\OptimisticLock.hpp">
+      <Filter>Utility\OptimisticLock</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
   </ItemGroup>
 </Project>

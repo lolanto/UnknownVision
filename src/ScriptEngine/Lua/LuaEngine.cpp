@@ -16,7 +16,9 @@ namespace UnknownVision {
 		luaL_openlibs(m_state);
 		/** 初始化引擎中的函数 */
 		if (!(setupFunctions() && setupGlobalVariable())) {
-			MLOG(LW, __FUNCTION__, LL, " initialize functions failed!");
+			char outputInfo[32] = { 0 };
+			sprintf(outputInfo, "Function: %s FAILED", __FUNCTION__);
+			MLOG(outputInfo);
 			return false;
 		}
 		return true;

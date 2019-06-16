@@ -1,4 +1,4 @@
-#include "MainClass.h"
+﻿#include "MainClass.h"
 #include "../InfoLog/InfoLog.h"
 #include <windowsx.h>
 
@@ -157,11 +157,9 @@ MouseStateNode* MouseState_Ideal::GetNextState(float x, float y, UINT msg) {
 	switch (msg) {
 	case WM_LBUTTONDOWN:
 		m_down->InitNode(x, y, msg);
-		MLOG(LL, "ideal -> down");
 		return m_down;
 	case WM_LBUTTONDBLCLK:
 		m_dClick->InitNode(x, y, msg);
-		MLOG(LL, "ideal -> dclick");
 		return m_dClick;
 	default:
 		return this;
@@ -181,11 +179,9 @@ MouseStateNode* MouseState_Down::GetNextState(float x, float y, UINT msg) {
 	switch (msg) {
 	case WM_LBUTTONUP:
 		m_click->InitNode(x, y, msg);
-		MLOG(LL, "down -> click");
 		return m_click;
 	case WM_MOUSEMOVE:
 		m_drag->InitNode(x, y, msg);
-		MLOG(LL, "down -> drag");
 		return m_drag;
 	default:
 		return this;
@@ -208,7 +204,6 @@ MouseStateNode* MouseState_Drag::GetNextState(float x, float y, UINT msg) {
 		return this;
 	case WM_LBUTTONUP:
 		m_ideal->InitNode(x, y, msg);
-		MLOG(LL, "drag -> ideal");
 		return m_ideal;
 	default:
 		return this;
@@ -225,7 +220,6 @@ void MouseState_Click::SetNextState(MouseStateNode* ideal) {
 }
 
 MouseStateNode* MouseState_Click::GetNextState(float x, float y, UINT msg) {
-	MLOG(LL, "click -> ideal");
 	return m_ideal;
 }
 
@@ -239,7 +233,6 @@ void MouseState_DClick::SetNextState(MouseStateNode* ideal) {
 }
 
 MouseStateNode* MouseState_DClick::GetNextState(float x, float y, UINT msg) {
-	MLOG(LL, "dclick -> ideal");
 	return m_ideal;
 }
 
