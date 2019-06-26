@@ -1,5 +1,4 @@
-﻿#ifndef INFO_LOG_H
-#define INFO_LOG_H
+﻿#pragma once
 #include <string>
 #include <iostream>
 #include <atomic>
@@ -26,4 +25,12 @@ private:
 #define MLOG(info) InfoLog::GetInstance().Log(info);
 #endif // !MLOG
 
-#endif // INFO_LOG_H
+#ifndef FLOG
+#define FLOG(format, ...) \
+{ \
+	char outputInfo[128] = { 0 }; \
+	sprintf(outputInfo, format, __VA_ARGS__); \
+	InfoLog::GetInstance().Log(outputInfo); \
+}
+#endif // !FLOG
+

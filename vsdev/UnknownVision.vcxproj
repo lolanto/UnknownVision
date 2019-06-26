@@ -159,21 +159,16 @@
     </ClCompile>
     <ClCompile Include="..\src\D3D12\DX12RenderBasic.cpp" />
     <ClCompile Include="..\src\D3D12\DX12RenderDevice.cpp" />
-    <ClCompile Include="..\src\D3D12\DX12RenderSys.cpp">
+    <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\RenderSystem\Task.cpp" />
+    <ClCompile Include="..\src\ScriptEngine\Lua\LuaEngine.cpp" />
+    <ClCompile Include="..\src\ScriptEngine\Lua\LuaFunctions.cpp" />
+    <ClCompile Include="..\src\Utility\DXCompilerHelper\DXCompilerHelper.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\src\main.cpp" />
-    <ClCompile Include="..\src\RenderSystem\Order.cpp" />
-    <ClCompile Include="..\src\RenderSystem\RenderGraph.cpp" />
-    <ClCompile Include="..\src\RenderSystem\Task.cpp" />
-    <ClCompile Include="..\src\ResourceManager\ResourceFactory.cpp" />
-    <ClCompile Include="..\src\Resource\ShaderDescription.cpp" />
-    <ClCompile Include="..\src\ScriptEngine\Lua\LuaEngine.cpp" />
-    <ClCompile Include="..\src\ScriptEngine\Lua\LuaFunctions.cpp" />
-    <ClCompile Include="..\src\Utility\DXCompilerHelper\DXCompilerHelper.cpp" />
     <ClCompile Include="..\src\Utility\FileContainer\FileContainer.cpp" />
     <ClCompile Include="..\src\Utility\InfoLog\InfoLog.cpp" />
     <ClCompile Include="..\src\Utility\MainClass\MainClass.cpp" />
@@ -184,25 +179,12 @@
     <ClInclude Include="..\src\D3D12\d3dx12.h" />
     <ClInclude Include="..\src\D3D12\DX12HeapManager.h" />
     <ClInclude Include="..\src\D3D12\DX12RenderBasic.h" />
-    <ClInclude Include="..\src\D3D12\DX12RenderSys.h" />
     <ClInclude Include="..\src\D3D12\DX12Config.h" />
     <ClInclude Include="..\src\D3D12\DX12ResourceManager.h" />
     <ClInclude Include="..\src\DirectXHelper.h" />
-    <ClInclude Include="..\src\RenderSystem\Order.h" />
-    <ClInclude Include="..\src\RenderSystem\TaskProcessor.h" />
+    <ClInclude Include="..\src\RenderSystem\RenderDescriptor.h" />
     <ClInclude Include="..\src\RenderSystem\RenderBasic.h" />
-    <ClInclude Include="..\src\RenderSystem\RenderGraph.h" />
-    <ClInclude Include="..\src\RenderSystem\RenderGraphRaw.h" />
-    <ClInclude Include="..\src\RenderSystem\RenderSystem.h" />
-    <ClInclude Include="..\src\RenderSystem\RenderSystemConfig.h" />
     <ClInclude Include="..\src\RenderSystem\Task.h" />
-    <ClInclude Include="..\src\ResourceManager\ResourceFactory.h" />
-    <ClInclude Include="..\src\Resource\Buffer.h" />
-    <ClInclude Include="..\src\Resource\Resource.h" />
-    <ClInclude Include="..\src\Resource\ResourceConfig.h" />
-    <ClInclude Include="..\src\Resource\Shader.h" />
-    <ClInclude Include="..\src\Resource\ShaderDescription.h" />
-    <ClInclude Include="..\src\Resource\Texture.h" />
     <ClInclude Include="..\src\ScriptEngine\Lua\LuaEngine.h" />
     <ClInclude Include="..\src\ScriptEngine\Lua\LuaFunctions.h" />
     <ClInclude Include="..\src\ScriptEngine\ScirptEngine.h" />
@@ -219,6 +201,7 @@
     <ClInclude Include="..\src\Utility\WindowBase\WindowBase.h" />
     <ClInclude Include="..\src\UVConfig.h" />
     <ClInclude Include="..\src\UVRoot.h" />
+    <ClInclude Include="..\src\UVType.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

@@ -1,44 +1,71 @@
 ﻿#pragma once
 #include "../UVConfig.h"
-#include "RenderSystemConfig.h"
+#include "../UVType.h"
+#include "RenderDescriptor.h"
 #include <atomic>
+#include <vector>
 
 BEG_NAME_SPACE
+struct Parameter {
+	enum Type : uint8_t {
+		PARAMETER_TYPE_INVALID = 0u,
+		PARAMETER_TYPE_BUFFER
+	};
+	union 
+	{
+		BufferDescriptor buf;
+	};
+	const Type type;
+	Parameter(const BufferDescriptor& buf) : buf(buf), type(PARAMETER_TYPE_BUFFER) {}
+};
+
+/** 指令的载体，一个任务由其所包含的指令序列定义，一个任务只能有一份 */
 struct Task {
-public:
 	struct Command {
 		enum Type : uint8_t {
+			COMMAND_TYPE_TEST = 0U,
 			COMMAND_TYPE_UPDATE_BUFFER = 0x01U,
 			COMMAND_TYPE_EXECUTE_PROGRAM = 0x02U
 		};
-		std::vector<Handle> readFrom;
-		std::vector<Handle> writeTo;
-		std::vector<std::byte> extraData;
-		Type type;
-		Command(Command&& cmd) {
-			readFrom.swap(cmd.readFrom);
-			writeTo.swap(cmd.writeTo);
+
+		Command(Command&& cmd) : type(cmd.type) {
+			parameters.swap(cmd.parameters);
 			extraData.swap(cmd.extraData);
-			type = cmd.type;
 		}
 		Command(Type type) : type(type) {}
+		Command(const Command&) = delete;
+		Command& operator=(const Command&) = delete;
+		Command& operator=(Command&&) = delete;
+
+		std::vector<Parameter> parameters;
+		std::vector<std::byte> extraData;
+		const Type type;
 	};
 
-	Task(uint64_t frame) : Frame(frame) {}
+	Task() = default;
 	Task& operator=(const Task& task) = delete;
-	Task& operator=(Task&& task) = delete;
-	Task(Task&& task) : Frame(task.Frame) { Commands.swap(task.Commands); }
 	Task(const Task& task) = delete;
+	Task& operator=(Task&& task) {
+		Frame = task.Frame;
+		Commands.swap(task.Commands);
+		task.Reset();
+		return *this;
+	};
+	Task(Task&& task) : Frame(task.Frame), Commands(std::move(task.Commands)) { task.Reset(); }
 
-	void UpdateBuffer(BufferHandle buf, void* data, size_t size);
+	/** 清空所有的指令和其它状态 */
+	void Reset() { Frame = UINT64_MAX; Commands.clear(); }
+
+	void Test(BufferDescriptor buf);
+
+	void UpdateBuffer(BufferDescriptor buf, void* data, size_t size);
 	
-	void ExecuteProgram(ProgramHandle pmg, 
-		ProgramParameters input, ProgramParameters output);
+	void ExecuteProgram(ProgramHandle pmg, std::vector<Parameter> parameters) {}
 
 	size_t NumberOfCommands() const { return Commands.size(); }
 
 	std::vector<Command> Commands;
-	const uint64_t Frame;
+	TaskFrame Frame = TaskFrame::InvalidIndex(); /**< 任务提交时的逻辑帧，不要手动修改 */
 };
 
 END_NAME_SPACE

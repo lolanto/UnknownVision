@@ -9,6 +9,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <deque>
+#include <map>
 
 #define MemoryManagementStrategy NoMemMng
 
@@ -103,22 +104,40 @@ private:
 class DX12RenderDevice : public RenderDevice {
 	friend class DX12RenderBackend;
 public:
+	/** 单个句柄对应的实体的信息 */
+	struct BufferInfo {
+		BufferInfo(ID3D12Resource* ptr = nullptr, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON	,
+			size_t size = 0)
+			: ptr(ptr), state(state), size(size) {}
+		ID3D12Resource* ptr = nullptr;
+		D3D12_RESOURCE_STATES state;
+		const size_t size = 0;
+	};
+
+	struct TextureInfo {
+		TextureInfo(ID3D12Resource* ptr = nullptr, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON, 
+			uint32_t width = 0, uint32_t height = 0)
+			: ptr(ptr), state(state), width(width), height(height) {}
+		ID3D12Resource* ptr = nullptr;
+		D3D12_RESOURCE_STATES state;
+		const uint32_t width = 0, height = 0;
+	};
 
 	bool Initialize(std::string config) final;
-	BufferHandle RequestBuffer(size_t size, ResourceUsage usage, ResourceFlag flag, bool manual) final thread_safe;
 
-	/** 待实现 */
-	std::function<void()> Process(Task&) thread_safe final {
-		return []() {};
-	}
+
+	/** 允许额外的线程执行该函数，负责处理任务队列中的任务 */
+	void Process() final;
 
 	ID3D12Device* GetDevice() { return m_device.Get(); }
 
 private:
 	DX12RenderDevice(SmartPTR<ID3D12CommandQueue>& queue,
 		SmartPTR<IDXGISwapChain1>& swapChain,
-		SmartPTR<ID3D12Device>& device)
-		: m_swapChain(swapChain), m_device(device) {
+		SmartPTR<ID3D12Device>& device,
+		uint32_t width, uint32_t height)
+		: m_swapChain(swapChain), m_device(device), 
+		m_backBuffers(decltype(m_backBuffers)(NUMBER_OF_BACK_BUFFERS)), m_curBackBufferIndex(0), RenderDevice(width, height) {
 		SmartPTR<ID3D12Fence> fence;
 		device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
 	}
@@ -130,7 +149,13 @@ private:
 
 	SmartPTR<IDXGISwapChain1> m_swapChain;
 	SmartPTR<ID3D12Device> m_device;
+	std::vector< SmartPTR<ID3D12Resource> > m_backBuffers; /**< 需要手动构建队列 */
+	/** 当前可以写入的后台缓存的索引，每一次切换frame buffer的时候都需要更新该值
+	 * 取值范围是[0, BACK_BUFFER_COUNT] */
+	uint8_t m_curBackBufferIndex = 0; 
 
+	std::map<BufferHandle, BufferInfo> m_buffers; /**< 所有缓冲区句柄的信息都在这里 */
+	std::map<TextureHandle, TextureInfo> m_textures; /**< 所有纹理句柄信息都在这里 */
 	std::atomic_uint64_t m_totalFrame;
 };
 

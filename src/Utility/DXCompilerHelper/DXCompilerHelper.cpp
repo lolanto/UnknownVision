@@ -1,6 +1,6 @@
-#include "DXCompilerHelper.h"
+﻿#include "DXCompilerHelper.h"
 #include "../FileContainer/FileContainer.h"
-#include "../../Resource/ShaderDescription.h"
+//#include "../../Resource/ShaderDescription.h"
 
 #include <d3d12shader.h>
 #include <d3dcompiler.h>

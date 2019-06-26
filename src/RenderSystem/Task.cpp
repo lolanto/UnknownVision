@@ -2,19 +2,22 @@
 
 BEG_NAME_SPACE
 
-void Task::UpdateBuffer(BufferHandle buf, void* data, size_t size) {
-	Command newCmd(Command::Type::COMMAND_TYPE_UPDATE_BUFFER);
-	newCmd.writeTo.push_back({ buf });
-	newCmd.extraData.resize(sizeof(void*) + sizeof(size_t));
-	std::byte* ed = newCmd.extraData.data();
-	memcpy(ed, &data, sizeof(data)); ed += sizeof(data);
+void Task::UpdateBuffer(BufferDescriptor buf, void* data, size_t size) {
+	Command cmd(Command::COMMAND_TYPE_UPDATE_BUFFER);
+	cmd.extraData = std::vector<std::byte>(sizeof(data) + sizeof(size));
+	cmd.parameters.push_back({ buf });
+	std::byte* ed = cmd.extraData.data();
+	memcpy(ed, &data, sizeof(data));
+	ed += sizeof(data);
 	memcpy(ed, &size, sizeof(size));
-	Commands.push_back(std::move(newCmd));
+	Commands.push_back(std::move(cmd));
 }
 
-void Task::ExecuteProgram(ProgramHandle pmg,
-	ProgramParameters input, ProgramParameters output) {
+void Task::Test(BufferDescriptor buf) {
+	Command cmd(Command::COMMAND_TYPE_TEST);
+	cmd.parameters.push_back({ buf });
 
+	Commands.push_back(std::move(cmd));
 }
 
 END_NAME_SPACE

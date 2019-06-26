@@ -43,12 +43,6 @@
     <Filter Include="Utility\CommandBuffer">
       <UniqueIdentifier>{a59dde36-45d8-491f-88b8-a623c9c13cc9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ResourceManager">
-      <UniqueIdentifier>{9d2493bc-f9a8-442d-bb1b-ac6d02eb299b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resource">
-      <UniqueIdentifier>{b2427597-5269-473a-8581-40e8e701101f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="RenderSystem">
       <UniqueIdentifier>{bc8e0dc4-51ec-4d92-9338-b08dc748429b}</UniqueIdentifier>
     </Filter>
@@ -72,12 +66,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\D3D12\DX12RenderSys.cpp">
-      <Filter>D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\Resource\ShaderDescription.cpp">
-      <Filter>Resource</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\Utility\FileContainer\FileContainer.cpp">
       <Filter>Utility\FileContainer</Filter>
     </ClCompile>
@@ -102,20 +90,11 @@
     <ClCompile Include="..\src\Utility\DXCompilerHelper\DXCompilerHelper.cpp">
       <Filter>Utility\DXCompilerHelper</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\RenderSystem\RenderGraph.cpp">
-      <Filter>RenderSystem\Source</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ScriptEngine\Lua\LuaEngine.cpp">
       <Filter>ScriptEngine\LUA</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ScriptEngine\Lua\LuaFunctions.cpp">
       <Filter>ScriptEngine\LUA</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\ResourceManager\ResourceFactory.cpp">
-      <Filter>ResourceManager</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\RenderSystem\Order.cpp">
-      <Filter>RenderSystem\Source</Filter>
     </ClCompile>
     <ClCompile Include="..\src\D3D12\DX12RenderBackend.cpp">
       <Filter>D3D12</Filter>
@@ -134,27 +113,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\D3D12\DX12RenderSys.h">
-      <Filter>D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Resource\Buffer.h">
-      <Filter>Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Resource\Resource.h">
-      <Filter>Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Resource\ResourceConfig.h">
-      <Filter>Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Resource\Shader.h">
-      <Filter>Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Resource\ShaderDescription.h">
-      <Filter>Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Resource\Texture.h">
-      <Filter>Resource</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\Utility\CommandBuffer\CommandBuffer.hpp">
       <Filter>Utility\CommandBuffer</Filter>
     </ClInclude>
@@ -191,23 +149,11 @@
     <ClInclude Include="..\src\DirectXHelper.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\RenderSystem\RenderSystem.h">
-      <Filter>RenderSystem\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\RenderSystem\RenderSystemConfig.h">
-      <Filter>RenderSystem\Header</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\D3D12\DX12Config.h">
       <Filter>D3D12</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Utility\DXCompilerHelper\DXCompilerHelper.h">
       <Filter>Utility\DXCompilerHelper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\RenderSystem\RenderGraph.h">
-      <Filter>RenderSystem\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\RenderSystem\RenderGraphRaw.h">
-      <Filter>RenderSystem\Header</Filter>
     </ClInclude>
     <ClInclude Include="..\src\ScriptEngine\ScirptEngine.h">
       <Filter>ScriptEngine</Filter>
@@ -217,12 +163,6 @@
     </ClInclude>
     <ClInclude Include="..\src\ScriptEngine\Lua\LuaFunctions.h">
       <Filter>ScriptEngine\LUA</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\RenderSystem\Order.h">
-      <Filter>RenderSystem\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ResourceManager\ResourceFactory.h">
-      <Filter>ResourceManager</Filter>
     </ClInclude>
     <ClInclude Include="..\src\RenderSystem\RenderBasic.h">
       <Filter>RenderSystem\Header</Filter>
@@ -242,11 +182,14 @@
     <ClInclude Include="..\src\RenderSystem\Task.h">
       <Filter>RenderSystem\Header</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\RenderSystem\TaskProcessor.h">
-      <Filter>RenderSystem\Header</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\Utility\optimisticLock\OptimisticLock.hpp">
       <Filter>Utility\OptimisticLock</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\UVType.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RenderSystem\RenderDescriptor.h">
+      <Filter>RenderSystem\Header</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

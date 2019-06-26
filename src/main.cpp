@@ -35,6 +35,8 @@ std::stack<OPRcd> reqStack;
 size_t totalReq = 0;
 size_t totalRev = 0;
 
+/** 需要将request到的descriptor与实际的资源相互联系 */
+/** 需要解决MONZA的错误!! */
 int main() {
 	WindowWin32 win("test", 100, 100, true);
 	win.Init();
@@ -44,8 +46,7 @@ int main() {
 	DX12RenderDevice* rd = (DX12RenderDevice*)rb.CreateDevice(&bud);
 	rd->Initialize("");
 	
-	DX12ResourceManager rmgr(rd->GetDevice());
-	
+	std::cout << "Finished!";
 	std::cin.get();
 	return 0;
 }

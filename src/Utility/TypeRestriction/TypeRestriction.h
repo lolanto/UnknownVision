@@ -19,6 +19,7 @@ public:
 public:
 	constexpr AliasIndex() : m_value(ValueType()) {}
 	static constexpr AliasIndex InvalidIndex() { return AliasIndex(std::numeric_limits<ValueType>::max()); }
+	static constexpr AliasIndex ZeroIndex() { return AliasIndex(0); }
 	constexpr explicit AliasIndex(ValueType value) : m_value(value) {}
 	/** 获取实际值 */
 	constexpr ValueType value() const { return m_value; }

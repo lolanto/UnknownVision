@@ -33,7 +33,9 @@ namespace UnknownVision {
 		SmartPTR<ID3D12CommandQueue> cmdQueue;
 		SmartPTR<IDXGISwapChain1> swapChain;
 		BackendUsedData datas = *reinterpret_cast<BackendUsedData*>(parameters);
-
+		const WindowWin32* win = std::get<0>(datas);
+		uint32_t width = std::get<1>(datas);
+		uint32_t height = std::get<2>(datas);
 		/** 枚举设备，创建device */
 		{
 			SmartPTR<IDXGIAdapter4> adapter;
@@ -64,12 +66,12 @@ namespace UnknownVision {
 		{
 			DXGI_SWAP_CHAIN_DESC1 swapChainDesc;
 			swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE; /**< 指定交换链缓冲的透明行为，暂且不进行特殊设置 */
-			swapChainDesc.BufferCount = BACK_BUFFER_COUNT; /**< 指定后台缓冲的数量 */
+			swapChainDesc.BufferCount = NUMBER_OF_BACK_BUFFERS; /**< 指定后台缓冲的数量 */
 			swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT; /**< 交换链缓冲的用途，默认已有backbuffer */
 			swapChainDesc.Flags = 0; /**< 不进行特殊设置 */
 			swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-			swapChainDesc.Height = std::get<2>(datas);
-			swapChainDesc.Width = std::get<1>(datas);
+			swapChainDesc.Height = height;
+			swapChainDesc.Width = width;
 			/** 不进行多重采样 */
 			swapChainDesc.SampleDesc.Count = 1;
 			swapChainDesc.SampleDesc.Quality = 0;
@@ -77,7 +79,7 @@ namespace UnknownVision {
 			swapChainDesc.Stereo = false;
 			swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 			XifFailed(m_factory->CreateSwapChainForHwnd(cmdQueue.Get(),
-				std::get<0>(datas)->hWnd(), &swapChainDesc,
+				win->hWnd(), &swapChainDesc,
 				nullptr,  /**< 不使用全屏，可直接传入null*/
 				nullptr, /**< 暂时不对输出做任何处理*/
 				swapChain.GetAddressOf()), {
@@ -85,7 +87,7 @@ namespace UnknownVision {
 				});
 		}
 
-		m_devices.push_back(new DX12RenderDevice(cmdQueue, swapChain, device));
+		m_devices.push_back(new DX12RenderDevice(cmdQueue, swapChain, device, width, height));
 		return m_devices.back();
 	}
 }
