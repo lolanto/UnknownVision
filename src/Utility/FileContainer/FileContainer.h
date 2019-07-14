@@ -1,4 +1,4 @@
-#ifndef FILE_CONTAINER_H
+﻿#ifndef FILE_CONTAINER_H
 #define FILE_CONTAINER_H
 
 #include <fstream>
@@ -42,8 +42,7 @@ public:
 private:
 	std::fstream m_file;
 	size_t m_fileSize;
-	std::string m_fileName;
-	std::string m_filePath;
+	std::string m_filePath; /**< 文件路径为空表示文件处在错误状态 */
 };
 
 #endif // FILE_CONTAINER_H

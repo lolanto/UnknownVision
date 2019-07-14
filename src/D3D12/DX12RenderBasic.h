@@ -2,6 +2,7 @@
 
 #include "../RenderSystem/RenderBasic.h"
 #include "DX12Config.h"
+#include "DX12ResourceManager.h"
 #include <vector>
 #include <memory>
 #include <array>
@@ -101,13 +102,18 @@ private:
 	uint64_t fenceValue;
 };
 
+/** 用于存放加载的shader字节码和reflect的属性 */
+struct DX12Shader {
+	D3D12_SHADER_BYTECODE byteCode;
+};
+
 class DX12RenderDevice : public RenderDevice {
 	friend class DX12RenderBackend;
 public:
 	/** 单个句柄对应的实体的信息 */
 	struct BufferInfo {
-		BufferInfo(ID3D12Resource* ptr = nullptr, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON	,
-			size_t size = 0)
+		BufferInfo(size_t size = 0, ID3D12Resource* ptr = nullptr,
+			D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON)
 			: ptr(ptr), state(state), size(size) {}
 		ID3D12Resource* ptr = nullptr;
 		D3D12_RESOURCE_STATES state;
@@ -137,7 +143,8 @@ private:
 		SmartPTR<ID3D12Device>& device,
 		uint32_t width, uint32_t height)
 		: m_swapChain(swapChain), m_device(device), 
-		m_backBuffers(decltype(m_backBuffers)(NUMBER_OF_BACK_BUFFERS)), m_curBackBufferIndex(0), RenderDevice(width, height) {
+		m_backBuffers(decltype(m_backBuffers)(NUMBER_OF_BACK_BUFFERS)), m_curBackBufferIndex(0), RenderDevice(width, height),
+		m_resourceManager(DX12ResourceManager(device.Get())) {
 		SmartPTR<ID3D12Fence> fence;
 		device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
 	}
@@ -145,11 +152,18 @@ private:
 	const DX12RenderDevice& operator=(const DX12RenderDevice&) = delete;
 	DX12RenderDevice(DX12RenderDevice&&) = delete;
 	DX12RenderDevice(const DX12RenderDevice&) = delete;
+
+	/** 从resource status转换出heapType和flags，供创建资源过程使用 */
+	inline void fromResourceStatusToHeapTypeAndFlags(const ResourceStatus& status, D3D12_HEAP_TYPE& heapType, D3D12_RESOURCE_FLAGS& flags);
+
+	void TEST_func(const Command&);
+
 private:
 
 	SmartPTR<IDXGISwapChain1> m_swapChain;
 	SmartPTR<ID3D12Device> m_device;
 	std::vector< SmartPTR<ID3D12Resource> > m_backBuffers; /**< 需要手动构建队列 */
+	DX12ResourceManager m_resourceManager; /**< 资源管理器 */
 	/** 当前可以写入的后台缓存的索引，每一次切换frame buffer的时候都需要更新该值
 	 * 取值范围是[0, BACK_BUFFER_COUNT] */
 	uint8_t m_curBackBufferIndex = 0; 
@@ -169,9 +183,14 @@ public:
 	bool Initialize() final;
 	bool isInitialized() const final { return m_isInitialized; }
 	RenderDevice* CreateDevice(void* parameters) final;
+	ProgramDescriptor RequestProgram(ShaderNames shader, ProgramOptions opts, VertexAttributeDescs vtxAttDesc,
+		bool usedIndex = true) final;
+private:
+	void analyseShader(const char* shaderName, ShaderType type);
 private:
 	bool m_isInitialized = false;
 	SmartPTR<IDXGIFactory6> m_factory;
 	std::vector<DX12RenderDevice*> m_devices;
+	std::map<std::string, DX12Shader> m_shaders;
 };
 END_NAME_SPACE

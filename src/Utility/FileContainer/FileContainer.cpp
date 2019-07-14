@@ -1,7 +1,8 @@
 ﻿#include "FileContainer.h"
 #include "../InfoLog/InfoLog.h"
 
-FileContainer::FileContainer(const char* filePath, std::ios_base::openmode mode) {
+FileContainer::FileContainer(const char* filePath, std::ios_base::openmode mode)
+	: m_fileSize(0), m_filePath("") {
 	m_file.open(filePath, mode);
 	if (m_file.is_open()) {
 		m_filePath = filePath;
@@ -10,34 +11,27 @@ FileContainer::FileContainer(const char* filePath, std::ios_base::openmode mode)
 		m_file.seekg(0, std::ios::beg);
 		return;
 	}
-	char outputInfo[32];
-	sprintf(outputInfo, "Function: %s FAILED", __FUNCTION__);
-	MLOG(outputInfo);
+	FLOG("Function: %s FAILED", __FUNCTION__);
 }
 
 bool FileContainer::ReadFile(uint32_t byteOffset, uint32_t bytes, char* outputData) {
-	char outputInfo[128];
 	if (!m_file.is_open()) {
-		sprintf(outputInfo, "%s: open file %s FAILED!", __FUNCTION__, outputData);
-		MLOG(outputInfo);
+		FLOG("%s: open file %s FAILED!", __FUNCTION__, outputData);
 		return false;
 	}
 	if (byteOffset + bytes > m_fileSize) {
-		sprintf(outputInfo, "%s: reading out of range!");
-		MLOG(outputInfo);
+		FLOG("%s: reading out of range!", __FUNCTION__);
 		return false;
 	}
 	if (!outputData) {
-		sprintf(outputInfo, "%s: Invalid output buffer pointer!");
-		MLOG(outputInfo);
+		FLOG("%s: Invalid output buffer pointer!", __FUNCTION__);
 		return false;
 	}
 	m_file.seekg(0, std::ios::beg);
 	m_file.seekg(byteOffset);
 	m_file.read(outputData, bytes);
 	if (m_file.fail()) {
-		sprintf(outputInfo, "%s: Something wrong happend!", __FUNCTION__);
-		MLOG(outputInfo);
+		FLOG("%s: Something wrong happend!", __FUNCTION__);
 		return false;
 	}
 	return true;
@@ -45,18 +39,15 @@ bool FileContainer::ReadFile(uint32_t byteOffset, uint32_t bytes, char* outputDa
 
 bool FileContainer::WriteFile(uint32_t byteOffset, uint32_t bytes, const char * inputData)
 {
-	char outputInfo[128];
 	if (!m_file.is_open()) {
-		sprintf(outputInfo, "%s: Open file %s FAILED!", __FUNCTION__, inputData);
-		MLOG(outputInfo);
+		FLOG("%s: Open file %s FAILED!", __FUNCTION__, inputData);
 		return false;
 	}
 	m_file.seekp(0, std::ios::beg);
 	m_file.seekp(byteOffset);
 	m_file.write(inputData, bytes);
 	if (m_file.fail()) {
-		sprintf(outputInfo, "%s: Something wrong happend!", __FUNCTION__);
-		MLOG(outputInfo);
+		FLOG("%s: Something wrong happend!", __FUNCTION__);
 		return false;
 	}
 	return false;

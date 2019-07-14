@@ -57,6 +57,9 @@ struct ResourceStatus {
 	CanBe(VertexBuffer, VERTEX_BUFFER);
 	CanBe(IndexBuffer, INDEX_BUFFER);
 	CanBe(ConstantBuffer, CONSTANT_BUFFER);
+	CanBe(RenderTarget, RENDER_TARGET);
+	CanBe(Depth, DEPTH);
+	CanBe(UnorderAccess, UNORDER_ACCESS);
 };
 #undef IsInState
 #undef IsFlag
@@ -74,21 +77,61 @@ enum ElementFormatType : uint8_t {
 	ELEMENT_FORMAT_TYPE_D24_UNORM_S8_UINT, /**< 常用于描述深度模板缓存元素的格式 */
 };
 
-struct SubVertexAttributeDesc {
-	const char* semantic = nullptr;
-	uint8_t index = 0;
-	ElementFormatType dataType;
-	uint8_t bufIdx = 0;
-	uint8_t byteOffset = 0;
+/** 顶点的属性类型 */
+enum VertexAttributeType : uint8_t {
+	VERTEX_ATTRIBUTE_TYPE_POSITION = 0,
+	VERTEX_ATTRIBUTE_TYPE_NORMAL,
+	VERTEX_ATTRIBUTE_TYPE_TANGENT,
+	VERTEX_ATTRIBUTE_TYPE_TEXTURE
 };
 
+/** 描述顶点缓冲中一个属性的子结构 */
+struct SubVertexAttributeDesc {
+	VertexAttributeType vertexAttribute; /**< 描述的顶点属性类型 */
+	uint8_t index = 0; /**< 同一个属性中的第几个，如uv0, uv1 */
+	ElementFormatType format; /**< 该属性的数据类型 */
+	uint8_t slotIndex = 0; /**< 该属性被绑定到哪个接口上，管线的"顶点缓冲接口"是有数量上限的 */
+	uint8_t byteOffset = 0; /**< 属性的每一个值在缓冲中间隔的距离, 假如未UINT8_MAX则表示直接接着上一个属性 */
+	SubVertexAttributeDesc() = default;
+	SubVertexAttributeDesc(VertexAttributeType att, ElementFormatType format, uint8_t slot,
+		uint8_t index = 0, uint8_t byteOffset = 0)
+		: vertexAttribute(att), index(index), format(format), slotIndex(slot), byteOffset(byteOffset) {}
+};
 
-/** 图元类型的枚举值，与光栅化相关
-*/
-enum Primitive {
-	PRI_INVALID, /**< 无效图元类型 */
-	PRI_Point, /**< 点图元 */
-	PRI_TriangleList /**< 三角形列表图元 */
+/** 固定的混合操作类型 */
+enum BlendOption : uint8_t {
+	BLEND_OPTION_NO_BLEND
+};
+/** 面的裁剪方式 */
+enum CullMode : uint8_t {
+	CULL_MODE_BACK = 0,
+	CULL_MODE_FRONT,
+	CULL_MODE_NONE
+};
+/** 面元的填充方式 */
+enum FillMode : uint8_t {
+	FILL_MODE_SOLID = 0,
+	FILL_MODE_WIREFRAME
+};
+
+/** 图元类型的枚举值，与光栅化相关 */
+enum PrimitiveType {
+	PRIMITIVE_TYPE_INVALID = 0, /**< 无效图元类型 */
+	PRIMITIVE_TYPE_POINT, /**< 点图元 */
+	PRIMITIVE_TYPE_TRIANGLE_LIST /**< 三角形列表图元 */
+};
+
+struct RasterizeOptions {
+	CullMode cullMode = CULL_MODE_BACK;
+	FillMode fillMode = FILL_MODE_SOLID;
+	bool counterClockWiseIsFront = true;
+	PrimitiveType primitive = PRIMITIVE_TYPE_TRIANGLE_LIST;
+};
+
+/** 堆深度模板缓冲进行的操作 */
+struct DepthStencilOptions {
+	bool enableDepthTest = true;
+	/** 或许会有其它操作，但暂时不考虑 */
 };
 
 enum API_TYPE {
@@ -106,11 +149,18 @@ struct ViewPortDesc {
 	float maxDepth = 1.0f; /**< 深度值最大值，范围0~1*/
 };
 
-enum ShaderType {
+/** 着色器类型 */
+enum ShaderType : uint8_t {
 	SHADER_TYPE_VERTEX_SHADER,
 	SHADER_TYPE_PIXEL_SHADER,
 	SHADER_TYPE_GEOMETRY_SHADER,
 	SHADER_TYPE_COMPUTE_SHADER
+};
+
+/** 程序类型 */
+enum ProgramType : uint8_t {
+	PROGRAM_TYPE_GRAPHICS,
+	PROGRAM_TYPE_COMPUTE
 };
 
 enum BufferFlag : uint32_t {

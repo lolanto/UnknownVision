@@ -164,10 +164,10 @@
     <ClCompile Include="..\src\ScriptEngine\Lua\LuaEngine.cpp" />
     <ClCompile Include="..\src\ScriptEngine\Lua\LuaFunctions.cpp" />
     <ClCompile Include="..\src\Utility\DXCompilerHelper\DXCompilerHelper.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\src\Utility\FileContainer\FileContainer.cpp" />
     <ClCompile Include="..\src\Utility\InfoLog\InfoLog.cpp" />
@@ -184,6 +184,7 @@
     <ClInclude Include="..\src\DirectXHelper.h" />
     <ClInclude Include="..\src\RenderSystem\RenderDescriptor.h" />
     <ClInclude Include="..\src\RenderSystem\RenderBasic.h" />
+    <ClInclude Include="..\src\RenderSystem\SettingHelpers.hpp" />
     <ClInclude Include="..\src\RenderSystem\Task.h" />
     <ClInclude Include="..\src\ScriptEngine\Lua\LuaEngine.h" />
     <ClInclude Include="..\src\ScriptEngine\Lua\LuaFunctions.h" />

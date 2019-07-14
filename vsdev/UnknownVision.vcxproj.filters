@@ -191,6 +191,9 @@
     <ClInclude Include="..\src\RenderSystem\RenderDescriptor.h">
       <Filter>RenderSystem\Header</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\RenderSystem\SettingHelpers.hpp">
+      <Filter>RenderSystem\Header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

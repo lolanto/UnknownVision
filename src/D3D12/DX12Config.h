@@ -15,7 +15,5 @@ using BackendUsedData = std::tuple<const WindowWin32* const, uint32_t, uint32_t>
 BEG_NAME_SPACE
 const UINT NUMBER_OF_BACK_BUFFERS = 2; /**< 交换链总共两个后台缓冲 */
 
-/** 获得DXC编译器的辅助对象 */
-//DXCompilerHelper* GetDXCompilerHelper();
 END_NAME_SPACE
 

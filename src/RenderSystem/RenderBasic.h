@@ -84,6 +84,14 @@ public:
 	virtual bool Initialize() = 0;
 	/** 创建依赖该API的设备 */
 	virtual RenderDevice* CreateDevice(void* parameters) = 0;
+	/** 创建一个程序，这个程序可能是compute类型(只有compute shader)，也可能是graphics类型
+	 * @param shader 该program种使用的各个shader的名称
+	 * @param opts 程序中的一些操作进行设置
+	 * @param vtxAttDesc 程序使用到的顶点属性，必须覆盖shader中所有的顶点属性
+	 * @param usedIndex 是否使用索引，仅对graphics程序有效 
+	 * @return 返回程序的描述器，包含程序关键信息 */
+	virtual ProgramDescriptor RequestProgram(ShaderNames shader, ProgramOptions opts, VertexAttributeDescs vtxAttDesc, 
+		bool usedIndex = true) = 0;
 	virtual bool isInitialized() const { return false; }
 };
 

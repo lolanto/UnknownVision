@@ -6,41 +6,30 @@
 #include <vector>
 
 BEG_NAME_SPACE
-struct Parameter {
+
+struct Command {
 	enum Type : uint8_t {
-		PARAMETER_TYPE_INVALID = 0u,
-		PARAMETER_TYPE_BUFFER
+		COMMAND_TYPE_TEST = 0U,
+		COMMAND_TYPE_UPDATE_BUFFER = 0x01U,
+		COMMAND_TYPE_EXECUTE_PROGRAM = 0x02U
 	};
-	union 
-	{
-		BufferDescriptor buf;
-	};
+
+	Command(Command&& cmd) : type(cmd.type) {
+		parameters.swap(cmd.parameters);
+		extraData.swap(cmd.extraData);
+	}
+	Command(Type type) : type(type) {}
+	Command(const Command&) = delete;
+	Command& operator=(const Command&) = delete;
+	Command& operator=(Command&&) = delete;
+
+	std::vector<Parameter> parameters;
+	std::vector<std::byte> extraData;
 	const Type type;
-	Parameter(const BufferDescriptor& buf) : buf(buf), type(PARAMETER_TYPE_BUFFER) {}
 };
 
 /** 指令的载体，一个任务由其所包含的指令序列定义，一个任务只能有一份 */
 struct Task {
-	struct Command {
-		enum Type : uint8_t {
-			COMMAND_TYPE_TEST = 0U,
-			COMMAND_TYPE_UPDATE_BUFFER = 0x01U,
-			COMMAND_TYPE_EXECUTE_PROGRAM = 0x02U
-		};
-
-		Command(Command&& cmd) : type(cmd.type) {
-			parameters.swap(cmd.parameters);
-			extraData.swap(cmd.extraData);
-		}
-		Command(Type type) : type(type) {}
-		Command(const Command&) = delete;
-		Command& operator=(const Command&) = delete;
-		Command& operator=(Command&&) = delete;
-
-		std::vector<Parameter> parameters;
-		std::vector<std::byte> extraData;
-		const Type type;
-	};
 
 	Task() = default;
 	Task& operator=(const Task& task) = delete;
