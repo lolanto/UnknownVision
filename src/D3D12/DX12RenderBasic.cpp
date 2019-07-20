@@ -83,4 +83,60 @@ void QueueProxy::Execute(uint32_t numCommandLists, ID3D12CommandList * const * p
 	WaitForSingleObject(fenceEvent, INFINITE);
 }
 
+
+
+D3D12_BLEND_DESC AnalyseBlendingOptionsFromOutputStageOptions(const OutputStageOptions & osOpt)
+{
+	/** TODO: 完善对blend的支持，目前仅提供默认(无blend)操作 */
+	D3D12_BLEND_DESC desc;
+	desc.AlphaToCoverageEnable = FALSE;
+	desc.IndependentBlendEnable = FALSE;
+	const D3D12_RENDER_TARGET_BLEND_DESC defaultRenderTargetBlendDesc =
+	{
+		FALSE,FALSE,
+		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+		D3D12_LOGIC_OP_NOOP,
+		D3D12_COLOR_WRITE_ENABLE_ALL,
+	};
+	for (UINT i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+		desc.RenderTarget[i] = defaultRenderTargetBlendDesc;
+	return desc;
+}
+
+D3D12_DEPTH_STENCIL_DESC AnalyseDepthStencilOptionsFromOutputStageOptions(const OutputStageOptions & osOpt)
+{
+	/** TODO: 完善深度模板操作的支持，目前仅支持默认的深度测试，不支持模板测试 */
+	D3D12_DEPTH_STENCIL_DESC desc;
+	desc.DepthEnable = osOpt.enableDepthTest;
+	desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	desc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+	desc.StencilEnable = FALSE;
+	desc.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
+	desc.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
+	const D3D12_DEPTH_STENCILOP_DESC defaultStencilOp =
+	{ D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_COMPARISON_FUNC_ALWAYS };
+	desc.FrontFace = defaultStencilOp;
+	desc.BackFace = defaultStencilOp;
+	return desc;
+}
+
+D3D12_RASTERIZER_DESC AnalyseRasterizerOptionsFromRasterizeOptions(const RasterizeOptions & rastOpt)
+{
+	D3D12_RASTERIZER_DESC desc;
+	desc.FillMode = FillModeToFillMode(rastOpt.fillMode);
+	desc.CullMode = CullModeToCullMode(rastOpt.cullMode);
+	desc.FrontCounterClockwise = rastOpt.counterClockWiseIsFront;
+	/** TODO: 支持以下光栅化设置 */
+	desc.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
+	desc.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
+	desc.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
+	desc.DepthClipEnable = TRUE;
+	desc.MultisampleEnable = FALSE;
+	desc.AntialiasedLineEnable = FALSE;
+	desc.ForcedSampleCount = 0;
+	desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+	return desc;
+}
+
 END_NAME_SPACE

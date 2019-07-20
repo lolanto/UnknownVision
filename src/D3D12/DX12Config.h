@@ -9,7 +9,7 @@
 
 class DXCompilerHelper;
 class WindowWin32;
-using BackendUsedData = std::tuple<const WindowWin32* const, uint32_t, uint32_t>;
+using DX12BackendUsedData = std::tuple<const WindowWin32* const, uint32_t, uint32_t>;
 #define SmartPTR Microsoft::WRL::ComPtr
 
 BEG_NAME_SPACE

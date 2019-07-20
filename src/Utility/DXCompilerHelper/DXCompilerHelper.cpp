@@ -69,6 +69,35 @@ std::string fromWideCharToUTF8(const wchar_t* wc) {
 	return str;
 }
 
+/** 输入(路径)文件名称(不带类型)，返回添加bin后缀的(路径)文件名称 */
+std::wstring generateBinFileName(const char* fileName) {
+	/** 需要使用windowsAPI，需要先将字符串相关的内容全部转成unicode(utf-16) */
+	int sizeOfName = MultiByteToWideChar(CP_UTF8, 0, fileName, -1, nullptr, 0);
+	std::wstring fileName_unic(sizeOfName - 1, 0);
+	assert(MultiByteToWideChar(CP_UTF8, 0, fileName, -1,fileName_unic.data(), sizeOfName) != 0);
+	/** @remark: wstring似乎无法像string那样直接使用+进行字符串连接
+	 * 即直接连接会保留前一个字符串的null，所以上面创建shaderName的时候-1
+	 * 是为了省略null，尔后的append中的空格是给null预留的位置*/
+	std::wstring binFile = fileName_unic;
+	binFile.append(L".bin ");
+	binFile.back() = 0;
+	return binFile;
+}
+/** 输入(路径)文件名称(不带类型)，返回添加hlsl后缀的(路径)文件名称 */
+std::wstring generateSrcFileName(const char* fileName) {
+	/** 需要使用windowsAPI，需要先将字符串相关的内容全部转成unicode(utf-16) */
+	int sizeOfName = MultiByteToWideChar(CP_UTF8, 0, fileName, -1, nullptr, 0);
+	std::wstring fileName_unic(sizeOfName - 1, 0);
+	assert(MultiByteToWideChar(CP_UTF8, 0, fileName, -1, fileName_unic.data(), sizeOfName) != 0);
+	/** @remark: wstring似乎无法像string那样直接使用+进行字符串连接
+	 * 即直接连接会保留前一个字符串的null，所以上面创建shaderName的时候-1
+	 * 是为了省略null，尔后的append中的空格是给null预留的位置*/
+	std::wstring srcFile = fileName_unic;
+	srcFile.append(L".hlsl ");
+	srcFile.back() = 0;
+	return srcFile;
+}
+
 DXCompilerHelper::DXCompilerHelper() {
 	if (FAILED(DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&m_library)))) {
 		m_err = "initialize library failed!";
@@ -80,24 +109,29 @@ DXCompilerHelper::DXCompilerHelper() {
 	}
 }
 
+auto DXCompilerHelper::TimeStampOfShaderSourceCode(const char * shaderName) -> std::pair<uint64_t, bool>
+{
+	std::wstring&& srcFile = generateSrcFileName(shaderName);
+	/** 尝试打开源码文件 */
+	SafeHandle srcHFile = CreateFileW(srcFile.data(), GENERIC_READ,
+		FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+	if (srcHFile == INVALID_HANDLE_VALUE) return { 0, false }; /**< 文件不存在 */
+
+	FILETIME src_t; /**< 源码文件上一次修改时间 */
+	assert(GetFileTime(srcHFile.get(), nullptr, nullptr, &src_t) != false);
+	uint64_t timestamp = static_cast<uint64_t>(src_t.dwHighDateTime);
+	timestamp = (timestamp << 32) + static_cast<uint64_t>(src_t.dwLowDateTime);
+	return { timestamp, true };
+}
+
 void DisplayError(LPTSTR lpszFunction);
 
 Microsoft::WRL::ComPtr<ID3DBlob> DXCompilerHelper::LoadShader(const char * shaderName, const char * profile)
 {
-	/** TODO: 检查字节文件是否已经存在 */
-	/** 需要使用windowsAPI，需要先将字符串相关的内容全部转成unicode(utf-16) */
-	int sizeOfName = MultiByteToWideChar(CP_UTF8, 0, shaderName, -1, nullptr, 0);
-	std::wstring shaderName_unic(sizeOfName - 1, 0);
-	assert(MultiByteToWideChar(CP_UTF8, 0, shaderName, -1, shaderName_unic.data(), sizeOfName) != 0);
-	/** @remark: wstring似乎无法像string那样直接使用+进行字符串连接
-	 * 即直接连接会保留前一个字符串的null，所以上面创建shaderName的时候-1
-	 * 是为了省略null，尔后的append中的空格是给null预留的位置*/
-	std::wstring binFile = shaderName_unic;
-	std::wstring srcFile = shaderName_unic;
-	srcFile.append(L".hlsl ");
-	srcFile.back() = 0;
-	binFile.append(L".bin ");
-	binFile.back() = 0;
+	std::wstring&& binFile = generateBinFileName(shaderName);
+	std::wstring&& srcFile = generateSrcFileName(shaderName);
+
 	/** 尝试打开源码文件 */
 	SafeHandle srcHFile = CreateFileW(srcFile.data(), GENERIC_READ,
 		FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
@@ -110,9 +144,9 @@ Microsoft::WRL::ComPtr<ID3DBlob> DXCompilerHelper::LoadShader(const char * shade
 	Microsoft::WRL::ComPtr<ID3DBlob> blob;
 	if (binHFile == INVALID_HANDLE_VALUE) {
 		/** 字节码文件不存在需要创建并编译 */
-		std::cout << "byte code file is not exist!\n";
 #ifdef _DEBUG
-		assert(CompileToByteCode(srcFile.data(), profile, blob, true) == true);
+		if (CompileToByteCode(srcFile.data(), profile, blob, true) == false)
+			return blob;
 #else // _DEBUG
 		CompileToByteCode(srcFile.data(), profile, blob, false);
 #endif // _DEBUG
@@ -140,10 +174,10 @@ Microsoft::WRL::ComPtr<ID3DBlob> DXCompilerHelper::LoadShader(const char * shade
 			srcwt += src_t.dwLowDateTime;
 		}
 		if (srcwt > binwt) {
-			std::cout << "byte code file need to be updated!\n";
 			/** 字节码不是最新的，重新编译 */
 #ifdef _DEBUG
-			assert(CompileToByteCode(srcFile.data(), profile, blob, true) == true);
+			if (CompileToByteCode(srcFile.data(), profile, blob, true) == false)
+				return blob;
 #else // _DEBUG
 			CompileToByteCode(srcFile.data(), profile, blob, false);
 #endif // _DEBUG
@@ -155,13 +189,11 @@ Microsoft::WRL::ComPtr<ID3DBlob> DXCompilerHelper::LoadShader(const char * shade
 				&& wordWritten == blob->GetBufferSize());
 		}
 		else {
-			std::cout << "byte code can be used\n";
 			/** 直接读取字节码 */
 			ByteCodeFileHeader header;
 			DWORD wordRead;
 			assert(ReadFile(binHFile.get(), &header, sizeof(header), &wordRead, nullptr) != false
 				&& wordRead == sizeof(header));
-			std::cout << header.byteCodeSize << ' ' << header.profile << '\n';
 			assert(SUCCEEDED(D3DCreateBlob(header.byteCodeSize, blob.GetAddressOf())));
 			assert(ReadFile(binHFile.get(), blob->GetBufferPointer(), blob->GetBufferSize(), &wordRead, nullptr) != false
 				&& wordRead == blob->GetBufferSize());
@@ -202,7 +234,9 @@ bool DXCompilerHelper::CompileToByteCode(const wchar_t* srcFilePath, const char*
 		&suggestDebugInfoFileName, debugInfo.ReleaseAndGetAddressOf()))) {
 		SmartPtr<IDxcBlobEncoding> errBlob;
 		compileOpResult->GetErrorBuffer(errBlob.ReleaseAndGetAddressOf());
-		m_err = fromWideCharToUTF8(reinterpret_cast<const wchar_t*>(errBlob->GetBufferPointer()));
+		SmartPtr<IDxcBlobEncoding> utf8Blob;
+		m_library->GetBlobAsUtf8(errBlob.Get(), utf8Blob.GetAddressOf());
+		m_err = reinterpret_cast<char*>(utf8Blob->GetBufferPointer());
 		return false;
 	}
 	/** 检查编译结果 */
@@ -211,7 +245,9 @@ bool DXCompilerHelper::CompileToByteCode(const wchar_t* srcFilePath, const char*
 	if (FAILED(compileStatus)) {
 		SmartPtr<IDxcBlobEncoding> errBlob;
 		compileOpResult->GetErrorBuffer(errBlob.ReleaseAndGetAddressOf());
-		m_err = fromWideCharToUTF8(reinterpret_cast<const wchar_t*>(errBlob->GetBufferPointer()));
+		SmartPtr<IDxcBlobEncoding> utf8Blob;
+		m_library->GetBlobAsUtf8(errBlob.Get(), utf8Blob.GetAddressOf());
+		m_err = reinterpret_cast<char*>(utf8Blob->GetBufferPointer());
 		return false;
 	}
 	SmartPtr<IDxcBlob> byteCodes;
@@ -255,6 +291,7 @@ auto DXCompilerHelper::RetrieveShaderDescriptionFromByteCode(SmartPtr<ID3DBlob>&
 	return shrReflect;
 }
 
+/** 从windows example拷贝的方法 */
 void DisplayError(LPTSTR lpszFunction)
 // Routine Description:
 // Retrieve and output the system error message for the last-error code

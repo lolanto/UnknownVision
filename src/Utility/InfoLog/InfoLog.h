@@ -29,8 +29,17 @@ private:
 #define FLOG(format, ...) \
 { \
 	char outputInfo[128] = { 0 }; \
-	sprintf(outputInfo, format, __VA_ARGS__); \
+	snprintf(outputInfo, 128, format, __VA_ARGS__); \
 	InfoLog::GetInstance().Log(outputInfo); \
 }
 #endif // !FLOG
+
+#ifndef LFLOG /**< long FLOG */
+#define LFLOG(size, format, ...) \
+{ \
+	std::string outputInfo(size, 0); \
+	snprintf(outputInfo.data(), size, format, __VA_ARGS__); \
+	InfoLog::GetInstance().Log(outputInfo.c_str()); \
+}
+#endif // !LFLOG
 

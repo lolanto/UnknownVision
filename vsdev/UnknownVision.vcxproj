@@ -178,6 +178,7 @@
   <ItemGroup>
     <ClInclude Include="..\src\D3D12\d3dx12.h" />
     <ClInclude Include="..\src\D3D12\DX12HeapManager.h" />
+    <ClInclude Include="..\src\D3D12\DX12Helpers.h" />
     <ClInclude Include="..\src\D3D12\DX12RenderBasic.h" />
     <ClInclude Include="..\src\D3D12\DX12Config.h" />
     <ClInclude Include="..\src\D3D12\DX12ResourceManager.h" />

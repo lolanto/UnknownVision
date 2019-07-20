@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <array>
 
 BEG_NAME_SPACE
 
@@ -16,7 +17,7 @@ struct BufferDescriptor {
 	}
 	const BufferHandle handle;
 	const size_t size;
-	const ResourceStatus status;
+	const ResourceStatus status; /**< 描述用途 */
 };
 
 struct TextureDescriptor {
@@ -29,62 +30,105 @@ struct TextureDescriptor {
 	const uint32_t width; /**< 纹理的宽度，单位像素 */
 	const uint32_t height; /**< 纹理的高度，单位像素 */
 	const ElementFormatType elementFormat; /**< 每个像素的格式 */
-	const ResourceStatus status;
+	const ResourceStatus status; /**< 描述用途 */
 };
+
+struct SamplerDescriptor {
+	const SamplerHandle handle;
+	const float borderColor[4];
+	const FilterType filter;
+	const SamplerAddressMode uAddrMode, vAddrMode, wAddrMode;
+	SamplerDescriptor(SamplerHandle handle, FilterType filter, SamplerAddressMode u,
+		SamplerAddressMode v, SamplerAddressMode w,
+		const float (&bc)[4])
+		: handle(handle), filter(filter), 
+		uAddrMode(u), vAddrMode(v), wAddrMode(w),
+		borderColor{bc[0], bc[1], bc[2], bc[3]} {}
+	static SamplerDescriptor CreateInvalidDescriptor() {
+		return SamplerDescriptor(SamplerHandle::InvalidIndex(), FILTER_TYPE_MIN_MAG_MIP_POINT,
+			SAMPLER_ADDRESS_MODE_WRAP, SAMPLER_ADDRESS_MODE_WRAP, SAMPLER_ADDRESS_MODE_WRAP,
+			{ 0.0f, 0.0f, 0.0f, 0.0f });
+	}
+};
+
 /** 传入command或者program中用到的参数类型
  * 是对资源描述器的统一包装
  * TODO: 是否有更高效的方法将不同类型的参数统一 */
 struct Parameter {
 	enum Type : uint8_t {
 		PARAMETER_TYPE_INVALID = 0u,
-		PARAMETER_TYPE_BUFFER
+		PARAMETER_TYPE_BUFFER,
+		PARAMETER_TYPE_TEXTURE,
+		PARAMETER_TYPE_SAMPLER
 	};
 	union
 	{
+		TextureDescriptor tex;
 		BufferDescriptor buf;
+		SamplerDescriptor sampler;
 	};
 	const Type type;
 	Parameter(const BufferDescriptor& buf) : buf(buf), type(PARAMETER_TYPE_BUFFER) {}
+	Parameter(const TextureDescriptor& tex) : tex(tex), type(PARAMETER_TYPE_TEXTURE) {}
+	Parameter(const SamplerDescriptor& sampler) : sampler(sampler), type(PARAMETER_TYPE_SAMPLER) {}
 };
 
-typedef std::vector<SubVertexAttributeDesc> VertexAttributeDescs;
-
-/** 一个program执行时候可选的执行方式 */
-struct ProgramOptions {
-	DepthStencilOptions depthStencilOpts;
-	RasterizeOptions rasterOpts;
-	BlendOption blendOpt;
-};
+using VertexAttributeDescs = std::vector<SubVertexAttributeDesc>;
 
 struct ShaderNames {
-	std::string vs;
-	std::string ps;
-	std::string gs;
-	std::string ts;
-	std::string cs;
-	ShaderNames()
-		: vs(""), ps(""), gs(""), ts(""), cs("") {}
-	ShaderNames(const char* vs, const char* ps)
-		: vs(vs), ps(ps), gs(""), ts(""), cs("") {}
-	ShaderNames(const char* cs)
-		: vs(""), ps(""), gs(""), ts(""), cs(cs) {}
+	std::array<std::string, SHADER_TYPE_NUMBER_OF_TYPE> names;
+	ShaderNames() {}
+	ShaderNames(const char* vs, const char* ps) {
+		names[SHADER_TYPE_VERTEX_SHADER] = vs;
+		names[SHADER_TYPE_PIXEL_SHADER] = ps;
+	}
+	ShaderNames(const char* cs) {
+		names[SHADER_TYPE_COMPUTE_SHADER] = cs;
+	}
+	ShaderNames(ShaderNames&& rhs) {
+		names.swap(rhs.names);
+	}
+	ShaderNames(const ShaderNames& rhs) {
+		names = rhs.names;
+	}
+	void swap(ShaderNames&& rhs) noexcept {
+		names.swap(rhs.names);
+	}
+	void swap(ShaderNames& rhs) noexcept {
+		names.swap(rhs.names);
+	}
+	decltype(names)::reference operator[](uint8_t index) { return names[index]; }
+	decltype(names)::const_reference operator[](uint8_t index) const { return names[index]; }
 };
+
 
 /** 管线/compute程序，记录了该程序的输入输出等信息 */
 struct ProgramDescriptor {
-	const std::map<std::string, Parameter> signature; /**< 程序的签名，记录了参数和参数在shader中的名称 */
-	const ShaderNames shaders; /**< shader的名称和shader类型 */
+	mutable std::map<std::string, Parameter::Type> signature; /**< 程序的签名，记录了参数和参数在shader中的名称 */
+	mutable ShaderNames shaders; /**< shader的名称和shader类型 */
 	const ProgramHandle handle;
 	const ProgramType type;
 	const bool usedIndex; /**< 程序是否需要使用索引 */
-
+	const RasterizeOptions rastOpt; /**< 光栅过程的设置 */
+	const OutputStageOptions osOpt; /**< 模板，深度以及混合过程的设置 */
 	/** 默认构造函数用于容器 */
 	ProgramDescriptor()
 		: handle(ProgramHandle::InvalidIndex()), type(PROGRAM_TYPE_GRAPHICS), usedIndex(false) {}
-	ProgramDescriptor(std::map<std::string, Parameter> signature,
+	ProgramDescriptor(std::map<std::string, Parameter::Type>&& signature,
 		ShaderNames shaders, ProgramHandle handle,
-		ProgramType type, bool usedIndex)
-		: signature(signature), shaders(shaders), handle(handle), type(type), usedIndex(usedIndex) {}
+		ProgramType type, bool usedIndex, RasterizeOptions rastOpt, OutputStageOptions osOpt)
+		: signature(std::move(signature)), shaders(shaders), handle(handle), type(type), usedIndex(usedIndex),
+		rastOpt(rastOpt), osOpt(osOpt) {}
+	ProgramDescriptor(ProgramDescriptor&& rhs)
+		: handle(rhs.handle), type(rhs.type), usedIndex(rhs.usedIndex),
+		rastOpt(rhs.rastOpt), osOpt(rhs.osOpt) {
+		signature.swap(rhs.signature);
+		shaders.swap(rhs.shaders);
+	}
+	ProgramDescriptor(const ProgramDescriptor& rhs)
+		: handle(rhs.handle), type(rhs.type), usedIndex(rhs.usedIndex), rastOpt(rhs.rastOpt),
+		osOpt(rhs.osOpt), signature(rhs.signature), shaders(rhs.shaders) { }
+	static ProgramDescriptor CreateInvalidDescirptor() { return ProgramDescriptor(); }
 };
 
 END_NAME_SPACE

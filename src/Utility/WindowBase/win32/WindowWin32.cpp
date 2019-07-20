@@ -54,7 +54,7 @@ bool WindowWin32::Init() {
 		m_name.c_str(),
 		WS_OVERLAPPEDWINDOW,
 		0, 0,
-		static_cast<int>(m_width), static_cast<int>(m_height),
+		m_width, m_height,
 		0,
 		0,
 		hInstance,

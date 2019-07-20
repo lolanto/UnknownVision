@@ -8,7 +8,8 @@
 #include <d3d12shader.h>
 #include <string>
 
-#define SHADER_MODEL(type) type##_5_0
+#define SHADER_VERSION(s) #s
+#define SHADER_MODEL(type) SHADER_VERSION(type##_6_0)
 
 class DXCompilerHelper {
 public:
@@ -17,7 +18,14 @@ public:
 	DXCompilerHelper();
 	~DXCompilerHelper() = default;
 public:
-	/** 加载指定的shader(源文件或字节码) */
+	/** 检验shader源码文件的存在性和时间戳 */
+	auto TimeStampOfShaderSourceCode(const char* shaderName)
+		->std::pair<uint64_t, bool>;
+	/** 加载指定的shader(源文件或字节码)
+	 * @param shaderName 需要加载的shader的(路径/)名称
+	 * @param profile 编译时必须设置的属性，决定了shader model以及shader的类型
+	 * @return 返回存储字节码的缓冲区，假如编译失败，返回空的blob
+	 * @remark 调用者必须保证源码文件(.hlsl)的存在*/
 	Microsoft::WRL::ComPtr<ID3DBlob> LoadShader(const char* shaderName, const char* profile);
 	/** 从Shader源文件编译产生字节码供Shader生成使用
 	 * @param srcFilePath Shader源文件路径

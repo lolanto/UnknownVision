@@ -17,7 +17,7 @@ public:
 	* @param height 窗口高度
 	* @param windowed 窗口是否为窗口化
 	*/
-	WindowWin32(const char* name, float width, float height, bool windowed)
+	WindowWin32(const char* name, uint32_t width, uint32_t height, bool windowed)
 		: WindowBase(name, width, height, windowed) {}
 	virtual ~WindowWin32() {}
 public:

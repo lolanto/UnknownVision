@@ -18,7 +18,7 @@ public:
 	 * @param height 窗口高度
 	 * @param windowed 窗口是否为窗口化
 	 */
-	WindowBase(const char* name, float width, float height, bool windowed) 
+	WindowBase(const char* name, uint32_t width, uint32_t height, bool windowed)
 		: m_name(name), m_width(width), m_height(height),m_isWindowed(windowed) {}
 	/** 虚析构函数 */
 	virtual ~WindowBase() {}
@@ -29,11 +29,13 @@ public:
 	virtual bool Init() = 0;
 	/** 窗口运行函数，由具体实现提供定义 */
 	virtual void Run() = 0;
+	uint32_t Width() const { return m_width; }
+	uint32_t Height() const { return m_height; }
 	void SetMainLoopFuncPtr(MainLoopFunctionPointer&& funcPtr) { MainLoop = funcPtr; }
 	void SetMouseEventFuncPtr(MouseEventCallBack&& funcPtr) { MouseCallBack = funcPtr; }
 	void SetKeyboardEventFuncPtr(KeyboardEventCallBack&& funcPtr) { KeyboardCallBack = funcPtr; }
 protected:
-	float m_width, m_height;
+	uint32_t m_width, m_height;
 	std::string m_name;
 	bool m_isWindowed;
 

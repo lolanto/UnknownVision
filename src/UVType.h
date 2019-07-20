@@ -68,6 +68,7 @@ struct ResourceStatus {
 enum ElementFormatType : uint8_t {
 	ELEMENT_FORMAT_TYPE_INVALID = 0,/**< 无效的默认值 */
 	/** 以下格式可以等价为float1, float2, float3以及float4 */
+	ELEMENT_FORMAT_TYPE_R16_FLOAT,
 	ELEMENT_FORMAT_TYPE_R32_FLOAT,
 	ELEMENT_FORMAT_TYPE_R32G32_FLOAT,
 	ELEMENT_FORMAT_TYPE_R32G32B32_FLOAT,
@@ -75,6 +76,18 @@ enum ElementFormatType : uint8_t {
 	ELEMENT_FORMAT_TYPE_R8G8B8A8_UNORM, /**< 常用于描述渲染对象元素的格式 */
 	/**/
 	ELEMENT_FORMAT_TYPE_D24_UNORM_S8_UINT, /**< 常用于描述深度模板缓存元素的格式 */
+};
+
+enum FilterType : uint8_t {
+	FILTER_TYPE_MIN_MAG_MIP_POINT = 0,
+	FILTER_TYPE_MIN_MAG_MIP_LINEAR,
+	FILTER_TYPE_ANISOTROPIC
+};
+
+enum SamplerAddressMode : uint8_t {
+	SAMPLER_ADDRESS_MODE_WRAP = 0,
+	SAMPLER_ADDRESS_MODE_CLAMP,
+	SAMPLER_ADDRESS_MODE_BORDER
 };
 
 /** 顶点的属性类型 */
@@ -90,12 +103,12 @@ struct SubVertexAttributeDesc {
 	VertexAttributeType vertexAttribute; /**< 描述的顶点属性类型 */
 	uint8_t index = 0; /**< 同一个属性中的第几个，如uv0, uv1 */
 	ElementFormatType format; /**< 该属性的数据类型 */
-	uint8_t slotIndex = 0; /**< 该属性被绑定到哪个接口上，管线的"顶点缓冲接口"是有数量上限的 */
+	uint8_t location = 0; /**< 该属性被绑定到哪个接口上，管线的"顶点缓冲接口"是有数量上限的 */
 	uint8_t byteOffset = 0; /**< 属性的每一个值在缓冲中间隔的距离, 假如未UINT8_MAX则表示直接接着上一个属性 */
 	SubVertexAttributeDesc() = default;
-	SubVertexAttributeDesc(VertexAttributeType att, ElementFormatType format, uint8_t slot,
-		uint8_t index = 0, uint8_t byteOffset = 0)
-		: vertexAttribute(att), index(index), format(format), slotIndex(slot), byteOffset(byteOffset) {}
+	SubVertexAttributeDesc(VertexAttributeType att, ElementFormatType format, uint8_t index,
+		uint8_t location = 0, uint8_t byteOffset = 0)
+		: vertexAttribute(att), index(index), format(format), location(location), byteOffset(byteOffset) {}
 };
 
 /** 固定的混合操作类型 */
@@ -124,14 +137,24 @@ enum PrimitiveType {
 struct RasterizeOptions {
 	CullMode cullMode = CULL_MODE_BACK;
 	FillMode fillMode = FILL_MODE_SOLID;
-	bool counterClockWiseIsFront = true;
+	bool counterClockWiseIsFront = false;
 	PrimitiveType primitive = PRIMITIVE_TYPE_TRIANGLE_LIST;
+	RasterizeOptions() : cullMode(CULL_MODE_BACK), fillMode(FILL_MODE_SOLID),
+		counterClockWiseIsFront(false), primitive(PRIMITIVE_TYPE_TRIANGLE_LIST) {}
 };
 
-/** 堆深度模板缓冲进行的操作 */
-struct DepthStencilOptions {
+/** 模板测试，深度测试，混合等输出过程的操作设置 */
+struct OutputStageOptions {
 	bool enableDepthTest = true;
-	/** 或许会有其它操作，但暂时不考虑 */
+	BlendOption blending = BLEND_OPTION_NO_BLEND;
+	ElementFormatType dsvFormat = ELEMENT_FORMAT_TYPE_D24_UNORM_S8_UINT; /**< 深度模板缓冲的格式 */
+	ElementFormatType rtvFormats[UV_MAX_RENDER_TARGET]; /**< 各个RenderTarget的顶点格式 */
+	OutputStageOptions() : enableDepthTest(true), blending(BLEND_OPTION_NO_BLEND),
+		dsvFormat(ELEMENT_FORMAT_TYPE_D24_UNORM_S8_UINT) {
+		for (auto& format : rtvFormats) {
+			format = ELEMENT_FORMAT_TYPE_INVALID;
+		}
+	}
 };
 
 enum API_TYPE {
@@ -151,10 +174,13 @@ struct ViewPortDesc {
 
 /** 着色器类型 */
 enum ShaderType : uint8_t {
-	SHADER_TYPE_VERTEX_SHADER,
+	SHADER_TYPE_VERTEX_SHADER = 0,
 	SHADER_TYPE_PIXEL_SHADER,
 	SHADER_TYPE_GEOMETRY_SHADER,
-	SHADER_TYPE_COMPUTE_SHADER
+	SHADER_TYPE_HULL_SHADER, /**< DX only */
+	SHADER_TYPE_TESSELLATION_SHADER, /**< =Domain shader for dx */
+	SHADER_TYPE_COMPUTE_SHADER,
+	SHADER_TYPE_NUMBER_OF_TYPE
 };
 
 /** 程序类型 */
@@ -189,6 +215,7 @@ using TextureFlagCombination = uint32_t;
 using BufferFlagCombination = uint32_t;
 
 /** 为索引值设置别名，加强类型检查 */
+ALIAS_INDEX(uint8_t, VertexAttributeHandle);
 ALIAS_INDEX(int32_t, Texture2DIdx);
 ALIAS_INDEX(int32_t, RenderTargetIdx);
 ALIAS_INDEX(int32_t, DepthStencilIdx);
@@ -202,6 +229,7 @@ ALIAS_INDEX(int32_t, GraphPassIdx);
 ALIAS_INDEX(uint64_t, BufferHandle);
 ALIAS_INDEX(uint64_t, TextureHandle);
 ALIAS_INDEX(uint64_t, ProgramHandle);
+ALIAS_INDEX(uint64_t, SamplerHandle);
 ALIAS_INDEX(uint64_t, TaskFrame);
 
 END_NAME_SPACE

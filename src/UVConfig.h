@@ -13,5 +13,4 @@
 BEG_NAME_SPACE
 const uint32_t UV_MAX_RENDER_TARGET = 8; /**< 可绑定的渲染对象的上限 */
 const uint32_t UV_MAX_VERTEX_BUFFER = 16; /**< 可绑定的顶点缓冲的上限 */
-
 END_NAME_SPACE

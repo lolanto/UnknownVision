@@ -194,6 +194,9 @@
     <ClInclude Include="..\src\RenderSystem\SettingHelpers.hpp">
       <Filter>RenderSystem\Header</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12Helpers.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
