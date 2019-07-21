@@ -75,6 +75,8 @@ struct Parameter {
 
 using VertexAttributeDescs = std::vector<SubVertexAttributeDesc>;
 
+/** 专门用于存储shader名称
+ * @remark 名称为Shader的源码路径，不带后缀! */
 struct ShaderNames {
 	std::array<std::string, SHADER_TYPE_NUMBER_OF_TYPE> names;
 	ShaderNames() {}
@@ -128,7 +130,7 @@ struct ProgramDescriptor {
 	ProgramDescriptor(const ProgramDescriptor& rhs)
 		: handle(rhs.handle), type(rhs.type), usedIndex(rhs.usedIndex), rastOpt(rhs.rastOpt),
 		osOpt(rhs.osOpt), signature(rhs.signature), shaders(rhs.shaders) { }
-	static ProgramDescriptor CreateInvalidDescirptor() { return ProgramDescriptor(); }
+	static ProgramDescriptor CreateInvalidDescirptor() thread_safe { return ProgramDescriptor(); }
 };
 
 END_NAME_SPACE

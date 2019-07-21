@@ -56,6 +56,139 @@ void DX12RenderDevice::Process()
 	}
 }
 
+ProgramDescriptor DX12RenderDevice::RequestProgram(const ShaderNames& shaderNames, VertexAttributeHandle va_handle,
+	bool usedIndex, RasterizeOptions rasterization, OutputStageOptions outputStage,
+	const std::map<std::string, const SamplerDescriptor&>& staticSamplers) thread_safe {
+	/** 先校验shader组合的合法性 */
+	ProgramType newProgramType;
+	if (shaderNames[SHADER_TYPE_VERTEX_SHADER].size() != 0 &&
+		shaderNames[SHADER_TYPE_PIXEL_SHADER].size() != 0)
+		newProgramType = PROGRAM_TYPE_GRAPHICS;
+	else if (shaderNames[SHADER_TYPE_COMPUTE_SHADER].size() != 0)
+		newProgramType = PROGRAM_TYPE_COMPUTE;
+	else {
+		FLOG("%s: Invalid shader group!\n", __FUNCTION__);
+		return ProgramDescriptor::CreateInvalidDescirptor();
+	}
+
+	std::map<std::string, Parameter::Type> signature; /**< 存储该program所有签名 */
+	ProgramInfo newProgramInfo;
+	/** 一些临时数据，用于先行收集shader的srv, cbv, uav信息，供之后的排序使用 */
+	std::list<uint32_t> srv_cbv_uav_idx;
+	std::map<std::string, std::list<uint32_t>::iterator> name_srv_cbv_uav_ptr;
+	std::list<uint32_t> sampler_idx;
+	std::map<std::string, std::list<uint32_t>::iterator> name_sampler_ptr;
+	/** 利用插入排序，将编码插入到指定的列表中
+	 * @param list 需要插入的列表
+	 * @param value 需要插入的编码值
+	 * @return 返回被插入的值在列表中的迭代器*/
+	auto insertCodeIntoList = [](std::list<uint32_t>& list, uint32_t value)->std::list<uint32_t>::iterator {
+		auto iter = list.begin();
+		while (iter != list.end() && value > (*iter)) ++iter;
+		if (iter == list.end()) {
+			list.push_back(value);
+			return std::prev(list.end());
+		}
+		else {
+			return list.insert(iter, value);
+		}
+	};
+	/** 创建static sampler 并存储到programInfo中，创建成功返回true，创建失败返回false */
+	auto generateStaticSamplerAndStoreIntoProgramInfo = [&newProgramInfo, &staticSamplers](
+		const std::string& samplerName, const DX12RenderBackend::ShaderInfo::ResourceInfo& info) -> bool {
+		auto samplerIter = staticSamplers.find(samplerName); 
+		if (samplerIter == staticSamplers.end()) return false; /**< 该sampler并不需要设置为static */
+		newProgramInfo.staticSamplers.push_back(
+			AnalyseStaticSamplerFromSamplerDescriptor(
+				samplerIter->second, info.spaceIndex, info.registerIndex));
+		return true;
+	};
+	/** 逐个shader分析 */
+	for (uint8_t i = 0; i < SHADER_TYPE_NUMBER_OF_TYPE &&
+		shaderNames[i].size() != 0; ++i) {
+		ShaderType curType = static_cast<ShaderType>(i);
+		const DX12RenderBackend::ShaderInfo& shader = m_backend.UpdateShaderInfo(shaderNames[i].c_str(), curType);
+		/** 分析资源签名 */
+		for (const auto& vSig : shader.signatures) {
+			uint32_t idx = 0;
+			ProgramInfo::EncodeReigsterIndex(idx, vSig.second.registerIndex);
+			ProgramInfo::EncodeSpaceIndex(idx, vSig.second.spaceIndex);
+			switch (vSig.second.type) {
+				/** TODO: 暂时还没有支持UAV */
+			case D3D_SIT_CBUFFER:
+				signature.insert(std::make_pair(vSig.first, Parameter::PARAMETER_TYPE_BUFFER));
+				ProgramInfo::EncodeType(idx, ProgramInfo::RESOURCE_TYPE_CONSTANT_BUFFER_VIEW);
+				name_srv_cbv_uav_ptr.insert(std::make_pair(vSig.first, insertCodeIntoList(srv_cbv_uav_idx, idx)));
+				break;
+			case D3D_SIT_TEXTURE:
+				signature.insert(std::make_pair(vSig.first, Parameter::PARAMETER_TYPE_TEXTURE));
+				ProgramInfo::EncodeType(idx, ProgramInfo::RESOURCE_TYPE_SHADER_RESOURCE_VIEW);
+				name_srv_cbv_uav_ptr.insert(std::make_pair(vSig.first, insertCodeIntoList(srv_cbv_uav_idx, idx)));
+				break;
+			case D3D_SIT_SAMPLER:
+				if (generateStaticSamplerAndStoreIntoProgramInfo(vSig.first, vSig.second)) break; /**< 当前sampler是static sampler不加入到签名中 */
+				signature.insert(std::make_pair(vSig.first, Parameter::PARAMETER_TYPE_SAMPLER));
+				ProgramInfo::EncodeType(idx, ProgramInfo::RESOURCE_TYPE_SAMPLER_STATE);
+				name_sampler_ptr.insert(std::make_pair(vSig.first, insertCodeIntoList(sampler_idx, idx)));
+				break;
+			default:
+				FLOG("%s: Doesn't support parameter: %s\n", __FUNCTION__, vSig.first.c_str());
+			}
+		}
+		/** 校验IA的输入是否匹配 */
+		if (shader.Type() == SHADER_TYPE_VERTEX_SHADER) {
+			const auto& ILSE = m_backend.AccessVertexAttributeDescs(va_handle);
+			if (VS_IO_ExceedMatch(ILSE.VS_IO, shader.VS_IO) == false) {
+				FLOG("%s: IA Stage setting doesn't match this program\n", __FUNCTION__);
+				return ProgramDescriptor::CreateInvalidDescirptor();
+			}
+			newProgramInfo.inputLayoutPtr = &ILSE.layout;
+			/** 将IA的签名合并到整个签名中 */
+			signature.insert(ILSE.inputLayoutSignature.begin(), ILSE.inputLayoutSignature.end());
+		}
+		/** 设置输出接口 */
+		else if (shader.Type() == SHADER_TYPE_PIXEL_SHADER) {
+			std::string semantic = "COLOR";
+			for (uint8_t target = 0; target < getSV_TARGET(shader.PS_IO); ++target) {
+				signature.insert(std::make_pair(semantic + std::to_string(target), Parameter::PARAMETER_TYPE_TEXTURE));
+			}
+			semantic = "DEPTH";
+			for (uint8_t depth = 0; depth < getSV_DEPTH(shader.PS_IO); ++depth) {
+				signature.insert(std::make_pair(semantic + std::to_string(depth), Parameter::PARAMETER_TYPE_TEXTURE));
+			}
+		}
+	}
+	{
+		/** 构建Descriptor列表 */
+		std::list<uint32_t>::iterator iter;
+		iter = srv_cbv_uav_idx.begin();
+		for (int i = 0; i < srv_cbv_uav_idx.size(); ++i, ++iter) {
+			(*iter) += i;
+		}
+		for (const auto& e : name_srv_cbv_uav_ptr) {
+			newProgramInfo.resNameToEncodingValue.insert(std::make_pair(e.first, *e.second));
+		}
+		iter = sampler_idx.begin();
+		for (int i = 0; i < sampler_idx.size(); ++i, ++iter) {
+			(*iter) += i;
+		}
+		for (const auto& e : name_sampler_ptr) {
+			newProgramInfo.resNameToEncodingValue.insert(std::make_pair(e.first, *e.second));
+		}
+	}
+	/** 假如使用索引，需要添加索引签名 */
+	if (usedIndex) signature.insert(std::make_pair("IDXBUF", Parameter::PARAMETER_TYPE_BUFFER));
+	ProgramHandle newProgramHandle(m_nextProgramHandle++);
+
+	{
+		std::lock_guard<decltype(m_programLock)> lg(m_programLock);
+		m_programs.insert(std::make_pair(newProgramHandle, newProgramInfo));
+	}
+
+	return 	ProgramDescriptor(std::move(signature), shaderNames, newProgramHandle,
+		newProgramType, usedIndex, rasterization, outputStage);
+}
+
 void DX12RenderDevice::TEST_func(const Command & cmd)
 {
 #ifdef _DEBUG
@@ -83,20 +216,18 @@ void DX12RenderDevice::TEST_func(const Command & cmd)
 
 bool DX12RenderDevice::generateGraphicsPSO(const ProgramDescriptor & pmgDesc)
 {
-	{
-		auto iter = m_psoAndRootSig.find(pmgDesc.handle);
-		if (iter != m_psoAndRootSig.end() && iter->second.pso != nullptr) {
-			return true; /**< 已经生成过pso就不重复创建 */
-		}
+
+	auto& programInfo = m_programs.find(pmgDesc.handle)->second;
+	if (programInfo.pso != nullptr) {
+		return true; /**< 已经生成过pso就不重复创建 */
 	}
-	PSOAndRootSig par;
-	if (generateGraphicsRootSignature(pmgDesc, par.rootSignature) == false) {
+
+	if (generateGraphicsRootSignature(programInfo, programInfo.rootSignature) == false) {
 		FLOG("%s: Generate Root signature failed!\n", __FUNCTION__);
 		return false;
 	}
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {}; /**< 对结构体进行零初始化 */
-	const DX12RenderBackend::ProgramInfo& pmgRef = m_backend.AccessProgramInfo(pmgDesc.handle);
 	/** BlendState设置 */
 	psoDesc.BlendState = AnalyseBlendingOptionsFromOutputStageOptions(pmgDesc.osOpt);
 	psoDesc.SampleMask = UINT_MAX; /**< blend过程使用的mask，暂不清楚具体用途 */
@@ -122,8 +253,8 @@ bool DX12RenderDevice::generateGraphicsPSO(const ProgramDescriptor & pmgDesc)
 	/** TODO: 暂不支持streamoutput */
 	psoDesc.StreamOutput = {};
 	/** 设置inputLayout */
-	psoDesc.InputLayout.pInputElementDescs = pmgRef.inputLayoutPtr->data();
-	psoDesc.InputLayout.NumElements = pmgRef.inputLayoutPtr->size();
+	psoDesc.InputLayout.pInputElementDescs = programInfo.inputLayoutPtr->data();
+	psoDesc.InputLayout.NumElements = programInfo.inputLayoutPtr->size();
 	/** 设置RTV格式 */
 	{
 		uint32_t numRTV = 0;
@@ -134,7 +265,7 @@ bool DX12RenderDevice::generateGraphicsPSO(const ProgramDescriptor & pmgDesc)
 		psoDesc.NumRenderTargets = numRTV;
 	}
 	/** 设置rootsignature */
-	psoDesc.pRootSignature = par.rootSignature.Get();
+	psoDesc.pRootSignature = programInfo.rootSignature.Get();
 	/** 设置shaders
 	 * requestProgram时候已经确保了必须有vs和ps */
 	for (const auto& shaderName : pmgDesc.shaders.names) {
@@ -166,85 +297,62 @@ bool DX12RenderDevice::generateGraphicsPSO(const ProgramDescriptor & pmgDesc)
 			return false;
 		}
 	}
-	if (FAILED(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&par.pso)))) {
+	if (FAILED(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&programInfo.pso)))) {
 		FLOG("%s: Create Graphics pipeline state object failed!\n", __FUNCTION__);
-		return false;
-	}
-	auto res = m_psoAndRootSig.insert(std::make_pair(pmgDesc.handle, par));
-	if (res.second == false) {
-		FLOG("%s: Generate new Pipelinestate object and root signature failed! Can't Insert them into the map\n", __FUNCTION__);
 		return false;
 	}
 	return true;
 }
 
-bool DX12RenderDevice::generateGraphicsRootSignature(const ProgramDescriptor & pmgDesc, SmartPTR<ID3D12RootSignature>& rootSignature)
+bool DX12RenderDevice::generateGraphicsRootSignature(const ProgramInfo & pmgRef, SmartPTR<ID3D12RootSignature>& rootSignature)
 {
-	const DX12RenderBackend::ProgramInfo& pmgRef = m_backend.AccessProgramInfo(pmgDesc.handle);
 	std::vector<D3D12_DESCRIPTOR_RANGE> scuRanges; /**< 记录srv, cbv以及uav的descriptor range */
-	/** 处理SRV, CBV, UAV资源描述 */
-	if (pmgRef.srv_cbv_uav_Desc.size() != 0) {
-		std::vector<uint32_t> srv_cbv_uav_idx;
-		for (const auto& idx : pmgRef.srv_cbv_uav_Desc) {
-			uint32_t resHeapIndex = DX12RenderBackend::ProgramInfo::DecodeIndex(idx.second);
-			if (resHeapIndex >= srv_cbv_uav_idx.size())
-				srv_cbv_uav_idx.resize(resHeapIndex + 1);
-			srv_cbv_uav_idx[resHeapIndex] = idx.second;
-		}
-		D3D12_DESCRIPTOR_RANGE curRange;
-		/** 初始化第一个range */
-		curRange.RangeType = DX12RenderBackend::ProgramInfo::DecodeType(srv_cbv_uav_idx[0]);
-		curRange.NumDescriptors = 1;
-		curRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-		curRange.RegisterSpace = DX12RenderBackend::ProgramInfo::DecodeSpaceIndex(srv_cbv_uav_idx[0]);
-		curRange.BaseShaderRegister = DX12RenderBackend::ProgramInfo::DecodeRegisterIndex(srv_cbv_uav_idx[0]);
-		for (int i = 1; i < srv_cbv_uav_idx.size(); ++i) {
-			if (curRange.RangeType == DX12RenderBackend::ProgramInfo::DecodeType(srv_cbv_uav_idx[i])
-				&& curRange.RegisterSpace == DX12RenderBackend::ProgramInfo::DecodeSpaceIndex(srv_cbv_uav_idx[i])
-				&& curRange.BaseShaderRegister + curRange.NumDescriptors == DX12RenderBackend::ProgramInfo::DecodeRegisterIndex(srv_cbv_uav_idx[i])) {
-				++curRange.NumDescriptors;
+	std::vector<D3D12_DESCRIPTOR_RANGE> samplerRanges; /**< 记录sampler的descriptor range */
+	auto generateDescriptorRangeFromEncodingValue = []( std::vector<D3D12_DESCRIPTOR_RANGE>& container,
+		const std::vector<uint32_t> encodingValues ) -> void {
+		if (encodingValues.size() != 0) {
+			D3D12_DESCRIPTOR_RANGE newRange;
+			newRange.RangeType = ProgramInfo::DecodeTypeToDescriptorRangeType(encodingValues[0]);
+			newRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+			newRange.NumDescriptors = 1;
+			newRange.RegisterSpace = ProgramInfo::DecodeSpaceIndex(encodingValues[0]);
+			newRange.BaseShaderRegister = ProgramInfo::DecodeRegisterIndex(encodingValues[0]);
+			for (int i = 1; i < encodingValues.size(); ++i) {
+				if (newRange.RangeType == ProgramInfo::DecodeTypeToDescriptorRangeType(encodingValues[i])
+					&& newRange.RegisterSpace == ProgramInfo::DecodeSpaceIndex(encodingValues[i])
+					&& newRange.BaseShaderRegister + newRange.NumDescriptors == ProgramInfo::DecodeRegisterIndex(encodingValues[i])) {
+					++newRange.NumDescriptors;
+				}
+				else {
+					/** 需要创建新的range了 */
+					container.push_back(newRange);
+					newRange.RangeType = ProgramInfo::DecodeTypeToDescriptorRangeType(encodingValues[i]);
+					newRange.NumDescriptors = 1;
+					newRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+					newRange.RegisterSpace = ProgramInfo::DecodeSpaceIndex(encodingValues[i]);
+					newRange.BaseShaderRegister = ProgramInfo::DecodeRegisterIndex(encodingValues[i]);
+				}
 			}
-			else {
-				/** 需要创建新的range了 */
-				scuRanges.push_back(curRange);
-				curRange.RangeType = DX12RenderBackend::ProgramInfo::DecodeType(srv_cbv_uav_idx[i]);
-				curRange.NumDescriptors = 1;
-				curRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-				curRange.RegisterSpace = DX12RenderBackend::ProgramInfo::DecodeSpaceIndex(srv_cbv_uav_idx[i]);
-				curRange.BaseShaderRegister = DX12RenderBackend::ProgramInfo::DecodeRegisterIndex(srv_cbv_uav_idx[i]);
-			}
+			container.push_back(newRange);
 		}
-		scuRanges.push_back(curRange);
-	}
-	/** 处理sampler描述 */
-	std::vector<D3D12_DESCRIPTOR_RANGE> samplerRanges;
-	if (pmgRef.sampler_Desc.size() != 0) {
-		std::vector<uint32_t> sampler_idx;
-		for (const auto& idx : pmgRef.sampler_Desc) {
-			uint32_t samplerHeapIndex = DX12RenderBackend::ProgramInfo::DecodeIndex(idx.second);
-			if (samplerHeapIndex >= sampler_idx.size())
-				sampler_idx.resize(samplerHeapIndex + 1);
-			sampler_idx[samplerHeapIndex] = idx.second;
-		}
-		D3D12_DESCRIPTOR_RANGE curRange;
-		curRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
-		curRange.NumDescriptors = 1;
-		curRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-		curRange.RegisterSpace = DX12RenderBackend::ProgramInfo::DecodeSpaceIndex(sampler_idx[0]);
-		curRange.BaseShaderRegister = DX12RenderBackend::ProgramInfo::DecodeRegisterIndex(sampler_idx[0]);
-		for (int i = 1; i < sampler_idx.size(); ++i) {
-			if (curRange.RegisterSpace == DX12RenderBackend::ProgramInfo::DecodeSpaceIndex(sampler_idx[i])
-				&& curRange.BaseShaderRegister + curRange.NumDescriptors == DX12RenderBackend::ProgramInfo::DecodeRegisterIndex(sampler_idx[i])) {
-				++curRange.NumDescriptors;
+	};
+	if (pmgRef.resNameToEncodingValue.size() != 0) {
+		std::vector<uint32_t> samplerEncodingValues;
+		std::vector<uint32_t> scuEncodingValues;
+		/** 将原来存储于programInfo中的string -> heapIndexEncode信息，根据heapIndex重新进行一次排序
+		 * 因为需要产生描述连续范围的descriptor range，而原来记录的map中不能直接提取heapIndex的顺序信息
+		 * 只能逐个分析并提取排序 */
+		for (const auto& idx : pmgRef.resNameToEncodingValue) {
+			uint32_t resHeapIndex = ProgramInfo::DecodeIndex(idx.second);
+			D3D12_DESCRIPTOR_RANGE_TYPE type = ProgramInfo::DecodeTypeToDescriptorRangeType(idx.second);
+			std::vector<uint32_t>& encodingValues = type == D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER ? samplerEncodingValues : scuEncodingValues;
+			if (resHeapIndex >= encodingValues.size()) {
+				encodingValues.resize(resHeapIndex + 1);
 			}
-			else {
-				samplerRanges.push_back(curRange);
-				curRange.BaseShaderRegister = DX12RenderBackend::ProgramInfo::DecodeRegisterIndex(sampler_idx[i]);
-				curRange.RegisterSpace = DX12RenderBackend::ProgramInfo::DecodeSpaceIndex(sampler_idx[i]);
-				curRange.NumDescriptors = 1;
-			}
+			encodingValues[resHeapIndex] = idx.second;
 		}
-		samplerRanges.push_back(curRange);
+		generateDescriptorRangeFromEncodingValue(scuRanges, scuEncodingValues);
+		generateDescriptorRangeFromEncodingValue(samplerRanges, samplerEncodingValues);
 	}
 
 	CD3DX12_ROOT_PARAMETER parameters[2];
@@ -253,8 +361,8 @@ bool DX12RenderDevice::generateGraphicsRootSignature(const ProgramDescriptor & p
 	D3D12_VERSIONED_ROOT_SIGNATURE_DESC rootSig;
 	rootSig.Version = D3D_ROOT_SIGNATURE_VERSION_1_0;
 	rootSig.Desc_1_0.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-	rootSig.Desc_1_0.pStaticSamplers = nullptr;
-	rootSig.Desc_1_0.NumStaticSamplers = 0;
+	rootSig.Desc_1_0.NumStaticSamplers = pmgRef.staticSamplers.size();
+	rootSig.Desc_1_0.pStaticSamplers = pmgRef.staticSamplers.size() == 0 ? nullptr : pmgRef.staticSamplers.data();
 	rootSig.Desc_1_0.NumParameters = 2;
 	rootSig.Desc_1_0.pParameters = (D3D12_ROOT_PARAMETER*)&parameters;
 	SmartPTR<ID3DBlob> serializeRootSignature;

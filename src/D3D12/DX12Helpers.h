@@ -59,7 +59,7 @@ inline D3D12_PRIMITIVE_TOPOLOGY_TYPE PrimitiveTypeToPrimitiveTopologyType(Primit
 	}
 }
 
-inline D3D12_FILL_MODE FillModeToFillMode(FillMode mode) {
+inline D3D12_FILL_MODE FillModeToDX12FillMode(FillMode mode) {
 	switch (mode)
 	{
 	case UnknownVision::FILL_MODE_SOLID:
@@ -101,6 +101,36 @@ inline D3D12_RESOURCE_FLAGS ResourceStatusToResourceFlag(const ResourceStatus& s
 	if (status.canBeUnorderAccess()) flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	/** TODO: 还有DenyShaderResource, crossAdapter, simultaneousAccess, videoDecodeReferenceOnly */
 	return flags;
+}
+
+inline D3D12_FILTER FilterTypeToDX12FilterType(const FilterType& type) {
+	switch (type)
+	{
+	case FILTER_TYPE_MIN_MAG_MIP_POINT:
+		return D3D12_FILTER_MIN_MAG_MIP_POINT;
+	case FILTER_TYPE_MIN_MAG_MIP_LINEAR:
+		return D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	case FILTER_TYPE_ANISOTROPIC:
+		return D3D12_FILTER_ANISOTROPIC;
+	default:
+		FLOG("%s: Doesn't support this type of filter\n", __FUNCTION__);
+		assert(false);
+	}
+}
+
+inline D3D12_TEXTURE_ADDRESS_MODE SamplerAddressModeToDX12TextureAddressMode(const SamplerAddressMode& mode) {
+	switch (mode)
+	{
+	case SAMPLER_ADDRESS_MODE_BORDER:
+		return D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	case SAMPLER_ADDRESS_MODE_CLAMP:
+		return D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	case SAMPLER_ADDRESS_MODE_WRAP:
+		return D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	default:
+		FLOG("%s: Doesn't support this address mode\n", __FUNCTION__);
+		assert(false);
+	}
 }
 
 END_NAME_SPACE

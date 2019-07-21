@@ -1,11 +1,34 @@
 ﻿#include "DXCompilerHelper.h"
-#include "../FileContainer/FileContainer.h"
 
 #include <d3dcompiler.h>
 #include <iostream>
 #include <cassert>
 #include <strsafe.h>
 #include <tchar.h>
+#include <set>
+#include <mutex>
+
+std::set<std::string> ProcessingShaders; /**< 存储当前正在处理的shader名称，用于防止相同的shader被重复Load */
+std::mutex GlobalShaderLock;
+std::condition_variable GlobalShaderCV;
+/** 以RAII的方式确保相同shader的load过程可以串行进行 */
+struct ShaderProcessingMutex {
+	const std::string shaderName;
+	ShaderProcessingMutex(const char* shaderName)
+		: shaderName(shaderName) {
+		std::unique_lock<std::mutex> lu(GlobalShaderLock);
+		GlobalShaderCV.wait(lu, [&shaderName]() {
+			return ProcessingShaders.find(shaderName) == ProcessingShaders.end();
+		});
+		ProcessingShaders.insert(shaderName);
+	}
+	~ShaderProcessingMutex() {
+		std::unique_lock<std::mutex> lu(GlobalShaderLock);
+		ProcessingShaders.erase(shaderName);
+		lu.unlock();
+		GlobalShaderCV.notify_all();
+	}
+};
 
 #define SmartPtr Microsoft::WRL::ComPtr
 
@@ -113,7 +136,7 @@ auto DXCompilerHelper::TimeStampOfShaderSourceCode(const char * shaderName) -> s
 {
 	std::wstring&& srcFile = generateSrcFileName(shaderName);
 	/** 尝试打开源码文件 */
-	SafeHandle srcHFile = CreateFileW(srcFile.data(), GENERIC_READ,
+	SafeHandle srcHFile = CreateFileW(srcFile.data(), 0, /**< 设置为0，仅读取文件属性不访问内容 */
 		FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
 		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (srcHFile == INVALID_HANDLE_VALUE) return { 0, false }; /**< 文件不存在 */
@@ -129,6 +152,7 @@ void DisplayError(LPTSTR lpszFunction);
 
 Microsoft::WRL::ComPtr<ID3DBlob> DXCompilerHelper::LoadShader(const char * shaderName, const char * profile)
 {
+	ShaderProcessingMutex spm(shaderName);
 	std::wstring&& binFile = generateBinFileName(shaderName);
 	std::wstring&& srcFile = generateSrcFileName(shaderName);
 
@@ -255,9 +279,20 @@ bool DXCompilerHelper::CompileToByteCode(const wchar_t* srcFilePath, const char*
 	
 	byteCodes.As(&outputBuffer);
 	if (outputDebugInfo) {
-		std::string&& df = fromWideCharToUTF8(suggestDebugInfoFileName);
-		FileContainer debugInfoFile(df.data(), std::ios::out | std::ios::trunc);
-		debugInfoFile.WriteFile(0, static_cast<uint32_t>(debugInfo->GetBufferSize()), reinterpret_cast<const char*>(debugInfo->GetBufferPointer()));
+		SafeHandle debugInfoFile = CreateFileW(suggestDebugInfoFileName, GENERIC_READ | GENERIC_WRITE,
+			FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+			CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+		if (debugInfoFile != INVALID_HANDLE_VALUE) {
+			DWORD numberOfDataWritten = 0;
+			if (WriteFile(debugInfoFile.get(), debugInfo->GetBufferPointer(),
+				debugInfo->GetBufferSize(), &numberOfDataWritten, nullptr) == false
+				|| numberOfDataWritten != debugInfo->GetBufferSize()) {
+				m_err = "write debug file failed!\n";
+			}
+		}
+		else {
+			m_err = "create debug file failed!\n";
+		}
 	}
 	return true;
 }

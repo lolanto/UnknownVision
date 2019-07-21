@@ -30,7 +30,11 @@ int main() {
 	RasterizeOptions rastOpt;
 	OutputStageOptions osOpt;
 	osOpt.rtvFormats[0] = ELEMENT_FORMAT_TYPE_R16_FLOAT;
-	auto programDescirptor = rb.RequestProgram(names, descHandle, true, rastOpt, osOpt);
+
+	SamplerDescriptor sampler = rd->RequestSampler(FILTER_TYPE_ANISOTROPIC, SAMPLER_ADDRESS_MODE_WRAP, SAMPLER_ADDRESS_MODE_WRAP,
+		SAMPLER_ADDRESS_MODE_WRAP);
+
+	auto programDescirptor = rd->RequestProgram(names, descHandle, true, rastOpt, osOpt, { {"g_sampler", sampler} });
 
 	std::cout << rd->generateGraphicsPSO(programDescirptor) << '\n';
 

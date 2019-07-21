@@ -95,153 +95,22 @@ RenderDevice * DX12RenderBackend::CreateDevice(void * parameters)
 	return m_devices.back();
 }
 
-ProgramDescriptor DX12RenderBackend::RequestProgram(const ShaderNames& shaderNames, VertexAttributeHandle va_handle,
-	bool usedIndex, RasterizeOptions rasterization, OutputStageOptions outputStage) {
-	/** 先校验shader组合的合法性 */
-	ProgramType newProgramType;
-	if (shaderNames[SHADER_TYPE_VERTEX_SHADER].size() != 0 &&
-		shaderNames[SHADER_TYPE_PIXEL_SHADER].size() != 0)
-		newProgramType = PROGRAM_TYPE_GRAPHICS;
-	else if (shaderNames[SHADER_TYPE_COMPUTE_SHADER].size() != 0)
-		newProgramType = PROGRAM_TYPE_COMPUTE;
-	else {
-		FLOG("%s: Invalid shader group!\n", __FUNCTION__);
-		return ProgramDescriptor::CreateInvalidDescirptor();
-	}
-
-	std::map<std::string, Parameter::Type> signature; /**< 存储该program所有签名 */
-	ProgramInfo newProgramInfo;
-	/** 一些临时数据，用于先行收集shader的srv, cbv, uav信息，供之后的排序使用 */
-	std::list<uint32_t> srv_cbv_uav_idx;
-	std::map<std::string, std::list<uint32_t>::iterator> name_srv_cbv_uav_ptr;
-	std::list<uint32_t> sampler_idx;
-	std::map<std::string, std::list<uint32_t>::iterator> name_sampler_ptr;
-	auto listInsert = [](std::list<uint32_t>& list, uint32_t value)->std::list<uint32_t>::iterator {
-		auto iter = list.begin();
-		while (iter != list.end() && value > (*iter)) ++iter;
-		if (iter == list.end()) {
-			list.push_back(value);
-			return std::prev(list.end());
-		}
-		else {
-			return list.insert(iter, value);
-		}
-	};
-	/** 逐个shader分析 */
-	for (uint8_t i = 0; i < SHADER_TYPE_NUMBER_OF_TYPE &&
-		shaderNames[i].size() != 0; ++i) {
-		ShaderType curType = static_cast<ShaderType>(i);
-		const ShaderInfo& shader = analyseShader(shaderNames[i].c_str(), curType);
-		/** 分析资源签名 */
-		for (const auto& vSig : shader.signatures) {
-			uint32_t idx = 0;
-			ProgramInfo::EncodeReigsterIndex(idx, vSig.second.registerIndex);
-			ProgramInfo::EncodeSpaceIndex(idx, vSig.second.spaceIndex);
-			switch (vSig.second.type) {
-			/** TODO: 暂时还没有支持UAV */
-			case D3D_SIT_CBUFFER:
-				signature.insert(std::make_pair(vSig.first, Parameter::PARAMETER_TYPE_BUFFER));
-				ProgramInfo::EncodeType(idx, 1u);
-				name_srv_cbv_uav_ptr.insert(std::make_pair(vSig.first, listInsert(srv_cbv_uav_idx, idx)));
-				break;
-			case D3D_SIT_TEXTURE:
-				signature.insert(std::make_pair(vSig.first, Parameter::PARAMETER_TYPE_TEXTURE));
-				name_srv_cbv_uav_ptr.insert(std::make_pair(vSig.first, listInsert(srv_cbv_uav_idx, idx)));
-				break;
-			case D3D_SIT_SAMPLER:
-				signature.insert(std::make_pair(vSig.first, Parameter::PARAMETER_TYPE_SAMPLER));
-				name_sampler_ptr.insert(std::make_pair(vSig.first, listInsert(sampler_idx, idx)));
-				break;
-			default:
-				FLOG("%s: Doesn't support parameter: %s\n", __FUNCTION__, vSig.first.c_str());
-			}
-		}
-		/** 校验IA的输入是否匹配 */
-		if (shader.Type() == SHADER_TYPE_VERTEX_SHADER) {
-			const InputLayoutSignatureEncode& ILSE = m_inputlayouts.find(va_handle)->second;
-			if (VS_IO_ExceedMatch(ILSE.VS_IO, shader.VS_IO) == false) {
-				FLOG("%s: IA Stage setting doesn't match this program\n", __FUNCTION__);
-				return ProgramDescriptor::CreateInvalidDescirptor();
-			}
-			newProgramInfo.inputLayoutPtr = &ILSE.layout;
-			/** 将IA的签名合并到整个签名中 */
-			signature.insert(ILSE.inputLayoutSignature.begin(), ILSE.inputLayoutSignature.end());
-		}
-		/** 设置输出接口 */
-		else if (shader.Type() == SHADER_TYPE_PIXEL_SHADER) {
-			std::string semantic = "COLOR";
-			for (uint8_t target = 0; target < getSV_TARGET(shader.PS_IO); ++target) {
-				signature.insert(std::make_pair(semantic + std::to_string(target), Parameter::PARAMETER_TYPE_TEXTURE));
-			}
-			semantic = "DEPTH";
-			for (uint8_t depth = 0; depth < getSV_DEPTH(shader.PS_IO); ++depth) {
-				signature.insert(std::make_pair(semantic + std::to_string(depth), Parameter::PARAMETER_TYPE_TEXTURE));
-			}
-		}
-	}
-	{
-		/** 构建Descriptor列表 */
-		std::list<uint32_t>::iterator iter;
-		iter = srv_cbv_uav_idx.begin();
-		for (int i = 0; i < srv_cbv_uav_idx.size(); ++i, ++iter) {
-			(*iter) += i;
-		}
-		for (const auto& e : name_srv_cbv_uav_ptr) {
-			newProgramInfo.srv_cbv_uav_Desc.insert(std::make_pair(e.first, *e.second));
-		}
-		iter = sampler_idx.begin();
-		for (int i = 0;	i < sampler_idx.size(); ++i, ++iter) {
-			(*iter) += i;
-		}
-		for (const auto& e : name_sampler_ptr) {
-			newProgramInfo.sampler_Desc.insert(std::make_pair(e.first, *e.second));
-		}
-	}
-	/** 假如使用索引，需要添加索引签名 */
-	if (usedIndex) signature.insert(std::make_pair("IDXBUF", Parameter::PARAMETER_TYPE_BUFFER));
-	ProgramHandle newProgramHandle(m_nextProgramHandle++);
-
-	{
-		std::lock_guard<decltype(m_programLock)> lg(m_programLock);
-		m_programs.insert(std::make_pair(newProgramHandle, newProgramInfo));
-	}
-
-	return 	ProgramDescriptor(std::move(signature), shaderNames, newProgramHandle,
-		newProgramType, usedIndex, rasterization, outputStage);
-}
-
-const DX12RenderBackend::ProgramInfo & DX12RenderBackend::AccessProgramInfo(const ProgramHandle & handle) const
-{
-	std::lock_guard<OptimisticLock> lg(m_programLock);
-	auto res = m_programs.find(handle);
-	assert(res != m_programs.end());
-	return res->second;
-}
-
-const DX12RenderBackend::ShaderInfo & DX12RenderBackend::AccessShaderInfo(const std::string & shaderName) const
-{
-	std::lock_guard<OptimisticLock> lg(m_shaderLock);
-	auto iter = m_shaders.find(shaderName);
-	assert(iter != m_shaders.end());
-	return iter->second;
-}
-
-auto DX12RenderBackend::analyseShader(const char * shaderName, ShaderType type)
+auto DX12RenderBackend::UpdateShaderInfo(const char * shaderName, ShaderType typeHint)
 	-> const DX12RenderBackend::ShaderInfo&
 {
 	decltype(m_shaders)::iterator iterator;
+	/** TODO: 这种加锁方式在只有一个shader需要创建时，
+	 * 其余无关shader的查询相关的调用都会被阻塞，应该优化 */
+	std::lock_guard<std::mutex> lg(m_shaderLock);
 	/** 判断shader是否已经被缓存 */
-	{
-		std::lock_guard<OptimisticLock> lg(m_shaderLock); /**< 考虑锁占用时间短，使用乐观锁 */
-		iterator = m_shaders.find(shaderName);
-		if (iterator != m_shaders.end()) {
-			FLOG("%s has been exist!\n", shaderName);
-		}
-		else {
-			auto [tempitr, res] = m_shaders.insert(std::make_pair(shaderName, ShaderInfo()));
-			assert(res == true);
-			iterator = tempitr;
-		}
+	iterator = m_shaders.find(shaderName);
+	if (iterator != m_shaders.end()) {
+		FLOG("%s has been exist!\n", shaderName);
+	}
+	else {
+		auto[tempitr, res] = m_shaders.insert(std::make_pair(shaderName, ShaderInfo()));
+		assert(res == true);
+		iterator = tempitr;
 	}
 	ShaderInfo& shader = iterator->second;
 	DXCompilerHelper dxc;
@@ -251,51 +120,33 @@ auto DX12RenderBackend::analyseShader(const char * shaderName, ShaderType type)
 		/** 缓存的字节码失效，需要重新加载 */
 		/** 清除原有的shader缓存数据 */
 		shader.Reset();
-		{
-			decltype(m_mapOfShaderAnalysationLock)::iterator lockIter;
-			/** 获得shader文件锁 */
-			{
-				std::lock_guard<OptimisticLock> lg(m_shaderAnalysationLock);
-				lockIter = m_mapOfShaderAnalysationLock.find(shaderName);
-				if (lockIter == m_mapOfShaderAnalysationLock.end()) {
-					/** 对应的锁不存在，创建锁 */
-					auto[tempIter, res] = m_mapOfShaderAnalysationLock.insert(std::make_pair(shaderName,
-						std::make_unique<std::mutex>()));
-					assert(res == true);
-					lockIter = tempIter;
-				}
-			}
-			/** 加载新的blob */
-			{
-				std::lock_guard<std::mutex> lg(*(lockIter->second));
-				/** 根据shader类型构造profile */
-				switch (type) {
-				case SHADER_TYPE_VERTEX_SHADER:
-					shader.blob = dxc.LoadShader(shaderName, SHADER_MODEL(vs));
-					break;
-				case SHADER_TYPE_PIXEL_SHADER:
-					shader.blob = dxc.LoadShader(shaderName, SHADER_MODEL(ps));
-					break;
-				case SHADER_TYPE_COMPUTE_SHADER:
-					shader.blob = dxc.LoadShader(shaderName, SHADER_MODEL(cs));
-					break;
-				case SHADER_TYPE_GEOMETRY_SHADER:
-					shader.blob = dxc.LoadShader(shaderName, SHADER_MODEL(gs));
-					break;
-				case SHADER_TYPE_TESSELLATION_SHADER:
-					shader.blob = dxc.LoadShader(shaderName, SHADER_MODEL(ds));
-					break;
-				case SHADER_TYPE_HULL_SHADER:
-					shader.blob = dxc.LoadShader(shaderName, SHADER_MODEL(hs));
-					break;
-				default:
-					assert(false);
-				}
-				if (shader.blob == nullptr) {
-					MLOG(dxc.LastErrorMsg());
-					assert(false);
-				}
-			}
+		/** 加载新的blob */
+		/** 根据shader类型构造profile */
+		switch (typeHint) {
+		case SHADER_TYPE_VERTEX_SHADER:
+			shader.blob = dxc.LoadShader(shaderName, SHADER_MODEL(vs));
+			break;
+		case SHADER_TYPE_PIXEL_SHADER:
+			shader.blob = dxc.LoadShader(shaderName, SHADER_MODEL(ps));
+			break;
+		case SHADER_TYPE_COMPUTE_SHADER:
+			shader.blob = dxc.LoadShader(shaderName, SHADER_MODEL(cs));
+			break;
+		case SHADER_TYPE_GEOMETRY_SHADER:
+			shader.blob = dxc.LoadShader(shaderName, SHADER_MODEL(gs));
+			break;
+		case SHADER_TYPE_TESSELLATION_SHADER:
+			shader.blob = dxc.LoadShader(shaderName, SHADER_MODEL(ds));
+			break;
+		case SHADER_TYPE_HULL_SHADER:
+			shader.blob = dxc.LoadShader(shaderName, SHADER_MODEL(hs));
+			break;
+		default:
+			assert(false);
+		}
+		if (shader.blob == nullptr) {
+			MLOG(dxc.LastErrorMsg());
+			assert(false);
 		}
 		shader.timestamp = timestamp + 1; /**< 更新时间戳 */
 		/** 对字节码重新进行分析 */
@@ -304,7 +155,7 @@ auto DX12RenderBackend::analyseShader(const char * shaderName, ShaderType type)
 		ref->GetDesc(&shaderDesc);
 		shader.version = shaderDesc.Version;
 		/** TODO: 支持更多类型shader的semantic */
-		if (type == SHADER_TYPE_VERTEX_SHADER) {
+		if (typeHint == SHADER_TYPE_VERTEX_SHADER) {
 			for (unsigned int i = 0; i < shaderDesc.InputParameters; ++i) {
 				D3D12_SIGNATURE_PARAMETER_DESC sigParaDesc;
 				ref->GetInputParameterDesc(i, &sigParaDesc);
@@ -329,7 +180,7 @@ auto DX12RenderBackend::analyseShader(const char * shaderName, ShaderType type)
 				}
 			}
 		}
-		else if (type == SHADER_TYPE_PIXEL_SHADER) {
+		else if (typeHint == SHADER_TYPE_PIXEL_SHADER) {
 			for (unsigned int i = 0; i < shaderDesc.OutputParameters; ++i) {
 				D3D12_SIGNATURE_PARAMETER_DESC sigParaDesc;
 				ref->GetOutputParameterDesc(i, &sigParaDesc);
@@ -353,6 +204,14 @@ auto DX12RenderBackend::analyseShader(const char * shaderName, ShaderType type)
 		}
 	}
 	return shader;
+}
+
+auto DX12RenderBackend::AccessShaderInfo(const std::string& shaderName) -> const DX12RenderBackend::ShaderInfo &
+{
+	std::lock_guard<std::mutex> lg(m_shaderLock);
+	auto shader = m_shaders.find(shaderName);
+	assert(shader != m_shaders.end());
+	return shader->second;
 }
 
 

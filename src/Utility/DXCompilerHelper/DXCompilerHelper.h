@@ -25,7 +25,8 @@ public:
 	 * @param shaderName 需要加载的shader的(路径/)名称
 	 * @param profile 编译时必须设置的属性，决定了shader model以及shader的类型
 	 * @return 返回存储字节码的缓冲区，假如编译失败，返回空的blob
-	 * @remark 调用者必须保证源码文件(.hlsl)的存在*/
+	 * @remark 调用者必须保证源码文件(.hlsl)的存在
+	 * 该函数保证相同shader加载过程可安全并行进行*/
 	Microsoft::WRL::ComPtr<ID3DBlob> LoadShader(const char* shaderName, const char* profile);
 	/** 从Shader源文件编译产生字节码供Shader生成使用
 	 * @param srcFilePath Shader源文件路径

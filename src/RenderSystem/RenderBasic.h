@@ -24,7 +24,7 @@ public:
 public:
 	RenderDevice(uint32_t width, uint32_t height) : ScreenWidth(width), ScreenHeight(height),
 		m_nextBufferHandle(NUMBER_OF_SPECIAL_BUFFER_RESOURCE), m_nextTextureHandle(NUMBER_OF_SPECIAL_TEXTURE_RESOURCE),
-		m_state(DEVICE_STATE_UNINITIALIZE) {}
+		m_state(DEVICE_STATE_UNINITIALIZE), m_nextProgramHandle(0) {}
 	/** @remark 必须在子类调用完成后调用该函数修改状态 */
 	virtual bool Initialize(std::string config) {
 		m_state = DEVICE_STATE_RUNNING;
@@ -43,6 +43,7 @@ public:
 			status, width, height, type);
 		else return TextureDescriptor(TextureHandle::InvalidIndex(), status, width, height, type);
 	}
+	/** 请求特殊纹理(默认backbuffer)的描述器 */
 	TextureDescriptor RequestTexture(SpecialTextureResource specialResource) thread_safe {
 		switch (specialResource) {
 		case DEFAULT_BACK_BUFFER:
@@ -60,6 +61,17 @@ public:
 		return SamplerDescriptor(SamplerHandle(static_cast<SamplerHandle::ValueType>(m_nextSamplerHandle++)),
 			filter, u, v, w, color);
 	}
+
+	/** 创建一个程序，这个程序可能是compute类型(只有compute shader)，也可能是graphics类型
+	* @param shaderNames 该program种使用的各个shader的名称
+	* @param opts 程序中的一些操作进行设置
+	* @param vtxAttDesc 程序使用到的顶点属性，必须覆盖shader中所有的顶点属性
+	* @param usedIndex 是否使用索引，仅对graphics程序有效
+	* @return 返回程序的描述器，包含程序关键信息 */
+	virtual ProgramDescriptor RequestProgram(const ShaderNames& shaderNames, VertexAttributeHandle va_handle,
+		bool usedIndex, RasterizeOptions rasterization, OutputStageOptions outputStage,
+		const std::map<std::string, const SamplerDescriptor&>& staticSamplers = {}) = 0 thread_safe;
+
 	/** 将task提交给RenderrDevice进行处理，调用后传入的task将被还原为默认状态 */
 	void Submit(Task& task, uint64_t frameCount) thread_safe { 
 		if (task.Commands.empty()) { 
@@ -79,6 +91,7 @@ protected:
 	OptimisticLock m_taskQueueLock;
 	std::queue<Task> m_taskQueue;
 	DeviceState m_state;
+	std::atomic<ProgramHandle::ValueType> m_nextProgramHandle;
 private:
 	std::atomic<BufferHandle::ValueType> m_nextBufferHandle;
 	std::atomic<TextureHandle::ValueType> m_nextTextureHandle;
@@ -87,27 +100,15 @@ private:
 
 class RenderBackend {
 public:
-	RenderBackend() : m_nextVertexAttributeHandle(0), m_nextProgramHandle(0) {}
+	RenderBackend() : m_nextVertexAttributeHandle(0) {}
 	virtual ~RenderBackend() {}
 	virtual bool Initialize() = 0;
 	/** 创建依赖该API的设备 */
 	virtual RenderDevice* CreateDevice(void* parameters) = 0;
-	/** 创建一个程序，这个程序可能是compute类型(只有compute shader)，也可能是graphics类型
-	 * @param shaderNames 该program种使用的各个shader的名称
-	 * @param opts 程序中的一些操作进行设置
-	 * @param vtxAttDesc 程序使用到的顶点属性，必须覆盖shader中所有的顶点属性
-	 * @param usedIndex 是否使用索引，仅对graphics程序有效 
-	 * @return 返回程序的描述器，包含程序关键信息 */
-	virtual ProgramDescriptor RequestProgram(const ShaderNames& shaderNames, VertexAttributeHandle va_handle,
-		bool usedIndex, RasterizeOptions rasterization, OutputStageOptions outputStage) = 0 thread_safe;
 	virtual bool isInitialized() const { return false; }
 	/** 注册顶点结构描述，以便重复使用 */
 	virtual VertexAttributeHandle RegisterVertexAttributeDescs(const VertexAttributeDescs& descs) = 0;
 protected:
-	 OptimisticLock m_shaderAnalysationLock;
-	std::map<std::string, std::unique_ptr<std::mutex> > m_mapOfShaderAnalysationLock;
-
-	std::atomic<ProgramHandle::ValueType> m_nextProgramHandle;
 	std::atomic<VertexAttributeHandle::ValueType> m_nextVertexAttributeHandle;
 };
 

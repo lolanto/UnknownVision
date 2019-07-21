@@ -85,7 +85,7 @@ void QueueProxy::Execute(uint32_t numCommandLists, ID3D12CommandList * const * p
 
 
 
-D3D12_BLEND_DESC AnalyseBlendingOptionsFromOutputStageOptions(const OutputStageOptions & osOpt)
+D3D12_BLEND_DESC AnalyseBlendingOptionsFromOutputStageOptions(const OutputStageOptions & osOpt) thread_safe
 {
 	/** TODO: 完善对blend的支持，目前仅提供默认(无blend)操作 */
 	D3D12_BLEND_DESC desc;
@@ -104,7 +104,7 @@ D3D12_BLEND_DESC AnalyseBlendingOptionsFromOutputStageOptions(const OutputStageO
 	return desc;
 }
 
-D3D12_DEPTH_STENCIL_DESC AnalyseDepthStencilOptionsFromOutputStageOptions(const OutputStageOptions & osOpt)
+D3D12_DEPTH_STENCIL_DESC AnalyseDepthStencilOptionsFromOutputStageOptions(const OutputStageOptions & osOpt) thread_safe
 {
 	/** TODO: 完善深度模板操作的支持，目前仅支持默认的深度测试，不支持模板测试 */
 	D3D12_DEPTH_STENCIL_DESC desc;
@@ -121,10 +121,10 @@ D3D12_DEPTH_STENCIL_DESC AnalyseDepthStencilOptionsFromOutputStageOptions(const 
 	return desc;
 }
 
-D3D12_RASTERIZER_DESC AnalyseRasterizerOptionsFromRasterizeOptions(const RasterizeOptions & rastOpt)
+D3D12_RASTERIZER_DESC AnalyseRasterizerOptionsFromRasterizeOptions(const RasterizeOptions & rastOpt) thread_safe
 {
 	D3D12_RASTERIZER_DESC desc;
-	desc.FillMode = FillModeToFillMode(rastOpt.fillMode);
+	desc.FillMode = FillModeToDX12FillMode(rastOpt.fillMode);
 	desc.CullMode = CullModeToCullMode(rastOpt.cullMode);
 	desc.FrontCounterClockwise = rastOpt.counterClockWiseIsFront;
 	/** TODO: 支持以下光栅化设置 */
@@ -137,6 +137,46 @@ D3D12_RASTERIZER_DESC AnalyseRasterizerOptionsFromRasterizeOptions(const Rasteri
 	desc.ForcedSampleCount = 0;
 	desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 	return desc;
+}
+
+D3D12_STATIC_SAMPLER_DESC AnalyseStaticSamplerFromSamplerDescriptor(const SamplerDescriptor & desc, uint8_t spaceIndex, uint8_t registerIndex) thread_safe
+{
+	D3D12_STATIC_SAMPLER_DESC samplerDesc;
+	samplerDesc.RegisterSpace = spaceIndex;
+	samplerDesc.ShaderRegister = registerIndex;
+	samplerDesc.Filter = FilterTypeToDX12FilterType(desc.filter);
+	samplerDesc.AddressU = SamplerAddressModeToDX12TextureAddressMode(desc.uAddrMode);
+	samplerDesc.AddressV = SamplerAddressModeToDX12TextureAddressMode(desc.vAddrMode);
+	samplerDesc.AddressW = SamplerAddressModeToDX12TextureAddressMode(desc.wAddrMode);
+	/** 静态sampler不能提供可设置的边界颜色只能使用默认值黑/白 */
+	samplerDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
+	/** TODO: 以下设置暂时不支持，均采用默认操作 */
+	samplerDesc.MipLODBias = 0;
+	samplerDesc.MaxAnisotropy = 16;
+	samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	samplerDesc.MinLOD = 0.0f;
+	samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+	samplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	return samplerDesc;
+}
+
+D3D12_SAMPLER_DESC AnalyseSamplerFromSamperDescriptor(const SamplerDescriptor& desc) thread_safe {
+	D3D12_SAMPLER_DESC samplerDesc;
+	samplerDesc.Filter = FilterTypeToDX12FilterType(desc.filter);
+	samplerDesc.AddressU = SamplerAddressModeToDX12TextureAddressMode(desc.uAddrMode);
+	samplerDesc.AddressV = SamplerAddressModeToDX12TextureAddressMode(desc.vAddrMode);
+	samplerDesc.AddressW = SamplerAddressModeToDX12TextureAddressMode(desc.wAddrMode);
+	samplerDesc.BorderColor[0] = desc.borderColor[0];
+	samplerDesc.BorderColor[1] = desc.borderColor[1];
+	samplerDesc.BorderColor[2] = desc.borderColor[2];
+	samplerDesc.BorderColor[3] = desc.borderColor[3];
+	/** TODO: 以下设置暂时不支持，均采用默认操作 */
+	samplerDesc.MipLODBias = 0;
+	samplerDesc.MaxAnisotropy = 16;
+	samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	samplerDesc.MinLOD = 0.0f;
+	samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+	return samplerDesc;
 }
 
 END_NAME_SPACE

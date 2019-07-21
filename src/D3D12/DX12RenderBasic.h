@@ -18,12 +18,15 @@
 BEG_NAME_SPACE
 
 /** 分析输出阶段中关于blending过程的内容，并生成blending设置 */
-D3D12_BLEND_DESC AnalyseBlendingOptionsFromOutputStageOptions(const OutputStageOptions& osOpt);
+D3D12_BLEND_DESC AnalyseBlendingOptionsFromOutputStageOptions(const OutputStageOptions& osOpt) thread_safe;
 /** 分析输出阶段中关于Depth和stencil过程的设置，并生成Depth Stencil设置 */
-D3D12_DEPTH_STENCIL_DESC AnalyseDepthStencilOptionsFromOutputStageOptions(const OutputStageOptions& osOpt);
+D3D12_DEPTH_STENCIL_DESC AnalyseDepthStencilOptionsFromOutputStageOptions(const OutputStageOptions& osOpt) thread_safe;
 /** 分析光栅化的设置并生成DX12相应的设置 */
-D3D12_RASTERIZER_DESC AnalyseRasterizerOptionsFromRasterizeOptions(const RasterizeOptions& rastOpt);
-
+D3D12_RASTERIZER_DESC AnalyseRasterizerOptionsFromRasterizeOptions(const RasterizeOptions& rastOpt) thread_safe;
+/** 分析静态samplerState并生成DX12相应的设置 */
+D3D12_STATIC_SAMPLER_DESC AnalyseStaticSamplerFromSamplerDescriptor(const SamplerDescriptor& desc, uint8_t spaceIndex, uint8_t registerIndex) thread_safe;
+/** 分析samplerState并生成DX12相应的设置 */
+D3D12_SAMPLER_DESC AnalyseSamplerFromSamperDescriptor(const SamplerDescriptor& desc) thread_safe;
 class DX12RenderBackend;
 class DX12RenderDevice;
 
@@ -135,6 +138,56 @@ public:
 	struct SamplerInfo {
 		D3D12_SAMPLER_DESC desc;
 	};
+
+	struct ProgramInfo {
+		/** 资源类型的编码方式，只有4位有效 */
+		enum ResourceType : uint8_t {
+			RESOURCE_TYPE_SHADER_RESOURCE_VIEW = 0x00u,
+			RESOURCE_TYPE_CONSTANT_BUFFER_VIEW = 0x01u,
+			RESOURCE_TYPE_UNORDER_ACCESS_VIEW = 0x02u,
+			RESOURCE_TYPE_SAMPLER_STATE = 0x03
+		};
+		const std::vector<D3D12_INPUT_ELEMENT_DESC>* inputLayoutPtr;
+		std::map<std::string, uint32_t> resNameToEncodingValue; /**< 资源名称和资源type, space, register编码 */
+		std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers; /**< 静态sampler state */
+		SmartPTR<ID3D12PipelineState> pso;
+		SmartPTR<ID3D12RootSignature> rootSignature;
+		static void EncodeHelper(uint32_t& idx, uint8_t offset, uint32_t mask, uint8_t value) thread_safe {
+			mask = mask << offset;
+			mask = ~mask;
+			idx &= mask;
+			mask = value;
+			mask = mask << offset;
+			idx |= mask;
+		}
+		/** 向idx编码寄存器索引value */
+		static void EncodeReigsterIndex(uint32_t& idx, uint8_t value) thread_safe {
+			EncodeHelper(idx, 12, 0xFFu, value);
+		}
+		/** 向idx编码空间索引value */
+		static void EncodeSpaceIndex(uint32_t& idx, uint8_t value) thread_safe {
+			EncodeHelper(idx, 20, 0xFFu, value);
+		}
+		/** 向idx编码类型编号 SRV: 0x00, CBV: 0x01, UAV: 0x02 */
+		static void EncodeType(uint32_t& idx, ResourceType type) thread_safe {
+			EncodeHelper(idx, 28, 0x0Fu, type);
+		}
+		static uint8_t DecodeRegisterIndex(const uint32_t& idx) thread_safe { return (idx & 0x000FF000u) >> 12; }
+		static uint8_t DecodeSpaceIndex(const uint32_t& idx) thread_safe { return (idx & 0x0FF00000u) >> 20; }
+		/** 仅对SRV CBV UAV有效 */
+		static D3D12_DESCRIPTOR_RANGE_TYPE DecodeTypeToDescriptorRangeType(const uint32_t& idx) thread_safe {
+			switch ((idx & 0xF0000000u) >> 28) {
+			case RESOURCE_TYPE_SHADER_RESOURCE_VIEW: return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+			case RESOURCE_TYPE_CONSTANT_BUFFER_VIEW: return D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+			case RESOURCE_TYPE_UNORDER_ACCESS_VIEW: return D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+			case RESOURCE_TYPE_SAMPLER_STATE: return D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+			default:
+				FLOG("%s: Invalid encode method! Unable to decode the type!\n", __FUNCTION__);
+				assert(false);
+			}
+		}
+		static uint32_t DecodeIndex(const uint32_t& idx) thread_safe { return idx & 0x00000FFFu; }
+	};
 public:
 	bool Initialize(std::string config) final;
 
@@ -143,15 +196,11 @@ public:
 
 	ID3D12Device* GetDevice() { return m_device.Get(); }
 
+	ProgramDescriptor RequestProgram(const ShaderNames& shaderNames, VertexAttributeHandle va_handle,
+		bool usedIndex, RasterizeOptions rasterization, OutputStageOptions outputStage,
+		const std::map<std::string, const SamplerDescriptor&>& staticSamplers = {}) final thread_safe;
 private:
-	/** 存储生成的PSO及其相应的rootSignature
-	 * TODO: 暂时不考虑 rootSignature的重用问题 */
-	struct PSOAndRootSig {
-		SmartPTR<ID3D12PipelineState> pso;
-		SmartPTR<ID3D12RootSignature> rootSignature;
-	};
-private:
-	DX12RenderDevice(const DX12RenderBackend& backend,
+	DX12RenderDevice(DX12RenderBackend& backend,
 		SmartPTR<ID3D12CommandQueue>& queue,
 		SmartPTR<IDXGISwapChain1>& swapChain,
 		SmartPTR<ID3D12Device>& device,
@@ -172,10 +221,10 @@ public:
 	/** 根据program descriptor 创建GraphicsPipeline state object */
 	bool generateGraphicsPSO(const ProgramDescriptor& pmgDesc);
 	/** 根据program descriptor 创建该program的root signature */
-	bool generateGraphicsRootSignature(const ProgramDescriptor& pmgDesc, SmartPTR<ID3D12RootSignature>& rootSignature);
+	bool generateGraphicsRootSignature(const ProgramInfo& pmgDesc, SmartPTR<ID3D12RootSignature>& rootSignature);
 
 private:
-	const DX12RenderBackend& m_backend;
+	DX12RenderBackend& m_backend;
 	SmartPTR<IDXGISwapChain1> m_swapChain;
 	SmartPTR<ID3D12Device> m_device;
 	std::vector< SmartPTR<ID3D12Resource> > m_backBuffers; /**< 需要手动构建队列 */
@@ -187,22 +236,33 @@ private:
 	std::map<BufferHandle, BufferInfo> m_buffers; /**< 所有缓冲区句柄的信息都在这里 */
 	std::map<TextureHandle, TextureInfo> m_textures; /**< 所有纹理句柄信息都在这里 */
 	std::map<SamplerHandle, SamplerInfo> m_samplers; /**< 所有采样方式信息都在这里 */
-
-	std::map<ProgramHandle, PSOAndRootSig> m_psoAndRootSig; /**< 每个程序对应pso, rootSignature存储于此 */
+	mutable OptimisticLock m_programLock;
+	std::map<ProgramHandle, ProgramInfo> m_programs;
 
 	std::atomic_uint64_t m_totalFrame;
 };
 
-inline uint8_t bit4Decode(const uint64_t& value, uint8_t pos) {
+/** 以4位为单位，对value中的某4个位进行解码
+ * @param value 被解码的值
+ * @param pos 需要解码的4个位的位置，比如pos = 0 代表读取低位的0~3位，1代表设置低位的4~7位 */
+inline uint8_t bit4Decode(const uint64_t& value, uint8_t pos) thread_safe {
 	return static_cast<uint8_t>((value >> (pos * 4)) & 0x000000000000000Fu);
 }
 
-inline void bit4Encode(uint64_t& value, uint8_t pos, uint8_t newValue) {
-	uint64_t t1 = 0xFFu;
+/** 以4位为单位，对value中的某4个位进行设置
+ * @param value 被设置的值
+ * @param pos 需要设置的4个位的位置，比如pos = 0 代表设置低位的0~3位，1代表设置低位的4~7位
+ * @param newValue 需要替换的新值
+ * @remark 虽然newValue类型位uint8_t，但实际上只有低四位有效 */
+inline void bit4Encode(uint64_t& value, uint8_t pos, uint8_t newValue) thread_safe {
+	uint64_t t1 = 0x0Fu;
 	t1 = t1 << (pos * 4);
 	t1 = ~t1;
 	value &= t1;
-	t1 = newValue;
+#ifdef _DEBUG
+	if (newValue & 0xF0u) FLOG("%s: high 4 bits are not zero and will be ignore\n", __FUNCTION__);
+#endif // _DEBUG
+	t1 = newValue & 0x0Fu;
 	t1 = t1 << (pos * 4);
 	value |= t1;
 }
@@ -234,7 +294,7 @@ inline void bit4Encode(uint64_t& value, uint8_t pos, uint8_t newValue) {
 #define setSV_TARGET(PS_IO, value) bit4Encode(PS_IO, 1, value)
 
 /** 分析a是否“过度匹配”b */
-inline bool VS_IO_ExceedMatch(uint64_t VS_IO_a, uint64_t VS_IO_b) {
+inline bool VS_IO_ExceedMatch(uint64_t VS_IO_a, uint64_t VS_IO_b) thread_safe {
 	for (int i = 0; i < 10; ++i) {
 		if ((VS_IO_a & 0x0Fu) < (VS_IO_b & 0x0Fu)) return false;
 		VS_IO_a = VS_IO_a >> 4;
@@ -294,74 +354,8 @@ public:
 		}
 	};
 
-	struct ProgramInfo {
-		const std::vector<D3D12_INPUT_ELEMENT_DESC>* inputLayoutPtr;
-		std::map<std::string, uint32_t> srv_cbv_uav_Desc; /**< 资源名称与其在descirptor heap中的索引映射关系 */
-		std::map<std::string, uint32_t> sampler_Desc;
-		static void EncodeHelper(uint32_t& idx, uint8_t offset, uint32_t mask, uint8_t value) {
-			mask = mask << offset;
-			mask = ~mask;
-			idx &= mask;
-			mask = value;
-			mask = mask << offset;
-			idx |= mask;
-		}
-		/** 向idx编码寄存器索引value */
-		static void EncodeReigsterIndex(uint32_t& idx, uint8_t value) {
-			EncodeHelper(idx, 12, 0xFFu, value);
-		}
-		/** 向idx编码空间索引value */
-		static void EncodeSpaceIndex(uint32_t& idx, uint8_t value) {
-			EncodeHelper(idx, 20, 0xFFu, value);
-		}
-		/** 向idx编码类型编号 SRV: 0x00, CBV: 0x01, UAV: 0x02 */
-		static void EncodeType(uint32_t& idx, uint8_t type) {
-			EncodeHelper(idx, 28, 0x0Fu, type);
-		}
-		static uint8_t DecodeRegisterIndex(const uint32_t& idx) { return (idx & 0x000FF000u) >> 12; }
-		static uint8_t DecodeSpaceIndex(const uint32_t& idx) { return (idx & 0x0FF00000u) >> 20; }
-		/** 仅对SRV CBV UAV有效 */
-		static D3D12_DESCRIPTOR_RANGE_TYPE DecodeType(const uint32_t& idx) { 
-			switch ((idx & 0xF0000000u) >> 28) {
-			case 0: return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-			case 1: return D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-			case 2: return D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-			default:
-				FLOG("%s: Invalid encode method! Unable to decode the type!\n", __FUNCTION__);
-				assert(false);
-			}
-		}
-		static uint32_t DecodeIndex(const uint32_t& idx) { return idx & 0x00000FFFu; }
-	};
-
-public:
-	~DX12RenderBackend() {
-		for (auto devPtr : m_devices)
-			delete devPtr;
-	}
-public:
-	bool Initialize() final;
-	bool isInitialized() const final { return m_isInitialized; }
-	RenderDevice* CreateDevice(void* parameters) final;
-	ProgramDescriptor RequestProgram(const ShaderNames& shaderNames, VertexAttributeHandle va_handle,
-		bool usedIndex, RasterizeOptions rasterization, OutputStageOptions outputStage) final;
-
-	/** 注册顶点结构描述，以便重复使用 */
-	VertexAttributeHandle RegisterVertexAttributeDescs(const VertexAttributeDescs& descs) final {
-		VertexAttributeHandle handle(m_nextVertexAttributeHandle++);
-		auto[iter, res] = m_inputlayouts.insert(std::make_pair(handle, analyseInputLayout(descs)));
-		if (res == false) return VertexAttributeHandle::InvalidIndex();
-		else return handle;
-	}
-public:
-	/** 透过program handle访问程序信息 */
-	const ProgramInfo& AccessProgramInfo(const ProgramHandle& handle) const;
-	/** 透过shader名称访问shader信息
-	 * @remark 调用该函数前务必确保已经调用过RequestProgram，否则会无法查找到shader*/
-	const ShaderInfo& AccessShaderInfo(const std::string& shaderName) const;
-private:
 	/** 存储用户注册的顶点缓冲结构，并提前生成DX的Input layout和签名及其编码
-	 * 方便之后使用 */
+	   * 方便之后使用 */
 	struct InputLayoutSignatureEncode {
 		std::vector<D3D12_INPUT_ELEMENT_DESC> layout; /**< 提前生成的DX input layout */
 		/** 顶点缓冲签名只针对到缓冲，如VTXBUF0，VTXBUF1等。至于缓冲中的实际内容由用户控制 */
@@ -374,10 +368,39 @@ private:
 		InputLayoutSignatureEncode() {}
 		InputLayoutSignatureEncode(InputLayoutSignatureEncode&& rhs) : VS_IO(rhs.VS_IO) { layout.swap(rhs.layout); inputLayoutSignature.swap(rhs.inputLayoutSignature); }
 	};
-private:
-	/** 解析shader的签名，假如字节码缓冲已经过期，更新字节码缓冲 */
-	auto analyseShader(const char* shaderName, ShaderType type)
+
+public:
+	~DX12RenderBackend() {
+		for (auto devPtr : m_devices)
+			delete devPtr;
+	}
+public:
+	bool Initialize() final;
+	bool isInitialized() const final { return m_isInitialized; }
+	RenderDevice* CreateDevice(void* parameters) final;
+
+	/** 注册顶点结构描述，以便重复使用 */
+	VertexAttributeHandle RegisterVertexAttributeDescs(const VertexAttributeDescs& descs) final thread_safe {
+		VertexAttributeHandle handle(m_nextVertexAttributeHandle++);
+		std::lock_guard<OptimisticLock> lg(m_inputLayoutLock);
+		auto[iter, res] = m_inputlayouts.insert(std::make_pair(handle, analyseInputLayout(descs)));
+		if (res == false) return VertexAttributeHandle::InvalidIndex();
+		else return handle;
+	}
+public:
+	 /** 解析shader的签名，假如字节码缓冲已经过期，更新字节码缓冲 */
+	auto UpdateShaderInfo(const char* shaderName, ShaderType typeHint)
 		-> const DX12RenderBackend::ShaderInfo&;
+	auto AccessShaderInfo(const std::string& shaderName) -> const DX12RenderBackend::ShaderInfo&;
+	/** 透过VertexAttributeHandle访问注册的DX12Input Layout */
+	const InputLayoutSignatureEncode& AccessVertexAttributeDescs(const VertexAttributeHandle& handle) thread_safe_const {
+		std::lock_guard<OptimisticLock> lg(m_inputLayoutLock);
+		auto inputLayout = m_inputlayouts.find(handle);
+		assert(inputLayout != m_inputlayouts.end());
+		return inputLayout->second;
+	}
+
+private:
 
 	/** 将顶点属性描述信息转换成DX12可以解析的结构 */
 	auto analyseInputLayout(const VertexAttributeDescs & descs)
@@ -388,12 +411,10 @@ private:
 	SmartPTR<IDXGIFactory6> m_factory;
 	std::vector<DX12RenderDevice*> m_devices;
 
-	mutable OptimisticLock m_shaderLock;
+	mutable std::mutex m_shaderLock;
 	std::map<std::string, ShaderInfo> m_shaders;
+	mutable OptimisticLock m_inputLayoutLock;
 	std::map<VertexAttributeHandle, InputLayoutSignatureEncode> m_inputlayouts;
-
-	mutable OptimisticLock m_programLock;
-	std::map<ProgramHandle, ProgramInfo> m_programs;
 };
 
 END_NAME_SPACE
