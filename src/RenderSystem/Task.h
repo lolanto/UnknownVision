@@ -10,7 +10,7 @@ BEG_NAME_SPACE
 struct Command {
 	enum Type : uint8_t {
 		COMMAND_TYPE_TEST = 0U,
-		COMMAND_TYPE_UPDATE_BUFFER = 0x01U,
+		COMMAND_TYPE_UPDATE_BUFFER_FROM_SYSTEM_MEMORY = 0x01U,
 		COMMAND_TYPE_EXECUTE_PROGRAM = 0x02U
 	};
 
@@ -47,7 +47,7 @@ struct Task {
 
 	void Test(BufferDescriptor buf);
 
-	void UpdateBuffer(BufferDescriptor buf, void* data, size_t size);
+	void UpdateBufferFromMemory(BufferDescriptor buf, void* data, size_t size);
 	
 	void ExecuteProgram(ProgramHandle pmg, std::vector<Parameter> parameters) {}
 

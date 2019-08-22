@@ -13,6 +13,31 @@
 
 BEG_NAME_SPACE
 
+/** 资源应用类指令的接口集合 */
+class CommandUnit {
+public:
+	virtual ~CommandUnit() = default;
+public:
+	virtual bool Active() = 0;
+	virtual bool Fetch() = 0;
+	virtual bool FetchAndPresent() = 0;
+	virtual bool Wait() = 0;
+	virtual bool Reset() = 0;
+	/** 仅针对CPU可写的缓冲 */
+	virtual bool UpdateBufferWithSysMem(BufferHandle dest, void* src, size_t size) = 0;
+	/** 仅针对可读回的，以及CPU可读的缓冲 */
+	virtual bool ReadBackToSysMem(BufferHandle src, void* dest, size_t size) = 0;
+	virtual bool CopyBetweenGPUBuffer(BufferHandle src, BufferHandle dest, size_t srcOffset, size_t destOffset, size_t size) = 0;
+	virtual bool TransferState(BufferHandle buf, ResourceStates newState) = 0;
+	virtual bool TransferState(TextureHandle tex, ResourceStates newState) = 0;
+	//virtual bool UseProgram(ProgramHandle program) = 0;
+	//virtual bool BindVaraiables(const std::vector<std::pair<std::string, Parameter>>& parameters) = 0;
+	//virtual bool BindVertexBuffers(const std::vector<BufferHandle>& vtxBuffers) = 0;
+	//virtual bool BindIndexBuffer(BufferHandle buf) = 0;
+	virtual bool BindRenderTargetsAndDepthStencilBuffer(const std::vector<TextureHandle>& renderTargets, TextureHandle depthStencil) = 0;
+	virtual bool ClearRenderTarget(TextureHandle renderTarget, const std::array<float, 4>& color) = 0;
+};
+
 class RenderDevice {
 public:
 	enum DeviceState : uint8_t {
@@ -25,6 +50,7 @@ public:
 	RenderDevice(uint32_t width, uint32_t height) : ScreenWidth(width), ScreenHeight(height),
 		m_nextBufferHandle(NUMBER_OF_SPECIAL_BUFFER_RESOURCE), m_nextTextureHandle(NUMBER_OF_SPECIAL_TEXTURE_RESOURCE),
 		m_state(DEVICE_STATE_UNINITIALIZE), m_nextProgramHandle(0) {}
+	virtual ~RenderDevice() = default;
 	/** @remark 必须在子类调用完成后调用该函数修改状态 */
 	virtual bool Initialize(std::string config) {
 		m_state = DEVICE_STATE_RUNNING;
@@ -32,64 +58,58 @@ public:
 	};
 	void ShutDown() { m_state = DEVICE_STATE_SHUTDOWN; }
 	DeviceState State() const { return m_state; }
-	BufferDescriptor RequestBuffer(size_t size, ResourceStatus status, bool exclusive = false) thread_safe {
-		if (exclusive) return BufferDescriptor(BufferHandle(static_cast<BufferHandle::ValueType>(m_nextBufferHandle++)), status, size);
-		else return BufferDescriptor(BufferHandle::InvalidIndex(), status, size);
-	}
 
-	TextureDescriptor RequestTexture(uint32_t width, uint32_t height, ElementFormatType type,
-		ResourceStatus status, bool exclusive = false) thread_safe {
-		if (exclusive) return TextureDescriptor(TextureHandle(static_cast<TextureHandle::ValueType>(m_nextTextureHandle++)),
-			status, width, height, type);
-		else return TextureDescriptor(TextureHandle::InvalidIndex(), status, width, height, type);
-	}
-	/** 请求特殊纹理(默认backbuffer)的描述器 */
-	TextureDescriptor RequestTexture(SpecialTextureResource specialResource) thread_safe {
-		switch (specialResource) {
-		case DEFAULT_BACK_BUFFER:
-			return TextureDescriptor(TextureHandle(DEFAULT_BACK_BUFFER),
-				{ RESOURCE_USAGE_RENDER_TARGET, RESOURCE_FLAG_STABLY }, ScreenWidth, ScreenHeight, ELEMENT_FORMAT_TYPE_R8G8B8A8_UNORM);
-			break;
-		default:
-			FLOG("Invalid special resource type!\n");
-		}
-		return TextureDescriptor::CreateInvalidDescriptor();
-	}
 	/** sampler只是描述性信息，暂不考虑是否临时资源 */
-	SamplerDescriptor RequestSampler(FilterType filter, SamplerAddressMode u, SamplerAddressMode v,
-		SamplerAddressMode w, const float(&color)[4] = { .0f, .0f, .0f, .0f }) thread_safe {
-		return SamplerDescriptor(SamplerHandle(static_cast<SamplerHandle::ValueType>(m_nextSamplerHandle++)),
-			filter, u, v, w, color);
-	}
+	//SamplerDescriptor RequestSampler(FilterType filter, SamplerAddressMode u, SamplerAddressMode v,
+	//	SamplerAddressMode w, const float(&color)[4] = { .0f, .0f, .0f, .0f }) thread_safe {
+	//	return SamplerDescriptor(SamplerHandle(static_cast<SamplerHandle::ValueType>(m_nextSamplerHandle++)),
+	//		filter, u, v, w, color);
+	//}
 
 	/** 创建一个程序，这个程序可能是compute类型(只有compute shader)，也可能是graphics类型
 	* @param shaderNames 该program种使用的各个shader的名称
 	* @param opts 程序中的一些操作进行设置
 	* @param vtxAttDesc 程序使用到的顶点属性，必须覆盖shader中所有的顶点属性
 	* @param usedIndex 是否使用索引，仅对graphics程序有效
+	* @param rasterization 光栅过程的设置
+	* @param outputStage 输出过程的设置
+	* @param staticSamplers 静态采样器的设置，设置格式为: "name of the static sampler", samplerHandle
 	* @return 返回程序的描述器，包含程序关键信息 */
 	virtual ProgramDescriptor RequestProgram(const ShaderNames& shaderNames, VertexAttributeHandle va_handle,
 		bool usedIndex, RasterizeOptions rasterization, OutputStageOptions outputStage,
 		const std::map<std::string, const SamplerDescriptor&>& staticSamplers = {}) = 0 thread_safe;
 
-	/** 将task提交给RenderrDevice进行处理，调用后传入的task将被还原为默认状态 */
-	void Submit(Task& task, uint64_t frameCount) thread_safe { 
-		if (task.Commands.empty()) { 
-			/** 不接受空的指令 */
-			MLOG("Submited an empty task!, Maybe there is something wrong happend.");
-			return;
-		}
-		task.Frame = frameCount;
-		std::lock_guard<OptimisticLock> lg(m_taskQueueLock);
-		m_taskQueue.push(std::move(task));
-		task.Reset();
-	}
-	/** 允许额外的线程执行该函数，负责处理任务队列中的任务 */
-	virtual void Process() = 0 thread_safe;
+	virtual ProgramHandle RequestProgram2(const ShaderNames& shaderNames, VertexAttributeHandle va_handle,
+		bool usedIndex, RasterizeOptions rasterization, OutputStageOptions outputStage,
+		const std::map<std::string, const SamplerDescriptor&>& staticSamplers = {}) = 0 thread_safe;
+
 	const uint32_t ScreenWidth, ScreenHeight; /**< 屏幕的宽高，单位像素 */
+
+	/** TODO: 暂时只能请求一个二维纹理 */
+	virtual TextureHandle RequestTexture(uint32_t width, uint32_t height, ElementFormatType type,
+		ResourceStatus status) thread_safe {
+		return TextureHandle(static_cast<TextureHandle::ValueType>(m_nextTextureHandle++));
+	}
+
+	virtual TextureHandle RequestTexture(SpecialTextureResource specialResource) thread_safe {
+		return TextureHandle(static_cast<uint8_t>(specialResource));
+	}
+
+	/** 假如缓冲是作为顶点或者索引缓冲，则stride表明缓冲中一个元素的大小 */
+	virtual BufferHandle RequestBuffer(size_t size, ResourceStatus status, size_t stride = 0) thread_safe {
+		return BufferHandle(static_cast<BufferHandle::ValueType>(m_nextBufferHandle++));
+	}
+
+	virtual bool RevertResource(BufferHandle handle)= 0 thread_safe;
+	virtual bool RevertResource(TextureHandle handle) = 0 thread_safe;
+
+	virtual CommandUnit& RequestCommandUnit(COMMAND_UNIT_TYPE type) = 0;
+
+	virtual bool Present() = 0;
+
+	virtual SpecialTextureResource CurrentBackBufferHandle() = 0;
+
 protected:
-	OptimisticLock m_taskQueueLock;
-	std::queue<Task> m_taskQueue;
 	DeviceState m_state;
 	std::atomic<ProgramHandle::ValueType> m_nextProgramHandle;
 private:

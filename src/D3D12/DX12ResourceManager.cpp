@@ -31,7 +31,7 @@ auto DX12ResourceManager::genNewBuffer(size_t size, D3D12_RESOURCE_FLAGS flags, 
 	SmartPTR<ID3D12Resource> buffer;
 	D3D12_RESOURCE_STATES state = heapType == D3D12_HEAP_TYPE_UPLOAD ? 
 		D3D12_RESOURCE_STATE_GENERIC_READ : D3D12_RESOURCE_STATE_COPY_DEST;;
-	DX12HeapManager::BlockInfo bInfo;
+	DX12ResourceHeapManager::BlockInfo bInfo;
 
 	/** 所有需要CPU读取的缓冲都使用committed resource
 	 * 缓冲区大小超过committed resource创建标准的也使用committed resource*/
@@ -113,7 +113,7 @@ auto DX12ResourceManager::genNewTexture(uint32_t width, uint32_t height, DXGI_FO
 	auto allocInfo = m_device->GetResourceAllocationInfo(0, 1, &texDesc);
 	SmartPTR<ID3D12Resource> texture;
 	D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST;
-	DX12HeapManager::BlockInfo bInfo;
+	DX12ResourceHeapManager::BlockInfo bInfo;
 
 	if (allocInfo.SizeInBytes >= TEXTURE_SIZE_USED_COMMITTED_RESOURCE) {
 		if (FAILED(m_device->CreateCommittedResource(

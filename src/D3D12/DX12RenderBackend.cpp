@@ -73,7 +73,7 @@ RenderDevice * DX12RenderBackend::CreateDevice(void * parameters)
 		swapChainDesc.BufferCount = NUMBER_OF_BACK_BUFFERS; /**< 指定后台缓冲的数量 */
 		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT; /**< 交换链缓冲的用途，默认已有backbuffer */
 		swapChainDesc.Flags = 0; /**< 不进行特殊设置 */
-		swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		swapChainDesc.Format = BACK_BUFFER_FORMAT;
 		swapChainDesc.Height = height;
 		swapChainDesc.Width = width;
 		/** 不进行多重采样 */
@@ -90,8 +90,9 @@ RenderDevice * DX12RenderBackend::CreateDevice(void * parameters)
 				return nullptr;
 			});
 	}
-
-	m_devices.push_back(new DX12RenderDevice(*this, cmdQueue, swapChain, device, width, height));
+	SmartPTR<IDXGISwapChain3> sc3;
+	swapChain.As(&sc3);
+	m_devices.push_back(new DX12RenderDevice(*this, cmdQueue, sc3, device, width, height));
 	return m_devices.back();
 }
 
@@ -175,6 +176,10 @@ auto DX12RenderBackend::UpdateShaderInfo(const char * shaderName, ShaderType typ
 					if (sigParaDesc.SemanticIndex >= getTANGENTN(shader.VS_IO))
 						setTANGENTN(shader.VS_IO, sigParaDesc.SemanticIndex + 1);
 				}
+				else if (strcmp(sigParaDesc.SemanticName, "COLOR") == 0) {
+					if (sigParaDesc.SemanticIndex >= getCOLORN(shader.VS_IO))
+						setCOLORN(shader.VS_IO, sigParaDesc.SemanticIndex + 1);
+				}
 				else {
 					FLOG("%s: Doesn't support %s currently\n", __FUNCTION__, sigParaDesc.SemanticName);
 				}
@@ -222,17 +227,16 @@ auto DX12RenderBackend::analyseInputLayout(const VertexAttributeDescs & descs)
 	std::map<std::string, Parameter::Type> sig;
 	res.reserve(descs.size());
 	uint64_t VS_IO = 0;
-	std::string semantic = "VTXBUF";
 	for (const auto& desc : descs) {
 		D3D12_INPUT_ELEMENT_DESC dxDesc;
 		dxDesc.InstanceDataStepRate = 0;
 		dxDesc.InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
 		dxDesc.Format = ElementFormatToDXGIFormat(desc.format);
 		dxDesc.InputSlot = desc.location;
-		sig.insert(std::make_pair(semantic + std::to_string(desc.location), Parameter::PARAMETER_TYPE_BUFFER));
+		sig.insert(std::make_pair(VERTEX_BUFFER_NAME[desc.location], Parameter::PARAMETER_TYPE_BUFFER));
 		dxDesc.SemanticIndex = desc.index;
 		dxDesc.SemanticName = VertexAttributeTypeToString(desc.vertexAttribute);
-		dxDesc.AlignedByteOffset = desc.byteOffset == 0 ? D3D12_APPEND_ALIGNED_ELEMENT : desc.byteOffset;
+		dxDesc.AlignedByteOffset = desc.byteOffset == SubVertexAttributeDesc::APPEND_FROM_PREVIOUS ? D3D12_APPEND_ALIGNED_ELEMENT : desc.byteOffset;
 		res.emplace_back(dxDesc);
 		switch (desc.vertexAttribute) {
 		case VERTEX_ATTRIBUTE_TYPE_POSITION:
@@ -246,6 +250,9 @@ auto DX12RenderBackend::analyseInputLayout(const VertexAttributeDescs & descs)
 			break;
 		case VERTEX_ATTRIBUTE_TYPE_TEXTURE:
 			if (desc.index >= getTEXCOORDN(VS_IO)) setTEXCOORDN(VS_IO, desc.index + 1);
+			break;
+		case VERTEX_ATTRIBUTE_TYPE_COLOR:
+			if (desc.index >= getCOLORN(VS_IO)) setCOLORN(VS_IO, desc.index + 1);
 			break;
 		default:
 			FLOG("%s: Currently Doesn't support this attribute type\n", __FUNCTION__);

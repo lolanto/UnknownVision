@@ -34,21 +34,15 @@ struct TextureDescriptor {
 };
 
 struct SamplerDescriptor {
-	const SamplerHandle handle;
 	const float borderColor[4];
 	const FilterType filter;
 	const SamplerAddressMode uAddrMode, vAddrMode, wAddrMode;
-	SamplerDescriptor(SamplerHandle handle, FilterType filter, SamplerAddressMode u,
+	SamplerDescriptor(FilterType filter, SamplerAddressMode u,
 		SamplerAddressMode v, SamplerAddressMode w,
 		const float (&bc)[4])
-		: handle(handle), filter(filter), 
+		: filter(filter), 
 		uAddrMode(u), vAddrMode(v), wAddrMode(w),
 		borderColor{bc[0], bc[1], bc[2], bc[3]} {}
-	static SamplerDescriptor CreateInvalidDescriptor() {
-		return SamplerDescriptor(SamplerHandle::InvalidIndex(), FILTER_TYPE_MIN_MAG_MIP_POINT,
-			SAMPLER_ADDRESS_MODE_WRAP, SAMPLER_ADDRESS_MODE_WRAP, SAMPLER_ADDRESS_MODE_WRAP,
-			{ 0.0f, 0.0f, 0.0f, 0.0f });
-	}
 };
 
 /** 传入command或者program中用到的参数类型
@@ -63,14 +57,24 @@ struct Parameter {
 	};
 	union
 	{
-		TextureDescriptor tex;
-		BufferDescriptor buf;
-		SamplerDescriptor sampler;
+		TextureHandle tex;
+		BufferHandle buf;
+		SamplerHandle sampler;
 	};
-	const Type type;
-	Parameter(const BufferDescriptor& buf) : buf(buf), type(PARAMETER_TYPE_BUFFER) {}
-	Parameter(const TextureDescriptor& tex) : tex(tex), type(PARAMETER_TYPE_TEXTURE) {}
-	Parameter(const SamplerDescriptor& sampler) : sampler(sampler), type(PARAMETER_TYPE_SAMPLER) {}
+	Type type;
+	Parameter& operator=(const Parameter& rhs) { 
+		type = rhs.type;
+		switch (rhs.type) {
+			case PARAMETER_TYPE_BUFFER: buf = rhs.buf; break;
+			case PARAMETER_TYPE_TEXTURE: tex = rhs.tex; break;
+			case PARAMETER_TYPE_SAMPLER: sampler = rhs.sampler; break;
+		}
+		return *this;
+	}
+	Parameter() : buf(BufferHandle::InvalidIndex()), type(PARAMETER_TYPE_INVALID) {}
+	Parameter(const BufferHandle& buf) : buf(buf), type(PARAMETER_TYPE_BUFFER) {}
+	Parameter(const TextureHandle& tex) : tex(tex), type(PARAMETER_TYPE_TEXTURE) {}
+	Parameter(const SamplerHandle& sampler) : sampler(sampler), type(PARAMETER_TYPE_SAMPLER) {}
 };
 
 using VertexAttributeDescs = std::vector<SubVertexAttributeDesc>;

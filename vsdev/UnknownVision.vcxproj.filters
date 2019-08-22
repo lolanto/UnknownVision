@@ -111,6 +111,9 @@
     <ClCompile Include="..\src\RenderSystem\Task.cpp">
       <Filter>RenderSystem\Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\D3D12\DX12CommandUnit.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Utility\CommandBuffer\CommandBuffer.hpp">

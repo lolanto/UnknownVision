@@ -6,8 +6,9 @@ BEG_NAME_SPACE
 /** 所有特殊资源与设备相关，必须在设备初始化中完成 */
 
 enum SpecialTextureResource : uint8_t {
-	DEFAULT_BACK_BUFFER = 0,
-	NUMBER_OF_SPECIAL_TEXTURE_RESOURCE
+	DEFAULT_BACK_BUFFER = 0, /**< 相当于是backbuffers的最小下标, backbuffers中的任一buffer = DEF_BACK_BUF + id */
+	/** Number of special texture resource的值 = 最后一个枚举值 + back buffer数量 */
+	NUMBER_OF_SPECIAL_TEXTURE_RESOURCE = DEFAULT_BACK_BUFFER + NUMBER_OF_BACK_BUFFERS
 };
 
 enum SpecialBufferResource : uint8_t {
@@ -15,18 +16,18 @@ enum SpecialBufferResource : uint8_t {
 };
 
 /** 资源的使用方式，通常用于显式规定资源的用途 */
-allow_logical_operation enum ResourceUsage : uint8_t {
+allow_logical_operation enum ResourceUsages : uint8_t {
 	RESOURCE_USAGE_INVALID = 0X00U,
 	RESOURCE_USAGE_VERTEX_BUFFER = 0x01U,
 	RESOURCE_USAGE_INDEX_BUFFER = 0x02U,
-	RESOURCE_USAGE_DEPTH = 0x04U,
+	RESOURCE_USAGE_DEPTH_STENCIL = 0x04U,
 	RESOURCE_USAGE_RENDER_TARGET = 0x08U,
 	RESOURCE_USAGE_SHADER_RESOURCE = 0x10U,
 	RESOURCE_USAGE_CONSTANT_BUFFER = 0x20U,
 	RESOURCE_USAGE_UNORDER_ACCESS = 0x40U
 };
 
-allow_logical_operation enum ResourceFlag : uint8_t {
+allow_logical_operation enum ResourceFlags : uint8_t {
 	RESOURCE_FLAG_INVALID = 0x00U,
 	RESOURCE_FLAG_STABLY = 0x01U, /**< CPU will never read / write */
 	RESOURCE_FLAG_ONCE = 0x02U, /**< CPU will write per frame */
@@ -34,16 +35,31 @@ allow_logical_operation enum ResourceFlag : uint8_t {
 	RESOURCE_FLAG_READ_BACK = 0x08U, /**< CPU will read it */
 };
 
+allow_logical_operation enum ResourceStates : uint32_t {
+	RESOURCE_STATE_UNKNOWN = 0,
+	RESOURCE_STATE_VERTEX_BUFFER = 0x0001u,
+	RESOURCE_STATE_CONSTANT_BUFFER = 0x0002u,
+	RESOURCE_STATE_INDEX_BUFFER = 0x0004u,
+	RESOURCE_STATE_RENDER_TARGET = 0x0008u,
+	RESOURCE_STATE_UNORDER_ACCESS = 0x0010u,
+	RESOURCE_STATE_DEPTH_READ = 0x0020u,
+	RESOURCE_STATE_DEPTH_WRITE = 0x0040u,
+	RESOURCE_STATE_SHADER_RESOURCE = 0x0080u,
+	RESOURCE_STATE_COPY_DEST = 0x0100u,
+	RESOURCE_STATE_COPY_SRC = 0x0200u,
+	RESOURCE_STATE_PRESENT = 0x0400u
+};
+ENUM_LOGICAL_OPERATION(ResourceStates, uint32_t)
 
 #define CanBe(x, X) inline bool canBe##x() const { return usage & RESOURCE_USAGE_##X; }
 #define IsFlag(x, X) inline bool is##x() const { return flag & RESOURCE_FLAG_##X; }
 #define IsInState(x, X) inline bool isInStateOf##x() const { return state == RESOURCE_STATE_##X; }
 struct ResourceStatus {
-	ResourceUsage usage = RESOURCE_USAGE_INVALID;
-	ResourceFlag flag = RESOURCE_FLAG_INVALID;
+	ResourceUsages usage = RESOURCE_USAGE_INVALID;
+	ResourceFlags flag = RESOURCE_FLAG_INVALID;
 
 	ResourceStatus() = default;
-	ResourceStatus(ResourceUsage usage, ResourceFlag flag)
+	ResourceStatus(ResourceUsages usage, ResourceFlags flag)
 		:usage(usage), flag(flag) {}
 	/** helper functions */
 	inline bool isInvalid() const {
@@ -58,7 +74,7 @@ struct ResourceStatus {
 	CanBe(IndexBuffer, INDEX_BUFFER);
 	CanBe(ConstantBuffer, CONSTANT_BUFFER);
 	CanBe(RenderTarget, RENDER_TARGET);
-	CanBe(Depth, DEPTH);
+	CanBe(DepthStencil, DEPTH_STENCIL);
 	CanBe(UnorderAccess, UNORDER_ACCESS);
 };
 #undef IsInState
@@ -95,17 +111,25 @@ enum VertexAttributeType : uint8_t {
 	VERTEX_ATTRIBUTE_TYPE_POSITION = 0,
 	VERTEX_ATTRIBUTE_TYPE_NORMAL,
 	VERTEX_ATTRIBUTE_TYPE_TANGENT,
-	VERTEX_ATTRIBUTE_TYPE_TEXTURE
+	VERTEX_ATTRIBUTE_TYPE_TEXTURE,
+	VERTEX_ATTRIBUTE_TYPE_COLOR
 };
 
 /** 描述顶点缓冲中一个属性的子结构 */
 struct SubVertexAttributeDesc {
+	enum { APPEND_FROM_PREVIOUS = UINT8_MAX };
 	VertexAttributeType vertexAttribute; /**< 描述的顶点属性类型 */
 	uint8_t index = 0; /**< 同一个属性中的第几个，如uv0, uv1 */
 	ElementFormatType format; /**< 该属性的数据类型 */
 	uint8_t location = 0; /**< 该属性被绑定到哪个接口上，管线的"顶点缓冲接口"是有数量上限的 */
-	uint8_t byteOffset = 0; /**< 属性的每一个值在缓冲中间隔的距离, 假如未UINT8_MAX则表示直接接着上一个属性 */
+	uint8_t byteOffset = 0; /**< 属性的每一个值在缓冲中间隔的距离, 假如为APPEND_FROM_PREVIOUS则表示直接接着上一个属性 */
 	SubVertexAttributeDesc() = default;
+	/** 构造一个子顶点属性描述对象
+	 * @param att 属性类型
+	 * @param format 顶点属性的格式
+	 * @param index 当前设置的是该属性数组的第几个元素，比如position0, position1或者normal2之类
+	 * @param location 存储该属性的顶点缓冲区会绑定到哪个接口(slot)上
+	 * @param byteOffset 该属性的值距离第一个属性值之间间隔的距离，单位是字节。设置为APPEND_FROM_PREVIOUS表示紧接着上一个属性，此时属性的声明顺序十分重要 */
 	SubVertexAttributeDesc(VertexAttributeType att, ElementFormatType format, uint8_t index,
 		uint8_t location = 0, uint8_t byteOffset = 0)
 		: vertexAttribute(att), index(index), format(format), location(location), byteOffset(byteOffset) {}
@@ -148,7 +172,7 @@ struct OutputStageOptions {
 	bool enableDepthTest = true;
 	BlendOption blending = BLEND_OPTION_NO_BLEND;
 	ElementFormatType dsvFormat = ELEMENT_FORMAT_TYPE_D24_UNORM_S8_UINT; /**< 深度模板缓冲的格式 */
-	ElementFormatType rtvFormats[UV_MAX_RENDER_TARGET]; /**< 各个RenderTarget的顶点格式 */
+	ElementFormatType rtvFormats[MAX_RENDER_TARGET]; /**< 各个RenderTarget的顶点格式 */
 	OutputStageOptions() : enableDepthTest(true), blending(BLEND_OPTION_NO_BLEND),
 		dsvFormat(ELEMENT_FORMAT_TYPE_D24_UNORM_S8_UINT) {
 		for (auto& format : rtvFormats) {
@@ -189,31 +213,6 @@ enum ProgramType : uint8_t {
 	PROGRAM_TYPE_COMPUTE
 };
 
-enum BufferFlag : uint32_t {
-	BF_INVALID = 0,
-	BF_WRITE_BY_CPU = 0x00000001U, // CPU能够写
-	BF_READ_BY_CPU = 0x00000002U, // CPU能够读
-	BF_WRITE_BY_GPU = 0x00000004U,
-	BF_READ_BY_GPU = 0x00000008U
-};
-
-enum BufferType : uint32_t {
-	BT_VERTEX_BUFFER,
-	BT_INDEX_BUFFER,
-	BT_CONSTANT_BUFFER
-};
-
-enum TextureFlag : uint32_t {
-	TF_INVALID = 0x00000000U,
-	TF_READ_BY_GPU = 0x00000001U,
-	TF_WRITE_BY_GPU = 0x00000002U,
-	TF_READ_BY_CPU = 0x00000004U,
-	TF_WRITE_BY_CPU = 0x00000008U
-};
-
-using TextureFlagCombination = uint32_t;
-using BufferFlagCombination = uint32_t;
-
 /** 为索引值设置别名，加强类型检查 */
 ALIAS_INDEX(uint8_t, VertexAttributeHandle);
 ALIAS_INDEX(int32_t, Texture2DIdx);
@@ -231,5 +230,10 @@ ALIAS_INDEX(uint64_t, TextureHandle);
 ALIAS_INDEX(uint64_t, ProgramHandle);
 ALIAS_INDEX(uint64_t, SamplerHandle);
 ALIAS_INDEX(uint64_t, TaskFrame);
+
+template<typename T>
+constexpr T InvalidHandleIndex(const T&) {
+	return T::InvalidIndex();
+}
 
 END_NAME_SPACE

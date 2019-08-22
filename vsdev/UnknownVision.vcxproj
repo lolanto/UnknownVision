@@ -149,6 +149,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\D3D12\DX12CommandUnit.cpp" />
     <ClCompile Include="..\src\D3D12\DX12ResourceManager.cpp" />
     <ClCompile Include="..\src\D3D12\DX12Config.cpp" />
     <ClCompile Include="..\src\D3D12\DX12RenderBackend.cpp">

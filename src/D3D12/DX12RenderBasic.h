@@ -12,6 +12,7 @@
 #include <condition_variable>
 #include <deque>
 #include <map>
+#include <optional>
 
 #define MemoryManagementStrategy NoMemMng
 
@@ -27,205 +28,270 @@ D3D12_RASTERIZER_DESC AnalyseRasterizerOptionsFromRasterizeOptions(const Rasteri
 D3D12_STATIC_SAMPLER_DESC AnalyseStaticSamplerFromSamplerDescriptor(const SamplerDescriptor& desc, uint8_t spaceIndex, uint8_t registerIndex) thread_safe;
 /** 分析samplerState并生成DX12相应的设置 */
 D3D12_SAMPLER_DESC AnalyseSamplerFromSamperDescriptor(const SamplerDescriptor& desc) thread_safe;
+
 class DX12RenderBackend;
 class DX12RenderDevice;
 
-
-enum CmdQueueType {
-	GraphicQue = 0,
-	CmdQueueCount
+/** 单个句柄对应的实体的信息 */
+struct BufferInfo {
+	BufferInfo(size_t size = 0, ID3D12Resource* ptr = nullptr,
+		D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON)
+		: ptr(ptr), state(state), size(size) {}
+	ID3D12Resource* ptr = nullptr;
+	D3D12_RESOURCE_STATES state;
+	const size_t size;
+	union
+	{
+		D3D12_CONSTANT_BUFFER_VIEW_DESC constBufViewDesc;
+		D3D12_VERTEX_BUFFER_VIEW vtxBufView;
+		D3D12_INDEX_BUFFER_VIEW idxBufView;
+	};
 };
 
-
-class BufMgr {
-public:
-	using ElementType = SmartPTR<ID3D12Resource>;
-	using IndexType = BufferHandle;
-private:
-	std::deque<ElementType> buffers; /**< 当前正在管理的所有buffer资源 */
-	std::vector<IndexType> freeIndices; /**< 空闲buffer句柄 */
-	mutable std::mutex bm_mutex;
-public:
-	IndexType RequestBufferHandle() thread_safe;
-	void RevertBufferHandle(IndexType index) thread_safe;
-	void SetBuffer(ElementType&& newElement, IndexType index) thread_safe;
-	const ElementType& operator[](const IndexType& index) thread_safe_const;
-	ElementType& operator[](const IndexType& index) thread_safe;
-};
-
-
-class TransientResourceMgr {
-public:
-	using ElementType = SmartPTR<ID3D12Resource>;
-private:
-	std::vector<ElementType> resources;
-	std::mutex trm_mutex;
-public:
-	void Store(ElementType& e) thread_safe;
-	void Reset() { resources.swap(std::vector<ElementType>()); }
-};
-
-class CommandListMgr {
-public:
-	using ElementType = SmartPTR<ID3D12GraphicsCommandList>;
-	CommandListMgr(ID3D12Device* dev) { dev->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&allocator)); }
-private:
-	SmartPTR<ID3D12CommandAllocator> allocator;
-	std::vector<ElementType> cmdLists;
-	std::vector<uint8_t> freeCmdLists;
-	mutable std::mutex clm_mutex;
-public:
-	ID3D12GraphicsCommandList* RequestCmdList() thread_safe;
-	const std::vector<ElementType>& RequestWholeList() const { return cmdLists; }
-	void SimpleRest() {
-		freeCmdLists.resize(cmdLists.size());
-		for (uint8_t i = 0; i < freeCmdLists.size(); ++i)
-			freeCmdLists[i] = i;
+struct TextureInfo {
+	TextureInfo(uint32_t width = 0, uint32_t height = 0,
+		ID3D12Resource* ptr = nullptr, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON)
+		: ptr(ptr), state(state), width(width), height(height), 
+		/** 让RTVCode最初索引到“空闲位”，表明当前RTV尚未创建 */
+		renderTargetViewCode(NUMBER_OF_DESCRIPTOR_IN_EACH_DESCRIPTOR_HEAP[D3D12_DESCRIPTOR_HEAP_TYPE_RTV]),
+		depthStencilViewCode(NUMBER_OF_DESCRIPTOR_IN_EACH_DESCRIPTOR_HEAP[D3D12_DESCRIPTOR_HEAP_TYPE_DSV]) {}
+	ID3D12Resource* ptr = nullptr;
+	D3D12_RESOURCE_STATES state;
+	const uint32_t width = 0, height = 0;
+	D3D12_SHADER_RESOURCE_VIEW_DESC shaderResViewDesc;
+	uint64_t renderTargetViewCode;
+	uint64_t depthStencilViewCode;
+	static uint32_t DecodeRTVCodeGen(uint64_t rtvCode) {
+		return (rtvCode & 0xffffffff00000000u) >> 32;
 	}
-	void DeepRest() {
-		cmdLists.clear();
-		freeCmdLists.clear();
-		allocator->Reset();
+	static uint32_t DecodeRTVCodeIndex(uint64_t rtvCode) {
+		return rtvCode & 0x00000000ffffffffu;
+	}
+	static uint64_t EncodeRTVCodeGen(uint64_t& rtvCode, uint64_t gen) {
+		rtvCode &= 0x00000000ffffffffu;
+		rtvCode |= (gen << 32);
+		return rtvCode;
+	}
+	static uint64_t EncodeRTVCodeIndex(uint64_t& rtvCode, uint32_t index) {
+		rtvCode &= 0xffffffff00000000u;
+		rtvCode |= index;
+		return rtvCode;
+	}
+
+	static uint32_t DecodeDSVCodeGen(uint64_t dsvCode) {
+		return (dsvCode & 0xffffffff00000000u) >> 32;
+	}
+	static uint32_t DecodeDSVCodeIndex(uint64_t dsvCode) {
+		return dsvCode & 0x00000000ffffffffu;
+	}
+	static uint64_t EncodeDSVCodeGen(uint64_t& dsvCode, uint64_t gen) {
+		dsvCode &= 0x00000000ffffffffu;
+		dsvCode |= (gen << 32);
+		return dsvCode;
+	}
+	static uint64_t EncodeDSVCodeIndex(uint64_t& dsvCode, uint32_t index) {
+		dsvCode &= 0xffffffff00000000u;
+		dsvCode |= index;
+		return dsvCode;
 	}
 };
 
-class QueueProxy {
-public:
-	QueueProxy(SmartPTR<ID3D12CommandQueue>& que,
-		SmartPTR<ID3D12Fence>& fen)
-		: queue(que), fence(fen) {
-		fenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-		fenceValue = 0;
+struct RootSignatureInfo {
+	SmartPTR<ID3D12RootSignature> rootSignature;
+	/** parameter列表中记录了各个descriptor / constant / table的情况
+	 * 连续的table之间使用invalidParamter进行分隔 */
+	std::vector<RootSignatureParameter> parameters;
+	/** functions */
+	/** 向rootSignature增加新的参数值
+	 * @param newParameter 新的参数值，可能是单个parameter，也可能是一个group
+	 * @return 返回当前parameter在parameters中的下标，或者说添加的是第几个参数*/
+	uint32_t SetParameter(const std::vector<RootSignatureParameter>& newParameter);
+	/** 基于当前parameters的设计创建一个rootsignature，返回创建结果 */
+	bool Build();
+	/** QueryAbility */
+	auto QueryWithParameter(const std::vector<RootSignatureParameter>& qury)
+		->std::vector<std::optional<RootSignatureQueryAnswer> >;
+};
+
+struct ProgramInfo {
+	/** 资源类型的编码方式，只有4位有效 */
+	enum ResourceType : uint8_t {
+		RESOURCE_TYPE_SHADER_RESOURCE_VIEW = 0x00u,
+		RESOURCE_TYPE_CONSTANT_BUFFER_VIEW = 0x01u,
+		RESOURCE_TYPE_UNORDER_ACCESS_VIEW = 0x02u,
+		RESOURCE_TYPE_SAMPLER_STATE = 0x03
+	};
+	const std::vector<D3D12_INPUT_ELEMENT_DESC>* inputLayoutPtr;
+	std::map<std::string, uint32_t> resNameToEncodingValue; /**< 资源名称和资源type, space, register编码 */
+	std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers; /**< 静态sampler state */
+	SmartPTR<ID3D12PipelineState> pso;
+	SmartPTR<ID3D12RootSignature> rootSignature;
+	/** Helper Functions */
+	static void EncodeHelper(uint32_t& idx, uint8_t offset, uint32_t mask, uint8_t value) thread_safe {
+		mask = mask << offset;
+		mask = ~mask;
+		idx &= mask;
+		mask = value;
+		mask = mask << offset;
+		idx |= mask;
 	}
-	QueueProxy(const QueueProxy&) = delete;
-	QueueProxy& operator=(const QueueProxy&) = delete;
-	QueueProxy(QueueProxy&& qp);
-	QueueProxy& operator=(QueueProxy&& rhs);
-	QueueProxy() : fenceEvent(NULL), fenceValue(0) {}
-	~QueueProxy() { if (fenceEvent) CloseHandle(fenceEvent); }
-	ID3D12Fence* GetFence() { return fence.Get(); }
-	void Execute(uint32_t numCommandLists, ID3D12CommandList* const* ppCommandLists);
-	void Wait(ID3D12Fence* fen, uint64_t value) { queue->Wait(fen, value); }
+	/** 向idx编码寄存器索引value */
+	static void EncodeReigsterIndex(uint32_t& idx, uint8_t value) thread_safe {
+		EncodeHelper(idx, 12, 0xFFu, value);
+	}
+	/** 向idx编码空间索引value */
+	static void EncodeSpaceIndex(uint32_t& idx, uint8_t value) thread_safe {
+		EncodeHelper(idx, 20, 0xFFu, value);
+	}
+	/** 向idx编码类型编号 SRV: 0x00, CBV: 0x01, UAV: 0x02 */
+	static void EncodeType(uint32_t& idx, ResourceType type) thread_safe {
+		EncodeHelper(idx, 28, 0x0Fu, type);
+	}
+	static uint8_t DecodeRegisterIndex(const uint32_t& idx) thread_safe { return (idx & 0x000FF000u) >> 12; }
+	static uint8_t DecodeSpaceIndex(const uint32_t& idx) thread_safe { return (idx & 0x0FF00000u) >> 20; }
+
+	static D3D12_DESCRIPTOR_RANGE_TYPE DecodeTypeToDescriptorRangeType(const uint32_t& idx) thread_safe {
+		switch ((idx & 0xF0000000u) >> 28) {
+		case RESOURCE_TYPE_SHADER_RESOURCE_VIEW: return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		case RESOURCE_TYPE_CONSTANT_BUFFER_VIEW: return D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		case RESOURCE_TYPE_UNORDER_ACCESS_VIEW: return D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+		case RESOURCE_TYPE_SAMPLER_STATE: return D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+		default:
+			FLOG("%s: Invalid encode method! Unable to decode the type!\n", __FUNCTION__);
+			assert(false);
+		}
+	}
+	static uint32_t DecodeIndex(const uint32_t& idx) thread_safe { return idx & 0x00000FFFu; }
+};
+
+class DX12CommandUnit : public CommandUnit {
+public:
+	bool Active() final;
+	bool Fetch() final;
+	bool FetchAndPresent() final;
+	bool Wait() final;
+	bool Reset() final;
+	bool UpdateBufferWithSysMem(BufferHandle dest, void* src, size_t size) final;
+	bool ReadBackToSysMem(BufferHandle src, void* dest, size_t size) final;
+	bool CopyBetweenGPUBuffer(BufferHandle src, BufferHandle dest, size_t srcOffset, size_t destOffset, size_t size) final;
+	bool TransferState(BufferHandle buf, ResourceStates newState) final;
+	bool TransferState(TextureHandle tex, ResourceStates newState) final;
+	bool BindRenderTargetsAndDepthStencilBuffer(const std::vector<TextureHandle>& renderTargets, TextureHandle depthStencil) final;
+	bool ClearRenderTarget(TextureHandle renderTarget, const std::array<float, 4>& color) final;
+public:
+	DX12CommandUnit(DX12RenderDevice* device = nullptr) : m_device(device),
+		m_fenceEvent(INVALID_HANDLE_VALUE), m_nextFenceValue(1), m_executing(false) {}
+	~DX12CommandUnit() {
+		if (INVALID_HANDLE_VALUE != m_fenceEvent) CloseHandle(m_fenceEvent);
+	}
+	void Setup(SmartPTR<ID3D12CommandQueue> queue);
+	void Setup(D3D12_COMMAND_LIST_TYPE);
 private:
-	SmartPTR<ID3D12CommandQueue> queue;
-	SmartPTR<ID3D12Fence> fence;
-	HANDLE fenceEvent;
-	uint64_t fenceValue;
+	void initializeFence();
+	void initializeCommandAllocAndList();
+	bool stateMatch(D3D12_RESOURCE_STATES oriStates, ResourceStates newStates) {
+		if (newStates == RESOURCE_STATE_PRESENT) {
+			if (oriStates != 0) return false;
+		}
+		if ((oriStates & ResourceStateToDX12ResourceState(newStates)) == ResourceStateToDX12ResourceState(newStates))
+			return true;
+		return false;
+	}
+private:
+	DX12RenderDevice* m_device;
+	SmartPTR<ID3D12CommandQueue> m_queue;
+	SmartPTR<ID3D12CommandAllocator> m_alloc;
+	/** TODO: 暂时只支持一个graphic command list */
+	SmartPTR<ID3D12GraphicsCommandList> m_graphicCmdList;
+	SmartPTR<ID3D12Fence> m_fence;
+	HANDLE m_fenceEvent;
+	uint64_t m_nextFenceValue;
+	uint64_t m_lastFenceValue;
+	bool m_executing;
+private:
+	std::vector<Parameter> m_tmpReses; /**< 临时变量 */
 };
 
 class DX12RenderDevice : public RenderDevice {
 	friend class DX12RenderBackend;
 public:
-	/** 单个句柄对应的实体的信息 */
-	struct BufferInfo {
-		BufferInfo(size_t size = 0, ID3D12Resource* ptr = nullptr,
-			D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON)
-			: ptr(ptr), state(state), size(size) {}
-		ID3D12Resource* ptr = nullptr;
-		D3D12_RESOURCE_STATES state;
-		const size_t size = 0;
-	};
-
-	struct TextureInfo {
-		TextureInfo(ID3D12Resource* ptr = nullptr, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON, 
-			uint32_t width = 0, uint32_t height = 0)
-			: ptr(ptr), state(state), width(width), height(height) {}
-		ID3D12Resource* ptr = nullptr;
-		D3D12_RESOURCE_STATES state;
-		const uint32_t width = 0, height = 0;
-	};
-
-	struct SamplerInfo {
-		D3D12_SAMPLER_DESC desc;
-	};
-
-	struct ProgramInfo {
-		/** 资源类型的编码方式，只有4位有效 */
-		enum ResourceType : uint8_t {
-			RESOURCE_TYPE_SHADER_RESOURCE_VIEW = 0x00u,
-			RESOURCE_TYPE_CONSTANT_BUFFER_VIEW = 0x01u,
-			RESOURCE_TYPE_UNORDER_ACCESS_VIEW = 0x02u,
-			RESOURCE_TYPE_SAMPLER_STATE = 0x03
-		};
-		const std::vector<D3D12_INPUT_ELEMENT_DESC>* inputLayoutPtr;
-		std::map<std::string, uint32_t> resNameToEncodingValue; /**< 资源名称和资源type, space, register编码 */
-		std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers; /**< 静态sampler state */
-		SmartPTR<ID3D12PipelineState> pso;
-		SmartPTR<ID3D12RootSignature> rootSignature;
-		static void EncodeHelper(uint32_t& idx, uint8_t offset, uint32_t mask, uint8_t value) thread_safe {
-			mask = mask << offset;
-			mask = ~mask;
-			idx &= mask;
-			mask = value;
-			mask = mask << offset;
-			idx |= mask;
-		}
-		/** 向idx编码寄存器索引value */
-		static void EncodeReigsterIndex(uint32_t& idx, uint8_t value) thread_safe {
-			EncodeHelper(idx, 12, 0xFFu, value);
-		}
-		/** 向idx编码空间索引value */
-		static void EncodeSpaceIndex(uint32_t& idx, uint8_t value) thread_safe {
-			EncodeHelper(idx, 20, 0xFFu, value);
-		}
-		/** 向idx编码类型编号 SRV: 0x00, CBV: 0x01, UAV: 0x02 */
-		static void EncodeType(uint32_t& idx, ResourceType type) thread_safe {
-			EncodeHelper(idx, 28, 0x0Fu, type);
-		}
-		static uint8_t DecodeRegisterIndex(const uint32_t& idx) thread_safe { return (idx & 0x000FF000u) >> 12; }
-		static uint8_t DecodeSpaceIndex(const uint32_t& idx) thread_safe { return (idx & 0x0FF00000u) >> 20; }
-		/** 仅对SRV CBV UAV有效 */
-		static D3D12_DESCRIPTOR_RANGE_TYPE DecodeTypeToDescriptorRangeType(const uint32_t& idx) thread_safe {
-			switch ((idx & 0xF0000000u) >> 28) {
-			case RESOURCE_TYPE_SHADER_RESOURCE_VIEW: return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-			case RESOURCE_TYPE_CONSTANT_BUFFER_VIEW: return D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-			case RESOURCE_TYPE_UNORDER_ACCESS_VIEW: return D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-			case RESOURCE_TYPE_SAMPLER_STATE: return D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
-			default:
-				FLOG("%s: Invalid encode method! Unable to decode the type!\n", __FUNCTION__);
-				assert(false);
-			}
-		}
-		static uint32_t DecodeIndex(const uint32_t& idx) thread_safe { return idx & 0x00000FFFu; }
-	};
-public:
 	bool Initialize(std::string config) final;
-
-	/** 允许额外的线程执行该函数，负责处理任务队列中的任务 */
-	void Process() final;
 
 	ID3D12Device* GetDevice() { return m_device.Get(); }
 
 	ProgramDescriptor RequestProgram(const ShaderNames& shaderNames, VertexAttributeHandle va_handle,
 		bool usedIndex, RasterizeOptions rasterization, OutputStageOptions outputStage,
 		const std::map<std::string, const SamplerDescriptor&>& staticSamplers = {}) final thread_safe;
+	/** 重构的函数 */
+	ProgramHandle RequestProgram2(const ShaderNames& shaderNames, VertexAttributeHandle va_handle,
+		bool usedIndex, RasterizeOptions rasterization, OutputStageOptions outputStage,
+		const std::map<std::string, const SamplerDescriptor&>& staticSamplers = {}) final thread_safe;
+
+	TextureHandle RequestTexture(uint32_t width, uint32_t height, ElementFormatType type,
+		ResourceStatus status) final thread_safe;
+
+	TextureHandle RequestTexture(SpecialTextureResource specialResource) final thread_safe {
+		return RenderDevice::RequestTexture(specialResource);
+	}
+
+	BufferHandle RequestBuffer(size_t size, ResourceStatus status, size_t stride) final thread_safe;
+
+	bool RevertResource(BufferHandle handle) thread_safe;
+	bool RevertResource(TextureHandle handle) thread_safe;
+
+	CommandUnit& RequestCommandUnit(COMMAND_UNIT_TYPE type) final { return m_commandUnits[type]; }
+
+	bool Present() final { return SUCCEEDED(m_swapChain->Present(1, 0)); }
+	SpecialTextureResource CurrentBackBufferHandle() final { return SpecialTextureResource((uint8_t)DEFAULT_BACK_BUFFER + (uint8_t)m_swapChain->GetCurrentBackBufferIndex()); }
+
+public:
+	/** 仅该子类拥有的函数 */
+	BufferInfo* PickupBuffer(BufferHandle handle) thread_safe;
+	TextureInfo* PickupTexture(TextureHandle handle) thread_safe;
+	std::optional<D3D12_CPU_DESCRIPTOR_HANDLE> PickupRenderTarget(TextureHandle tex) thread_safe;
+	std::optional<D3D12_CPU_DESCRIPTOR_HANDLE> PickupDepthStencilTarget(TextureHandle tex) thread_safe;
+
 private:
 	DX12RenderDevice(DX12RenderBackend& backend,
 		SmartPTR<ID3D12CommandQueue>& queue,
-		SmartPTR<IDXGISwapChain1>& swapChain,
+		SmartPTR<IDXGISwapChain3>& swapChain,
 		SmartPTR<ID3D12Device>& device,
 		uint32_t width, uint32_t height)
 		: m_backend(backend), m_swapChain(swapChain), m_device(device), 
 		m_backBuffers(decltype(m_backBuffers)(NUMBER_OF_BACK_BUFFERS)), m_curBackBufferIndex(0), RenderDevice(width, height),
 		m_resourceManager(DX12ResourceManager(device.Get())) {
-		SmartPTR<ID3D12Fence> fence;
-		device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
+		/** 获取各个descriptor heap的元素(步进)大小 */
+		for (size_t heapType = 0; heapType < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++heapType) {
+			m_descriptorHeapIncrementSize[heapType] = device->GetDescriptorHandleIncrementSize(static_cast<D3D12_DESCRIPTOR_HEAP_TYPE>(heapType));
+		}
+		/** 初始化指令执行单位 */
+		for (size_t commandUnitType = 0; commandUnitType < NUMBER_OF_COMMAND_UNIT_TYPE; ++commandUnitType) {
+			m_commandUnits[commandUnitType] = DX12CommandUnit(this);
+			if (commandUnitType == DEFAULT_COMMAND_UNIT) m_commandUnits[commandUnitType].Setup(queue);
+			else m_commandUnits[commandUnitType].Setup(
+				CommandUnitTypeToDX12CommandListType(
+					static_cast<COMMAND_UNIT_TYPE>(commandUnitType)));
+		}
+		m_rtvHeapGen.back() = 0;
+		m_dsvHeapGen.back() = 0;
+		m_scuHeapManager.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, m_device.Get());
+		m_samplerHeapManager.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, m_device.Get());
 	}
 
 	const DX12RenderDevice& operator=(const DX12RenderDevice&) = delete;
 	DX12RenderDevice(DX12RenderDevice&&) = delete;
 	DX12RenderDevice(const DX12RenderDevice&) = delete;
 
-	void TEST_func(const Command&);
-public:
 	/** 根据program descriptor 创建GraphicsPipeline state object */
 	bool generateGraphicsPSO(const ProgramDescriptor& pmgDesc);
 	/** 根据program descriptor 创建该program的root signature */
 	bool generateGraphicsRootSignature(const ProgramInfo& pmgDesc, SmartPTR<ID3D12RootSignature>& rootSignature);
-
+	bool generateGraphicsRootSignature(const std::vector<RootSignatureParameter>& parameters,
+		const std::vector<std::pair<SamplerDescriptor, RootSignatureParameter>>& staticSamplers);
+	bool generateBuffer(const BufferDescriptor& desc);
 private:
 	DX12RenderBackend& m_backend;
-	SmartPTR<IDXGISwapChain1> m_swapChain;
+	SmartPTR<IDXGISwapChain3> m_swapChain;
 	SmartPTR<ID3D12Device> m_device;
 	std::vector< SmartPTR<ID3D12Resource> > m_backBuffers; /**< 需要手动构建队列 */
 	DX12ResourceManager m_resourceManager; /**< 资源管理器 */
@@ -233,9 +299,30 @@ private:
 	 * 取值范围是[0, BACK_BUFFER_COUNT] */
 	uint8_t m_curBackBufferIndex = 0; 
 
+	SmartPTR<ID3D12DescriptorHeap> m_rtvHeap;
+	SmartPTR<ID3D12DescriptorHeap> m_dsvHeap;
+	DX12DescriptorHeapManager m_scuHeapManager;
+	DX12DescriptorHeapManager m_samplerHeapManager;
+	UINT m_descriptorHeapIncrementSize[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];
+	
+	/** 最后一个元素存储当前空闲的位置索引 */
+	mutable OptimisticLock m_rtvHeapGenLock;
+	std::array<uint32_t, NUMBER_OF_DESCRIPTOR_IN_RTV_HEAP + 1> m_rtvHeapGen;
+
+	mutable OptimisticLock m_dsvHeapGenLock;
+	std::array<uint32_t, NUMBER_OF_DESCRIPTOR_IN_DSV_HEAP + 1> m_dsvHeapGen;
+
+	DX12CommandUnit m_commandUnits[NUMBER_OF_COMMAND_UNIT_TYPE]; /**< 包含所有可用的指令单元 */
+
+	D3D12_VIEWPORT m_viewport;
+	D3D12_RECT m_scissorRect;
+
+	mutable OptimisticLock m_bufferLock;
 	std::map<BufferHandle, BufferInfo> m_buffers; /**< 所有缓冲区句柄的信息都在这里 */
+	mutable OptimisticLock m_textureLock;
 	std::map<TextureHandle, TextureInfo> m_textures; /**< 所有纹理句柄信息都在这里 */
-	std::map<SamplerHandle, SamplerInfo> m_samplers; /**< 所有采样方式信息都在这里 */
+	//mutable OptimisticLock m_samplerLock;
+	//std::map<SamplerHandle, SamplerInfo> m_samplers; /**< 所有采样方式信息都在这里 */
 	mutable OptimisticLock m_programLock;
 	std::map<ProgramHandle, ProgramInfo> m_programs;
 

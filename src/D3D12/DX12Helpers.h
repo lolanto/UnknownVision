@@ -3,6 +3,7 @@
 #include "../UVType.h"
 #include "../Utility/InfoLog/InfoLog.h"
 #include <cassert>
+#include <optional>
 
 BEG_NAME_SPACE
 /** Helping Functions */
@@ -40,6 +41,8 @@ inline const char* VertexAttributeTypeToString(VertexAttributeType type) {
 		return "TANGENT";
 	case UnknownVision::VERTEX_ATTRIBUTE_TYPE_TEXTURE:
 		return "TEXCOORD";
+	case UnknownVision::VERTEX_ATTRIBUTE_TYPE_COLOR:
+		return "COLOR";
 	default:
 		MLOG("Invalid Vertex Attribute type!\n");
 		return nullptr;
@@ -97,7 +100,7 @@ inline D3D12_HEAP_TYPE ResourceStatusToHeapType(const ResourceStatus& status) {
 inline D3D12_RESOURCE_FLAGS ResourceStatusToResourceFlag(const ResourceStatus& status) {
 	D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE; /**< 默认flag类型 */
 	if (status.canBeRenderTarget()) flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-	if (status.canBeDepth()) flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+	if (status.canBeDepthStencil()) flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 	if (status.canBeUnorderAccess()) flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	/** TODO: 还有DenyShaderResource, crossAdapter, simultaneousAccess, videoDecodeReferenceOnly */
 	return flags;
@@ -132,6 +135,219 @@ inline D3D12_TEXTURE_ADDRESS_MODE SamplerAddressModeToDX12TextureAddressMode(con
 		assert(false);
 	}
 }
+
+inline D3D12_COMMAND_LIST_TYPE CommandUnitTypeToDX12CommandListType(const COMMAND_UNIT_TYPE type) {
+	switch (type) {
+	case DEFAULT_COMMAND_UNIT:
+		return D3D12_COMMAND_LIST_TYPE_DIRECT;
+	case COMPUTE_COMMAND_UNIT:
+		return D3D12_COMMAND_LIST_TYPE_COMPUTE;
+	case TRANSFER_COMMAND_UNIT:
+		return D3D12_COMMAND_LIST_TYPE_COPY;
+	default:
+		FLOG("%s: Doesn't support this kind of command unit\n", __FUNCTION__);
+		assert(false);
+	}
+}
+
+inline D3D12_RESOURCE_STATES ResourceStateToDX12ResourceState(const ResourceStates state) {
+	D3D12_RESOURCE_STATES res = D3D12_RESOURCE_STATE_COMMON;
+	if (state & RESOURCE_STATE_CONSTANT_BUFFER)
+		res |= D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+	if (state & RESOURCE_STATE_COPY_DEST)
+		res |= D3D12_RESOURCE_STATE_COPY_DEST;
+	if (state & RESOURCE_STATE_COPY_SRC)
+		res |= D3D12_RESOURCE_STATE_COPY_SOURCE;
+	if (state & RESOURCE_STATE_DEPTH_READ)
+		res |= D3D12_RESOURCE_STATE_DEPTH_READ;
+	if (state & RESOURCE_STATE_DEPTH_WRITE)
+		res |= D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	if (state & RESOURCE_STATE_INDEX_BUFFER)
+		res |= D3D12_RESOURCE_STATE_INDEX_BUFFER;
+	if (state & RESOURCE_STATE_PRESENT)
+		res |= D3D12_RESOURCE_STATE_PRESENT;
+	if (state & RESOURCE_STATE_RENDER_TARGET)
+		res |= D3D12_RESOURCE_STATE_RENDER_TARGET;
+	if (state & RESOURCE_STATE_SHADER_RESOURCE)
+		res |= (D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	if (state & RESOURCE_STATE_UNORDER_ACCESS)
+		res |= D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	if (state & RESOURCE_STATE_VERTEX_BUFFER)
+		res |= D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+	
+	return res;
+}
+
+D3D12_SHADER_VISIBILITY ShaderTypeToDX12ShaderVisibility(ShaderType type) {
+	switch (type)
+	{
+	case UnknownVision::SHADER_TYPE_VERTEX_SHADER:
+		return D3D12_SHADER_VISIBILITY_VERTEX;
+	case UnknownVision::SHADER_TYPE_PIXEL_SHADER:
+		return D3D12_SHADER_VISIBILITY_PIXEL;
+	case UnknownVision::SHADER_TYPE_GEOMETRY_SHADER:
+		return D3D12_SHADER_VISIBILITY_GEOMETRY;
+	case UnknownVision::SHADER_TYPE_HULL_SHADER:
+		return D3D12_SHADER_VISIBILITY_HULL;
+	case UnknownVision::SHADER_TYPE_TESSELLATION_SHADER:
+		return D3D12_SHADER_VISIBILITY_DOMAIN;
+	/** compute shader由于只有一个，所以设置可见性没有意义 */
+	default:
+		return D3D12_SHADER_VISIBILITY_ALL;
+	}
+}
+
+/** Type类型表明了编码的值属于descriptor / constant / table中的某一类range / 用于分隔的值 */
+enum RootSignatureParameterType : uint8_t {
+	RS_PARAMETER_TYPE_RANGE_SRV = D3D12_DESCRIPTOR_RANGE_TYPE_SRV, /**< 000 */
+	RS_PARAMETER_TYPE_RANGE_UAV = D3D12_DESCRIPTOR_RANGE_TYPE_UAV, /**< 001 */
+	RS_PARAMETER_TYPE_RANGE_CBV = D3D12_DESCRIPTOR_RANGE_TYPE_CBV, /**< 010 */
+	RS_PARAMETER_TYPE_RANGE_SAMPLER = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, /**< 011 */
+	RS_PARAMETER_TYPE_DESCRIPTOR_CBV,
+	RS_PARAMETER_TYPE_DESCRIPTOR_SRV,
+	RS_PARAMETER_TYPE_DESCRIPTOR_UAV,
+	RS_PARAMETER_TYPE_32BIT_CONSTANT
+};
+
+struct RootSignatureParameter {
+	uint32_t value = 0;
+	/** 辅助函数，用于解析或者写入编码 */
+	/** 3bit type - 6bit shaderVisibility - 3bit space - 8 bit count - 12bit register */
+	void EncodeParameterType(RootSignatureParameterType type) {
+		value &= 0x1fffffffu;
+		uint32_t mask = uint32_t(type);
+		mask = mask << 29;
+		value |= mask;
+	}
+	void EncodeShaderVisibility(ShaderType type, bool visible) {
+		uint32_t mask = 1;
+		switch (type)
+		{
+		case UnknownVision::SHADER_TYPE_VERTEX_SHADER: mask = mask << (23 + SHADER_TYPE_VERTEX_SHADER); break;
+		case UnknownVision::SHADER_TYPE_PIXEL_SHADER: mask = mask << (23 + SHADER_TYPE_PIXEL_SHADER); break;
+		case UnknownVision::SHADER_TYPE_GEOMETRY_SHADER: mask = mask << (23 + SHADER_TYPE_GEOMETRY_SHADER); break;
+		case UnknownVision::SHADER_TYPE_HULL_SHADER: mask = mask << (23 + SHADER_TYPE_HULL_SHADER); break;
+		case UnknownVision::SHADER_TYPE_TESSELLATION_SHADER: mask = mask << (23 + SHADER_TYPE_TESSELLATION_SHADER); break;
+		case UnknownVision::SHADER_TYPE_COMPUTE_SHADER: mask = mask << (23 + SHADER_TYPE_COMPUTE_SHADER); break;
+		}
+		if (visible) value |= mask;
+		else value &= ~mask;
+	}
+	void EncodeSpaceValue(uint32_t space) {
+		value &= 0xff8fffff;
+		space = space << 20;
+		value |= space;
+	}
+	/** 参数描述的range连续占用的register数量至少为1，非range该值为0 */
+	void EncodeCountValue(uint32_t count) {
+		value &= 0xfff00fff;
+		count = count << 12;
+		value |= count;
+	}
+	void EncodeBaseRegister(uint32_t reg) {
+		value &= 0xfffff000u;
+		value |= reg;
+	}
+	RootSignatureParameterType DecodeParameterType() const {
+		uint32_t type = value & 0xe0000000u;
+		type = type >> 29;
+		return RootSignatureParameterType(type);
+	}
+	uint32_t DecodeSpaceValue() const {
+		uint32_t space = value & 0x00700000u;
+		space = space >> 20;
+		return space;
+	}
+	uint32_t DecodeCountValue() const {
+		uint32_t count = value & 0x000ff000u;
+		count = count >> 12;
+		return count;
+	}
+	uint32_t DecodeBaseRegister() const {
+		uint32_t reg = value & 0x00000fffu;
+		return reg;
+	}
+	bool DecodeShaderVisibility(ShaderType type) const {
+		uint32_t mask = 1;
+		switch (type)
+		{
+		case UnknownVision::SHADER_TYPE_VERTEX_SHADER: mask = mask << (23 + SHADER_TYPE_VERTEX_SHADER); break;
+		case UnknownVision::SHADER_TYPE_PIXEL_SHADER: mask = mask << (23 + SHADER_TYPE_PIXEL_SHADER); break;
+		case UnknownVision::SHADER_TYPE_GEOMETRY_SHADER: mask = mask << (23 + SHADER_TYPE_GEOMETRY_SHADER); break;
+		case UnknownVision::SHADER_TYPE_HULL_SHADER: mask = mask << (23 + SHADER_TYPE_HULL_SHADER); break;
+		case UnknownVision::SHADER_TYPE_TESSELLATION_SHADER: mask = mask << (23 + SHADER_TYPE_TESSELLATION_SHADER); break;
+		case UnknownVision::SHADER_TYPE_COMPUTE_SHADER: mask = mask << (23 + SHADER_TYPE_COMPUTE_SHADER); break;
+		default:
+			FLOG("%s: Invalid shader type\n", __FUNCTION__);
+			return false;
+		}
+		return value & mask;
+	}
+	bool IsInvalid() const {
+		return DecodeParameterType() <= RS_PARAMETER_TYPE_RANGE_SAMPLER &&
+			DecodeCountValue() == 0;
+	}
+	/** 构造一个无效的参数值: 申请range类型，但长度为0 */
+	static RootSignatureParameter InvalidValue() {
+		RootSignatureParameter rsv;
+		rsv.EncodeParameterType(RS_PARAMETER_TYPE_DESCRIPTOR_CBV);
+		rsv.EncodeCountValue(0);
+		return rsv;
+	}
+	/** 因为一个d3d12_root_parameter只能有一个visibility，一旦parameter包含多个visibility就需要返回多个 */
+	std::optional<D3D12_ROOT_PARAMETER> DecodeToSingleRootParameter() const {
+		if (IsInvalid()) return {}; /**< 无效参数 */
+		D3D12_ROOT_PARAMETER para;
+		/** TODO: 假如可见性2个及以上则全部可见 */
+		{
+			uint8_t vs = 0;
+			uint32_t mask = value >> 8;
+			para.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+			for (size_t i = 0; i < SHADER_TYPE_NUMBER_OF_TYPE; ++i) {
+				vs += mask & 0x1u;
+				if (vs == 1) {
+					para.ShaderVisibility = ShaderTypeToDX12ShaderVisibility(static_cast<ShaderType>(i));
+				}
+				else if (vs > 1) {
+					para.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+					break;
+				}
+			}
+		}
+		para.Descriptor.RegisterSpace = DecodeSpaceValue();
+		para.Descriptor.ShaderRegister = DecodeBaseRegister();
+		switch (DecodeParameterType()) {
+		case RS_PARAMETER_TYPE_32BIT_CONSTANT:
+			para.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS; break;
+		case RS_PARAMETER_TYPE_DESCRIPTOR_CBV:
+			para.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; break;
+		case RS_PARAMETER_TYPE_DESCRIPTOR_SRV:
+			para.ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV; break;
+		case RS_PARAMETER_TYPE_DESCRIPTOR_UAV:
+			para.ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV; break;
+		}
+		return para;
+	}
+
+	std::optional<D3D12_DESCRIPTOR_RANGE> DecodeToDescriptorRange() const {
+		if (IsInvalid()) return {};
+		D3D12_DESCRIPTOR_RANGE range;
+		range.BaseShaderRegister = DecodeBaseRegister();
+		range.NumDescriptors = DecodeCountValue();
+		/** TODO:暂时只能紧跟上一个range */
+		range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+		range.RegisterSpace = DecodeSpaceValue();
+		range.RangeType = static_cast<D3D12_DESCRIPTOR_RANGE_TYPE>(DecodeParameterType());
+		return range;
+	}
+};
+
+/** 询问某个root signature 参数后返回的结果 */
+struct RootSignatureQueryAnswer {
+	uint8_t slot; /**< 该参数属于哪个parameter slot */
+	uint8_t beg; /**< 该参数于该slot对应的descHeap的开头偏移值 */
+	uint8_t range; /**< 该参数连续占用的范围大小 */
+};
 
 END_NAME_SPACE
 

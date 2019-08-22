@@ -23,11 +23,11 @@ constexpr static uint32_t TEXTURE_SIZE_RELEASE_IMMEDIATELY = (HEAP_CHUNK_SIZE / 
 class DX12ResourceManager {
 	struct BufferInfo {
 		BufferInfo() = default;
-		BufferInfo(SmartPTR<ID3D12Resource>&& buf, const DX12HeapManager::BlockInfo& block,
+		BufferInfo(SmartPTR<ID3D12Resource>&& buf, const DX12ResourceHeapManager::BlockInfo& block,
 			D3D12_RESOURCE_STATES state, D3D12_RESOURCE_FLAGS flags, D3D12_HEAP_TYPE heapType,
 			size_t size, bool isFree)
 			: buffer(std::move(buf)), block(block), state(state), flags(flags), heapType(heapType), size(size), isFree(isFree) {}
-		BufferInfo(const SmartPTR<ID3D12Resource>& buf, const DX12HeapManager::BlockInfo& block,
+		BufferInfo(const SmartPTR<ID3D12Resource>& buf, const DX12ResourceHeapManager::BlockInfo& block,
 			D3D12_RESOURCE_STATES state, D3D12_RESOURCE_FLAGS flags, D3D12_HEAP_TYPE heapType,
 			size_t size, bool isFree)
 			: buffer(buf), block(block), state(state), flags(flags), heapType(heapType), size(size), isFree(isFree) {}
@@ -39,7 +39,7 @@ class DX12ResourceManager {
 		BufferInfo& operator=(const BufferInfo&&) = delete;
 		/** Properties */
 		SmartPTR<ID3D12Resource> buffer = nullptr;
-		const DX12HeapManager::BlockInfo block = {}; /**< 堆占用情况，假如不使用heap manager，则内部数据全是0 */
+		const DX12ResourceHeapManager::BlockInfo block = {}; /**< 堆占用情况，假如不使用heap manager，则内部数据全是0 */
 		D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON;
 		const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
 		const D3D12_HEAP_TYPE heapType = D3D12_HEAP_TYPE_DEFAULT;
@@ -48,12 +48,12 @@ class DX12ResourceManager {
 	};
 	struct TextureInfo {
 		TextureInfo() = default;
-		TextureInfo(SmartPTR<ID3D12Resource>&& tex, const DX12HeapManager::BlockInfo& block, D3D12_RESOURCE_STATES state,
+		TextureInfo(SmartPTR<ID3D12Resource>&& tex, const DX12ResourceHeapManager::BlockInfo& block, D3D12_RESOURCE_STATES state,
 			D3D12_RESOURCE_FLAGS flags, DXGI_FORMAT format, uint32_t width, uint32_t height,
 			uint16_t mipLevel, bool isFree)
 			: texture(std::move(tex)), block(block), state(state), flags(flags),
 			elementFormat(format), width(width), height(height), mipLevel(mipLevel), isFree(isFree) {}
-		TextureInfo(const SmartPTR<ID3D12Resource>& tex, const DX12HeapManager::BlockInfo& block, D3D12_RESOURCE_STATES state,
+		TextureInfo(const SmartPTR<ID3D12Resource>& tex, const DX12ResourceHeapManager::BlockInfo& block, D3D12_RESOURCE_STATES state,
 			D3D12_RESOURCE_FLAGS flags, D3D12_HEAP_TYPE heapType, DXGI_FORMAT format, uint32_t width, uint32_t height,
 			uint16_t mipLevel, bool isFree)
 			: texture(tex), block(block), state(state), flags(flags),
@@ -68,7 +68,7 @@ class DX12ResourceManager {
 		TextureInfo& operator=(const TextureInfo&) = delete;
 		/** Properties */
 		SmartPTR<ID3D12Resource> texture = nullptr;
-		const DX12HeapManager::BlockInfo block = {}; /**< 堆占用情况，假如不使用heap manager，则内部数据全是0 */
+		const DX12ResourceHeapManager::BlockInfo block = {}; /**< 堆占用情况，假如不使用heap manager，则内部数据全是0 */
 		D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON;
 		const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
 		const DXGI_FORMAT elementFormat = DXGI_FORMAT_UNKNOWN; /**< 申请时的纹理元素的格式 */
@@ -176,8 +176,8 @@ class DX12ResourceManager {
 	};
 public:
 	DX12ResourceManager(ID3D12Device* device) : m_device(device) {
-		m_uploadHeapMgr = std::make_unique<DX12HeapManager>(device, D3D12_HEAP_TYPE_UPLOAD);
-		m_defaultHeapMgr = std::make_unique<DX12HeapManager>(device, D3D12_HEAP_TYPE_DEFAULT);
+		m_uploadHeapMgr = std::make_unique<DX12ResourceHeapManager>(device, D3D12_HEAP_TYPE_UPLOAD);
+		m_defaultHeapMgr = std::make_unique<DX12ResourceHeapManager>(device, D3D12_HEAP_TYPE_DEFAULT);
 	}
 	~DX12ResourceManager() = default; /**< 假如有资源正在被引用，可能会造成错误 */
 	DX12ResourceManager(const DX12ResourceManager&) = delete;
@@ -270,8 +270,8 @@ private:
 	std::mutex m_textureLock;
 	TexturePool m_textures; /**< 当前已经申请的所有纹理 */
 	std::map<std::uintptr_t, TexturePool::iterator> m_textureAddrIndex; /**< 纹理地址和纹理迭代器对 */
-	std::unique_ptr<DX12HeapManager> m_uploadHeapMgr;
-	std::unique_ptr<DX12HeapManager> m_defaultHeapMgr;
+	std::unique_ptr<DX12ResourceHeapManager> m_uploadHeapMgr;
+	std::unique_ptr<DX12ResourceHeapManager> m_defaultHeapMgr;
 };
 
 END_NAME_SPACE
