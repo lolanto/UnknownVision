@@ -13,9 +13,16 @@
 
 BEG_NAME_SPACE
 
+class CommandListener {
+
+};
+
 /** 资源应用类指令的接口集合 */
 class CommandUnit {
 public:
+	enum VariableType {
+		
+	};
 	virtual ~CommandUnit() = default;
 public:
 	virtual bool Active() = 0;
@@ -31,7 +38,7 @@ public:
 	virtual bool TransferState(BufferHandle buf, ResourceStates newState) = 0;
 	virtual bool TransferState(TextureHandle tex, ResourceStates newState) = 0;
 	//virtual bool UseProgram(ProgramHandle program) = 0;
-	//virtual bool BindVaraiables(const std::vector<std::pair<std::string, Parameter>>& parameters) = 0;
+	virtual bool BindVariable(VariableType type, ) = 0;
 	//virtual bool BindVertexBuffers(const std::vector<BufferHandle>& vtxBuffers) = 0;
 	//virtual bool BindIndexBuffer(BufferHandle buf) = 0;
 	virtual bool BindRenderTargetsAndDepthStencilBuffer(const std::vector<TextureHandle>& renderTargets, TextureHandle depthStencil) = 0;

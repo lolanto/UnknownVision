@@ -213,6 +213,18 @@ enum ProgramType : uint8_t {
 	PROGRAM_TYPE_COMPUTE
 };
 
+enum DescriptorHeapType : uint8_t {
+	DESCRIPTOR_HEAP_TYPE_INVALID = 0,
+	DESCRIPTOR_HEAP_TYPE_CBV = 1 << 0,
+	DESCRIPTOR_HEAP_TYPE_SRV = 1 << 1,
+	DESCRIPTOR_HEAP_TYPE_UAV = 1 << 2,
+	DESCRIPTOR_HEAP_TYPE_SAMPLER = 1 << 3,
+	DESCRIPTOR_HEAP_TYPE_RTV = 1 << 4
+};
+
+ENUM_LOGICAL_OPERATION(DescriptorHeapType, uint8_t)
+#define DESCRIPTOR_HEAP_CBV_SRV_UAV DESCRIPTOR_HEAP_TYPE_CBV | DESCRIPTOR_HEAP_TYPE_SRV | DESCRIPTOR_HEAP_TYPE_UAV
+
 /** 为索引值设置别名，加强类型检查 */
 ALIAS_INDEX(uint8_t, VertexAttributeHandle);
 ALIAS_INDEX(int32_t, Texture2DIdx);
@@ -229,6 +241,8 @@ ALIAS_INDEX(uint64_t, BufferHandle);
 ALIAS_INDEX(uint64_t, TextureHandle);
 ALIAS_INDEX(uint64_t, ProgramHandle);
 ALIAS_INDEX(uint64_t, SamplerHandle);
+ALIAS_INDEX(uint64_t, ShaderHandle);
+ALIAS_INDEX(uint64_t, PipelineHandle);
 ALIAS_INDEX(uint64_t, TaskFrame);
 
 template<typename T>

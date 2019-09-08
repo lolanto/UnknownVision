@@ -64,6 +64,9 @@
     <Filter Include="Utility\OptimisticLock">
       <UniqueIdentifier>{8b3ba271-14b3-4093-be39-5dc90ba4aeb4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shader">
+      <UniqueIdentifier>{d08aceef-ea07-4a74-893c-fb7effe912f5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\Utility\FileContainer\FileContainer.cpp">
@@ -113,6 +116,9 @@
     </ClCompile>
     <ClCompile Include="..\src\D3D12\DX12CommandUnit.cpp">
       <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Shader\SampleShader.cpp">
+      <Filter>Shader</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -199,6 +205,21 @@
     </ClInclude>
     <ClInclude Include="..\src\D3D12\DX12Helpers.h">
       <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RenderSystem\Renderable.h">
+      <Filter>RenderSystem\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12Shader.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RenderSystem\Shader.h">
+      <Filter>RenderSystem\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Shader\SampleShader.h">
+      <Filter>Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RenderSystem\Pipeline.h">
+      <Filter>RenderSystem\Header</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
