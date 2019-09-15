@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "DX12Config.h"
+#include "../RenderSystem/FixedStage.h"
 #include "../UVType.h"
 #include "../Utility/InfoLog/InfoLog.h"
 #include <cassert>
@@ -348,6 +349,65 @@ struct RootSignatureQueryAnswer {
 	uint8_t beg; /**< 该参数于该slot对应的descHeap的开头偏移值 */
 	uint8_t range; /**< 该参数连续占用的范围大小 */
 };
+
+/** 分析输出阶段中关于blending过程的内容，并生成blending设置 */
+D3D12_BLEND_DESC AnalyseBlendingOptionsFromOutputStageOptions(const OutputStageOptions & osOpt) thread_safe
+{
+	/** TODO: 完善对blend的支持，目前仅提供默认(无blend)操作 */
+	D3D12_BLEND_DESC desc;
+	desc.AlphaToCoverageEnable = FALSE;
+	desc.IndependentBlendEnable = FALSE;
+	const D3D12_RENDER_TARGET_BLEND_DESC defaultRenderTargetBlendDesc =
+	{
+		FALSE,FALSE,
+		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+		D3D12_LOGIC_OP_NOOP,
+		D3D12_COLOR_WRITE_ENABLE_ALL,
+	};
+	for (UINT i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+		desc.RenderTarget[i] = defaultRenderTargetBlendDesc;
+	return desc;
+}
+/** 分析输出阶段中关于Depth和stencil过程的设置，并生成Depth Stencil设置 */
+D3D12_DEPTH_STENCIL_DESC AnalyseDepthStencilOptionsFromOutputStageOptions(const OutputStageOptions & osOpt) thread_safe
+{
+	/** TODO: 完善深度模板操作的支持，目前仅支持默认的深度测试，不支持模板测试 */
+	D3D12_DEPTH_STENCIL_DESC desc;
+	desc.DepthEnable = osOpt.enableDepthTest;
+	desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	desc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+	desc.StencilEnable = FALSE;
+	desc.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
+	desc.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
+	const D3D12_DEPTH_STENCILOP_DESC defaultStencilOp =
+	{ D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_COMPARISON_FUNC_ALWAYS };
+	desc.FrontFace = defaultStencilOp;
+	desc.BackFace = defaultStencilOp;
+	return desc;
+}
+/** 分析光栅化的设置并生成DX12相应的设置 */
+D3D12_RASTERIZER_DESC AnalyseRasterizerOptionsFromRasterizeOptions(const RasterizeOptions & rastOpt) thread_safe
+{
+	D3D12_RASTERIZER_DESC desc;
+	desc.FillMode = FillModeToDX12FillMode(rastOpt.fillMode);
+	desc.CullMode = CullModeToCullMode(rastOpt.cullMode);
+	desc.FrontCounterClockwise = rastOpt.counterClockWiseIsFront;
+	/** TODO: 支持以下光栅化设置 */
+	desc.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
+	desc.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
+	desc.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
+	desc.DepthClipEnable = TRUE;
+	desc.MultisampleEnable = FALSE;
+	desc.AntialiasedLineEnable = FALSE;
+	desc.ForcedSampleCount = 0;
+	desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+	return desc;
+}
+///** 分析静态samplerState并生成DX12相应的设置 */
+//D3D12_STATIC_SAMPLER_DESC AnalyseStaticSamplerFromSamplerDescriptor(const SamplerDescriptor& desc, uint8_t spaceIndex, uint8_t registerIndex) thread_safe;
+///** 分析samplerState并生成DX12相应的设置 */
+//D3D12_SAMPLER_DESC AnalyseSamplerFromSamperDescriptor(const SamplerDescriptor& desc) thread_safe;
 
 END_NAME_SPACE
 

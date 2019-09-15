@@ -1,4 +1,5 @@
-﻿#include "DX12RenderBasic.h"
+﻿#include "DX12RenderBackend.h"
+
 #include "../Utility/WindowBase/win32/WindowWin32.h"
 #include "../Utility/InfoLog/InfoLog.h"
 #include "../Utility/DXCompilerHelper/DXCompilerHelper.h"
@@ -9,7 +10,7 @@
 #define XifFailed(function, behavior) if (FAILED(function)) behavior
 
 BEG_NAME_SPACE
-bool UnknownVision::DX12RenderBackend::Initialize()
+bool DX12RenderBackend::Initialize()
 {
 	if (m_isInitialized) return true;
 
@@ -30,6 +31,7 @@ bool UnknownVision::DX12RenderBackend::Initialize()
 
 	return m_isInitialized = true;
 }
+
 RenderDevice * DX12RenderBackend::CreateDevice(void * parameters)
 {
 	if (!m_isInitialized) return nullptr;

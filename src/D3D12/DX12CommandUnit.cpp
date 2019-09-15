@@ -1,4 +1,7 @@
-﻿#include "DX12RenderBasic.h"
+﻿#include "DX12CommandUnit.h"
+#include "DX12RenderBasic.h"
+#include "DX12RenderResource.h"
+#include <cassert>
 
 BEG_NAME_SPACE
 
@@ -69,9 +72,24 @@ bool DX12CommandUnit::Wait() {
 			WaitForSingleObject(m_fenceEvent, INFINITE);
 		}
 		m_executing = false;
-		for (auto res : m_tmpReses) {
-			/** 销毁临时资源 */
+		for (auto& e : m_onEndEvent) e();
+		m_onEndEvent.clear();
+		for (auto& e : m_onEndEvent_regular) e();
+	}
+	return true;
+}
+
+bool DX12CommandUnit::RegisterEvent(std::function<void()> e, EventTime time, bool isRegularEvent)
+{
+	switch (time) {
+	case EVENT_TIME_ON_END:
+		if (isRegularEvent) {
+			m_onEndEvent_regular.push_back(e);
 		}
+		else {
+			m_onEndEvent.push_back(e);
+		}
+		break;
 	}
 	return true;
 }
@@ -80,6 +98,8 @@ bool DX12CommandUnit::Reset()
 {
 	Wait();
 	m_alloc->Reset();
+	m_onEndEvent.clear();
+	m_onEndEvent_regular.clear();
 	return false;
 }
 
@@ -180,6 +200,30 @@ bool DX12CommandUnit::TransferState(BufferHandle buf, ResourceStates newState)
 	barrier.Transition.StateAfter = ResourceStateToDX12ResourceState(newState);
 	barrier.Transition.Subresource = 0;
 	m_graphicCmdList->ResourceBarrier(1, &barrier);
+	return true;
+}
+
+bool DX12CommandUnit::TransferState(Buffer* buf, ResourceStates newState) {
+	DX12Buffer* dx12Buf = dynamic_cast<DX12Buffer*>(buf);
+	assert(dx12Buf != nullptr);
+	D3D12_HEAP_PROPERTIES prop;
+	D3D12_HEAP_FLAGS flag;
+	dx12Buf->GetResource()->GetHeapProperties(&prop, &flag);
+	if (prop.Type == D3D12_HEAP_TYPE_UPLOAD || prop.Type == D3D12_HEAP_TYPE_READBACK) {
+		MLOG("resource on upload/readback heap can't change state!\n");
+		return true;
+	}
+	if (stateMatch(dx12Buf->GetResourceState(), newState)) return true;
+	D3D12_RESOURCE_BARRIER barrier;
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.Transition.pResource = dx12Buf->GetResource();
+	barrier.Transition.StateBefore = dx12Buf->GetResourceState();
+	barrier.Transition.StateAfter = ResourceStateToDX12ResourceState(newState);
+	barrier.Transition.Subresource = 0;
+	m_graphicCmdList->ResourceBarrier(1, &barrier);
+	/** 修改对应的资源状态 */
+	dx12Buf->GetResourceState() = ResourceStateToDX12ResourceState(newState);
 	return true;
 }
 

@@ -94,7 +94,7 @@
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <PreprocessToFile>false</PreprocessToFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>Lua.lib;d3d12.lib;d3d11.lib;dxgi.lib;dxcompiler.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -107,7 +107,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <FxCompile>
       <ShaderModel>5.0</ShaderModel>
@@ -124,7 +124,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -140,7 +140,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -150,6 +150,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\D3D12\DX12CommandUnit.cpp" />
+    <ClInclude Include="..\src\D3D12\DX12CommandUnit.h" />
+    <ClInclude Include="..\src\D3D12\DX12DescriptorHeap.h" />
+    <ClCompile Include="..\src\D3D12\DX12DescriptorHeap.cpp" />
+    <ClCompile Include="..\src\D3D12\DX12PipelineManager.cpp" />
     <ClCompile Include="..\src\D3D12\DX12ResourceManager.cpp" />
     <ClCompile Include="..\src\D3D12\DX12Config.cpp" />
     <ClCompile Include="..\src\D3D12\DX12RenderBackend.cpp">
@@ -160,6 +164,7 @@
     </ClCompile>
     <ClCompile Include="..\src\D3D12\DX12RenderBasic.cpp" />
     <ClCompile Include="..\src\D3D12\DX12RenderDevice.cpp" />
+    <ClCompile Include="..\src\D3D12\DX12Shader.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\RenderSystem\Task.cpp" />
     <ClCompile Include="..\src\ScriptEngine\Lua\LuaEngine.cpp" />
@@ -181,18 +186,28 @@
     <ClInclude Include="..\src\D3D12\d3dx12.h" />
     <ClInclude Include="..\src\D3D12\DX12HeapManager.h" />
     <ClInclude Include="..\src\D3D12\DX12Helpers.h" />
+    <ClInclude Include="..\src\D3D12\DX12PipelineManager.h" />
+    <ClInclude Include="..\src\D3D12\DX12RenderBackend.h" />
     <ClInclude Include="..\src\D3D12\DX12RenderBasic.h" />
     <ClInclude Include="..\src\D3D12\DX12Config.h" />
+    <ClInclude Include="..\src\D3D12\DX12RenderDevice.h" />
+    <ClInclude Include="..\src\D3D12\DX12RenderResource.h" />
     <ClInclude Include="..\src\D3D12\DX12ResourceManager.h" />
     <ClInclude Include="..\src\D3D12\DX12Shader.h" />
+    <ClInclude Include="..\src\D3D12\DX12ShaderResource.h" />
     <ClInclude Include="..\src\DirectXHelper.h" />
+    <ClInclude Include="..\src\RenderSystem\CommandUnit.h" />
+    <ClInclude Include="..\src\RenderSystem\FixedStage.h" />
     <ClInclude Include="..\src\RenderSystem\Pipeline.h" />
     <ClInclude Include="..\src\RenderSystem\Renderable.h" />
     <ClInclude Include="..\src\RenderSystem\RenderDescriptor.h" />
-    <ClInclude Include="..\src\RenderSystem\RenderBasic.h" />
+    <ClInclude Include="..\src\RenderSystem\RenderBackend.h" />
+    <ClInclude Include="..\src\RenderSystem\RenderDevice.h" />
     <ClInclude Include="..\src\RenderSystem\SettingHelpers.hpp" />
     <ClInclude Include="..\src\RenderSystem\Shader.h" />
     <ClInclude Include="..\src\RenderSystem\Task.h" />
+    <ClInclude Include="..\src\Resource\RenderResource.h" />
+    <ClInclude Include="..\src\Resource\ShaderResource.h" />
     <ClInclude Include="..\src\ScriptEngine\Lua\LuaEngine.h" />
     <ClInclude Include="..\src\ScriptEngine\Lua\LuaFunctions.h" />
     <ClInclude Include="..\src\ScriptEngine\ScirptEngine.h" />

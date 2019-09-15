@@ -241,77 +241,77 @@ private:
 constexpr uint8_t DESCRIPTOR_HEAP_DEFAULT_SIZE = 64; /**< 一个descriptor heap能够容纳的最大descriptor */
 constexpr uint8_t MAX_NUMBER_OF_DESCRIPTOR_HEAP = 8; /**< 一个manager可以容纳的descriptor heap的数量 */
 
-class DX12DescriptorHeapManager : public BasicHeapManager {
-public:
-	DX12DescriptorHeapManager() : m_device(nullptr) {}
-	void Initialize(D3D12_DESCRIPTOR_HEAP_TYPE type, ID3D12Device* dev) { m_type = type; m_device = dev; }
-	/** 向管理器请求堆空间
-	 * @param size 请求的堆空间大小
-	 * @return heap, offset, 假如分配失败 heap = nullptr
-	 * @invariance 多个请求时必须保证多个请求都有唯一分配的空间， 或者分配失败*/
-	auto RequestBlock(HeapBlockSize size)
-		->std::pair<ID3D12DescriptorHeap*, BlockInfo> thread_safe {
-		assert(size > 0 && size < DESCRIPTOR_HEAP_DEFAULT_SIZE);
-		BlockInfo block = BasicHeapManager::RequestBlock(size, 1, DESCRIPTOR_HEAP_DEFAULT_SIZE, 1);
-		if (block.size == 0) return { nullptr, block };
-		ID3D12DescriptorHeap* heap = GetHeap(block.offset);
-		return { heap, block };
-	}
-
-	/** 向管理器归还空间
-	 * @param blockInfo 需要归还的空间的信息
-	 * @invariance 多个请求时保证空间管理信息的正确性 */
-	void RevertBlock(BlockInfo blockInfo) thread_safe {
-		BasicHeapManager::RevertBlock(blockInfo, DESCRIPTOR_HEAP_DEFAULT_SIZE);
-	}
-
-	ID3D12DescriptorHeap* GetHeap(HeapBlockOffset offset) thread_safe {
-		return m_heaps[offset / DESCRIPTOR_HEAP_DEFAULT_SIZE].Get();
-	}
-
-	auto HeapSize() const {
-		return m_heaps.size() * DESCRIPTOR_HEAP_DEFAULT_SIZE;
-	}
-
-	void Reset() final {
-		{
-			std::lock_guard<std::mutex> hlg(m_heapMutex);
-			m_heaps.swap(decltype(m_heaps)());
-		}
-		BasicHeapManager::Reset();
-	}
-private:
-	bool createHeap() final thread_safe {
-		size_t newOffset = 0;
-		{
-			/** 使用try lock是为了避免多个线程请求创建heap而造成创建了多个heap的情况
-			* 只允许一个线程创建heap，剩下的请求都会驳回，并不断尝试重新创建新的block */
-			std::unique_lock<std::mutex> ul(m_heapMutex, std::try_to_lock);
-			if (!ul) return true;
-			if (m_heaps.size() == MAX_NUMBER_OF_DESCRIPTOR_HEAP) return false;
-			Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> newHeap;
-			D3D12_DESCRIPTOR_HEAP_DESC desc;
-			desc.Type = m_type;
-			desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-			desc.NodeMask = 0;
-			desc.NumDescriptors = DESCRIPTOR_HEAP_DEFAULT_SIZE;
-			if (FAILED(m_device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&newHeap))))
-				return false;
-			/** 压入新的freeblock */
-			std::lock_guard<std::mutex> lg(m_freeBlockMutex);
-			m_heaps.push_back(newHeap);
-			newOffset = (m_heaps.size() - 1) * DESCRIPTOR_HEAP_DEFAULT_SIZE;
-			m_freeBlocksInOffset.insert(std::make_pair(newOffset, DESCRIPTOR_HEAP_DEFAULT_SIZE));
-			m_freeBlocksInSize.insert(std::make_pair(DESCRIPTOR_HEAP_DEFAULT_SIZE, newOffset));
-		}
-		return true;
-	}
-private:
-	D3D12_DESCRIPTOR_HEAP_TYPE m_type;
-
-	std::mutex m_heapMutex; /**< 维护heap的锁 */
-	std::vector< Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> > m_heaps;
-	ID3D12Device* m_device;
-};
+//class DX12DescriptorHeapManager : public BasicHeapManager {
+//public:
+//	DX12DescriptorHeapManager() : m_device(nullptr) {}
+//	void Initialize(D3D12_DESCRIPTOR_HEAP_TYPE type, ID3D12Device* dev) { m_type = type; m_device = dev; }
+//	/** 向管理器请求堆空间
+//	 * @param size 请求的堆空间大小
+//	 * @return heap, offset, 假如分配失败 heap = nullptr
+//	 * @invariance 多个请求时必须保证多个请求都有唯一分配的空间， 或者分配失败*/
+//	auto RequestBlock(HeapBlockSize size)
+//		->std::pair<ID3D12DescriptorHeap*, BlockInfo> thread_safe {
+//		assert(size > 0 && size < DESCRIPTOR_HEAP_DEFAULT_SIZE);
+//		BlockInfo block = BasicHeapManager::RequestBlock(size, 1, DESCRIPTOR_HEAP_DEFAULT_SIZE, 1);
+//		if (block.size == 0) return { nullptr, block };
+//		ID3D12DescriptorHeap* heap = GetHeap(block.offset);
+//		return { heap, block };
+//	}
+//
+//	/** 向管理器归还空间
+//	 * @param blockInfo 需要归还的空间的信息
+//	 * @invariance 多个请求时保证空间管理信息的正确性 */
+//	void RevertBlock(BlockInfo blockInfo) thread_safe {
+//		BasicHeapManager::RevertBlock(blockInfo, DESCRIPTOR_HEAP_DEFAULT_SIZE);
+//	}
+//
+//	ID3D12DescriptorHeap* GetHeap(HeapBlockOffset offset) thread_safe {
+//		return m_heaps[offset / DESCRIPTOR_HEAP_DEFAULT_SIZE].Get();
+//	}
+//
+//	auto HeapSize() const {
+//		return m_heaps.size() * DESCRIPTOR_HEAP_DEFAULT_SIZE;
+//	}
+//
+//	void Reset() final {
+//		{
+//			std::lock_guard<std::mutex> hlg(m_heapMutex);
+//			m_heaps.swap(decltype(m_heaps)());
+//		}
+//		BasicHeapManager::Reset();
+//	}
+//private:
+//	bool createHeap() final thread_safe {
+//		size_t newOffset = 0;
+//		{
+//			/** 使用try lock是为了避免多个线程请求创建heap而造成创建了多个heap的情况
+//			* 只允许一个线程创建heap，剩下的请求都会驳回，并不断尝试重新创建新的block */
+//			std::unique_lock<std::mutex> ul(m_heapMutex, std::try_to_lock);
+//			if (!ul) return true;
+//			if (m_heaps.size() == MAX_NUMBER_OF_DESCRIPTOR_HEAP) return false;
+//			Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> newHeap;
+//			D3D12_DESCRIPTOR_HEAP_DESC desc;
+//			desc.Type = m_type;
+//			desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+//			desc.NodeMask = 0;
+//			desc.NumDescriptors = DESCRIPTOR_HEAP_DEFAULT_SIZE;
+//			if (FAILED(m_device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&newHeap))))
+//				return false;
+//			/** 压入新的freeblock */
+//			std::lock_guard<std::mutex> lg(m_freeBlockMutex);
+//			m_heaps.push_back(newHeap);
+//			newOffset = (m_heaps.size() - 1) * DESCRIPTOR_HEAP_DEFAULT_SIZE;
+//			m_freeBlocksInOffset.insert(std::make_pair(newOffset, DESCRIPTOR_HEAP_DEFAULT_SIZE));
+//			m_freeBlocksInSize.insert(std::make_pair(DESCRIPTOR_HEAP_DEFAULT_SIZE, newOffset));
+//		}
+//		return true;
+//	}
+//private:
+//	D3D12_DESCRIPTOR_HEAP_TYPE m_type;
+//
+//	std::mutex m_heapMutex; /**< 维护heap的锁 */
+//	std::vector< Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> > m_heaps;
+//	ID3D12Device* m_device;
+//};
 
 END_NAME_SPACE

@@ -67,6 +67,12 @@
     <Filter Include="Shader">
       <UniqueIdentifier>{d08aceef-ea07-4a74-893c-fb7effe912f5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="D3D12\Header">
+      <UniqueIdentifier>{56d417d0-473a-42e4-9bfc-8b4ebea80808}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D12\Source">
+      <UniqueIdentifier>{92516d57-5bf9-484c-abcb-7611e903eea5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\Utility\FileContainer\FileContainer.cpp">
@@ -87,9 +93,6 @@
     <ClCompile Include="..\src\main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\D3D12\DX12Config.cpp">
-      <Filter>D3D12</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\Utility\DXCompilerHelper\DXCompilerHelper.cpp">
       <Filter>Utility\DXCompilerHelper</Filter>
     </ClCompile>
@@ -99,26 +102,38 @@
     <ClCompile Include="..\src\ScriptEngine\Lua\LuaFunctions.cpp">
       <Filter>ScriptEngine\LUA</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\D3D12\DX12RenderBackend.cpp">
-      <Filter>D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\D3D12\DX12RenderDevice.cpp">
-      <Filter>D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\D3D12\DX12RenderBasic.cpp">
-      <Filter>D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\D3D12\DX12ResourceManager.cpp">
-      <Filter>D3D12</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\RenderSystem\Task.cpp">
       <Filter>RenderSystem\Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\D3D12\DX12CommandUnit.cpp">
-      <Filter>D3D12</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\Shader\SampleShader.cpp">
       <Filter>Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\DX12CommandUnit.cpp">
+      <Filter>D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\DX12Config.cpp">
+      <Filter>D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\DX12DescriptorHeap.cpp">
+      <Filter>D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\DX12PipelineManager.cpp">
+      <Filter>D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\DX12RenderBackend.cpp">
+      <Filter>D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\DX12RenderBasic.cpp">
+      <Filter>D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\DX12RenderDevice.cpp">
+      <Filter>D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\DX12ResourceManager.cpp">
+      <Filter>D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\DX12Shader.cpp">
+      <Filter>D3D12\Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -158,9 +173,6 @@
     <ClInclude Include="..\src\DirectXHelper.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\D3D12\DX12Config.h">
-      <Filter>D3D12</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\Utility\DXCompilerHelper\DXCompilerHelper.h">
       <Filter>Utility\DXCompilerHelper</Filter>
     </ClInclude>
@@ -172,21 +184,6 @@
     </ClInclude>
     <ClInclude Include="..\src\ScriptEngine\Lua\LuaFunctions.h">
       <Filter>ScriptEngine\LUA</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\RenderSystem\RenderBasic.h">
-      <Filter>RenderSystem\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\D3D12\DX12RenderBasic.h">
-      <Filter>D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\D3D12\d3dx12.h">
-      <Filter>D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\D3D12\DX12ResourceManager.h">
-      <Filter>D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\D3D12\DX12HeapManager.h">
-      <Filter>D3D12</Filter>
     </ClInclude>
     <ClInclude Include="..\src\RenderSystem\Task.h">
       <Filter>RenderSystem\Header</Filter>
@@ -203,14 +200,8 @@
     <ClInclude Include="..\src\RenderSystem\SettingHelpers.hpp">
       <Filter>RenderSystem\Header</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\D3D12\DX12Helpers.h">
-      <Filter>D3D12</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\RenderSystem\Renderable.h">
       <Filter>RenderSystem\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\D3D12\DX12Shader.h">
-      <Filter>D3D12</Filter>
     </ClInclude>
     <ClInclude Include="..\src\RenderSystem\Shader.h">
       <Filter>RenderSystem\Header</Filter>
@@ -220,6 +211,66 @@
     </ClInclude>
     <ClInclude Include="..\src\RenderSystem\Pipeline.h">
       <Filter>RenderSystem\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RenderSystem\CommandUnit.h">
+      <Filter>RenderSystem\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RenderSystem\RenderDevice.h">
+      <Filter>RenderSystem\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RenderSystem\RenderBackend.h">
+      <Filter>RenderSystem\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Resource\RenderResource.h">
+      <Filter>RenderSystem\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Resource\ShaderResource.h">
+      <Filter>RenderSystem\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RenderSystem\FixedStage.h">
+      <Filter>RenderSystem\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\d3dx12.h">
+      <Filter>D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12CommandUnit.h">
+      <Filter>D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12Config.h">
+      <Filter>D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12DescriptorHeap.h">
+      <Filter>D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12HeapManager.h">
+      <Filter>D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12Helpers.h">
+      <Filter>D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12PipelineManager.h">
+      <Filter>D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12RenderBasic.h">
+      <Filter>D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12RenderResource.h">
+      <Filter>D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12ResourceManager.h">
+      <Filter>D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12Shader.h">
+      <Filter>D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12ShaderResource.h">
+      <Filter>D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12RenderBackend.h">
+      <Filter>D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12RenderDevice.h">
+      <Filter>D3D12\Header</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
