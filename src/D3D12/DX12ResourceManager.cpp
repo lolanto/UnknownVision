@@ -295,4 +295,42 @@ void DX12ResourceManager::Statistics() {
 	m_defaultHeapMgr->Statistics();
 }
 
+bool DX12ResourceManager2::Initialize() {
+	D3D12MA::ALLOCATOR_DESC aloctrDesc;
+	aloctrDesc.Flags = D3D12MA::ALLOCATOR_FLAG_NONE;
+	aloctrDesc.pDevice = m_pdevice;
+	aloctrDesc.PreferredBlockSize = 0;
+	aloctrDesc.pAllocationCallbacks = nullptr;
+	if (FAILED(D3D12MA::CreateAllocator(&aloctrDesc, &m_pallocator)))
+		return false;
+	return true;
+}
+
+auto DX12ResourceManager2::RequestBuffer(size_t size, D3D12_RESOURCE_FLAGS flags,
+	D3D12_HEAP_TYPE heapType, bool bForceCommitted)
+->std::pair<ID3D12Resource*, D3D12_RESOURCE_STATES> thread_safe {
+	/** 暂不支持custom类型 */
+	assert(heapType != D3D12_HEAP_TYPE_CUSTOM);
+
+	auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(size, flags);
+	auto allocInfo = m_pdevice->GetResourceAllocationInfo(0, 1, &bufferDesc);
+	SmartPTR<ID3D12Resource> buffer;
+	D3D12_RESOURCE_STATES state = heapType == D3D12_HEAP_TYPE_UPLOAD ?
+		D3D12_RESOURCE_STATE_GENERIC_READ : D3D12_RESOURCE_STATE_COPY_DEST;;
+	DX12ResourceHeapManager::BlockInfo bInfo;
+
+	ResourceInfo newResource(state);
+
+	D3D12MA::ALLOCATION_DESC allocDesc;
+	allocDesc.Flags = bForceCommitted ? D3D12MA::ALLOCATION_FLAG_COMMITTED : D3D12MA::ALLOCATION_FLAG_NONE;
+	allocDesc.HeapType = heapType;
+	if (FAILED(m_pallocator->CreateResource(&allocDesc, &bufferDesc, state, nullptr,
+		&newResource.pAllocation, IID_PPV_ARGS(&newResource.pResource)))) {
+		return { nullptr, D3D12_RESOURCE_STATE_COMMON };
+	}
+
+	m_resourceRepository.insert(std::make_pair(newResource.pResource, newResource));
+	return { newResource.pResource, state };
+}
+
 END_NAME_SPACE

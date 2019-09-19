@@ -31,7 +31,8 @@ public:
 public:
 	bool Initialize() final;
 	bool isInitialized() const final { return m_isInitialized; }
-	bool InitializeShaderObject(ShaderInterface* shader) final;
+	/** 完成Shader对象的初始化工作，包括编译，反射信息提取 */
+	bool InitializeShaderObject(BasicShader* shader) final;
 	RenderDevice* CreateDevice(void* parameters) final;
 
 	/** 注册顶点结构描述，以便重复使用 */

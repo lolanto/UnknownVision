@@ -12,4 +12,16 @@ class ConstantBufferView {
 
 };
 
+class UnorderAccessView {
+
+};
+
+class RenderTargetView {
+
+};
+
+class DepthStencilView {
+
+};
+
 END_NAME_SPACE

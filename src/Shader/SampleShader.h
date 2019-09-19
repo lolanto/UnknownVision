@@ -3,9 +3,9 @@
 
 BEG_NAME_SPACE
 
-class SampleShaderVS : public ShaderInterface {
+class SampleShaderVS : public BasicShader {
 public:
-	SampleShaderVS() : ShaderInterface("hellovs") {
+	SampleShaderVS() : BasicShader("hellovs") {
 		m_mvp.name = "mvp";
 	}
 
@@ -28,9 +28,9 @@ private:
 	std::string m_sourceCode;
 };
 
-class SampleShaderPS : public ShaderInterface {
+class SampleShaderPS : public BasicShader {
 public:
-	SampleShaderPS() : ShaderInterface("hellops") {
+	SampleShaderPS() : BasicShader("hellops") {
 		m_tex.name = "tex";
 	}
 	virtual size_t GetNumParameters(ShaderParameterType type) const override final {

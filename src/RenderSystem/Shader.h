@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "../UVConfig.h"
 #include "../UVType.h"
+#include "RenderDescriptor.h"
 #include "CommandUnit.h"
 
 #include <string>
@@ -42,33 +43,33 @@ struct ShaderParameter {
 
 class DX12RenderBackend;
 
-class ShaderInterface {
+/** 自定义的Shader类都继承自这个抽象类，主要是提供Shader的描述信息 */
+class BasicShader {
 public:
-	ShaderInterface(const char* shaderFile) : m_shaderFile(shaderFile) {}
-	virtual ~ShaderInterface() = default;
+	BasicShader(const char* shaderFile) : m_shaderFile(shaderFile) {}
+	virtual ~BasicShader() = default;
 	ShaderHandle GetHandle() const { return m_handle; }
 	/** 返回该Shader某个类型参数的数量 */
 	virtual size_t GetNumParameters(ShaderParameterType type) const = 0;
 	/** 绑定参数 */
-	virtual  std::vector<ParameterPackage> Pack() const = 0;
+	virtual  std::vector<ParameterPackageInterface> Pack() const = 0;
+	/** 务必在构造Shader之前完成设置!! */
+	void SetSamplerDescriptor(std::string name, SamplerDescriptor desc) { m_samplerDesces[name] = desc; }
 protected:
 	ShaderHandle m_handle;
 	const char* m_shaderFile;
+	std::map<std::string, SamplerDescriptor> m_samplerDesces; /**< 预设的部分(假如允许默认值)采样器的描述属性, Note: 务必在构建Shader前设置完毕 */
 };
 
-struct ParameterPackage {
-	bool IsEmpty() const { return parameters.empty(); }
-	size_t GetCapacity() const { return parameters.size(); }
-	void Pack(ShaderParameter cargo, size_t position) { parameters[position] = cargo; }
-	void PackBack(ShaderParameter cargo) { parameters.push_back(cargo); }
-	size_t uniqueCode;
-	std::vector<ShaderParameter> parameters;
+struct ParameterPackageInterface {
+	virtual std::vector<std::string> ShowParameterList() const = 0; /**< 展示这个参数包对应的参数列表 */
+	virtual std::vector<ShaderParameter> GetParameterList() const = 0;
 };
 
 /** 负责将参数传送到GPU  */
 class ParameterPipeline {
 public:
-	virtual bool SendPackage(CommandUnit& cu, std::vector<ParameterPackage> packages) = 0;
+	virtual bool SendPackage(CommandUnit& cu, std::vector<ParameterPackageInterface> packages) = 0;
 };
 
 END_NAME_SPACE

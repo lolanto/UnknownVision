@@ -21,7 +21,7 @@ createRootSignatureDesc(const GraphicsPipeline& pipeline, DX12GraphicsPipelineOb
 	size_t heapIndex = 0;
 	std::vector<std::vector<D3D12_DESCRIPTOR_RANGE> > ranges;
 	std::vector<CD3DX12_ROOT_PARAMETER > parameters;
-	auto initDesc = [&ranges, &parameters, &heapIndex, &output](ShaderInterface* shader, D3D12_SHADER_VISIBILITY visibility)
+	auto initDesc = [&ranges, &parameters, &heapIndex, &output](BasicShader* shader, D3D12_SHADER_VISIBILITY visibility)
 	{
 		ranges.emplace_back();
 		auto shaderObject = GShaderManager[shader->GetHandle()];

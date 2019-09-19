@@ -33,10 +33,13 @@ struct TextureDescriptor {
 	const ResourceStatus status; /**< 描述用途 */
 };
 
+/** 通用的采样器描述信息集合 */
 struct SamplerDescriptor {
-	const float borderColor[4];
-	const FilterType filter;
-	const SamplerAddressMode uAddrMode, vAddrMode, wAddrMode;
+	float borderColor[4];
+	FilterType filter;
+	SamplerAddressMode uAddrMode, vAddrMode, wAddrMode;
+	/** 尽量不要使用无参初始化! */
+	SamplerDescriptor() = default;
 	SamplerDescriptor(FilterType filter, SamplerAddressMode u,
 		SamplerAddressMode v, SamplerAddressMode w,
 		const float (&bc)[4])

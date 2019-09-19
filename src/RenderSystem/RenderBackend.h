@@ -14,7 +14,7 @@
 BEG_NAME_SPACE
 
 class RenderDevice;
-class ShaderInterface;
+class BasicShader;
 
 class RenderBackend {
 public:
@@ -26,7 +26,7 @@ public:
 	virtual bool isInitialized() const { return false; }
 	/** 注册顶点结构描述，以便重复使用 */
 	virtual VertexAttributeHandle RegisterVertexAttributeDescs(const VertexAttributeDescs& descs) = 0;
-	virtual bool InitializeShaderObject(ShaderInterface* shader) { return false; }
+	virtual bool InitializeShaderObject(BasicShader* shader) { return false; }
 protected:
 	std::atomic<VertexAttributeHandle::ValueType> m_nextVertexAttributeHandle;
 };

@@ -25,7 +25,7 @@ D3D12_STATIC_SAMPLER_DESC AnalyseStaticSamplerFromSamplerDescriptor(const Sample
 	return samplerDesc;
 }
 
-D3D12_SAMPLER_DESC AnalyseSamplerFromSamperDescriptor(const SamplerDescriptor& desc) thread_safe {
+D3D12_SAMPLER_DESC AnalyseSamplerFromSamplerDescriptor(const SamplerDescriptor& desc) thread_safe {
 	D3D12_SAMPLER_DESC samplerDesc;
 	samplerDesc.Filter = FilterTypeToDX12FilterType(desc.filter);
 	samplerDesc.AddressU = SamplerAddressModeToDX12TextureAddressMode(desc.uAddrMode);
@@ -44,7 +44,7 @@ D3D12_SAMPLER_DESC AnalyseSamplerFromSamperDescriptor(const SamplerDescriptor& d
 	return samplerDesc;
 }
 
-D3D12_SAMPLER_DESC AnalyseSamplerFromSamperSettings(FilterType filter,
+D3D12_SAMPLER_DESC AnalyseSamplerFromSamplerSettings(FilterType filter,
 	const SamplerAddressMode(&uvwMode)[3],
 	const float(&borderColor)[4]) thread_safe {
 	D3D12_SAMPLER_DESC samplerDesc;

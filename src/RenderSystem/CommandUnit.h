@@ -1,4 +1,5 @@
-﻿#pragma once
+﻿/** 指令的发送器抽象，继承者需要对诸多GPU指令进行封装 */
+#pragma once
 #include "../UVType.h"
 #include <vector>
 #include <array>

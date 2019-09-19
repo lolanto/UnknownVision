@@ -102,9 +102,6 @@
     <ClCompile Include="..\src\ScriptEngine\Lua\LuaFunctions.cpp">
       <Filter>ScriptEngine\LUA</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\RenderSystem\Task.cpp">
-      <Filter>RenderSystem\Source</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\Shader\SampleShader.cpp">
       <Filter>Shader</Filter>
     </ClCompile>
@@ -133,6 +130,12 @@
       <Filter>D3D12\Source</Filter>
     </ClCompile>
     <ClCompile Include="..\src\D3D12\DX12Shader.cpp">
+      <Filter>D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\DX12Pipeline.cpp">
+      <Filter>D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\DX12Buffer.cpp">
       <Filter>D3D12\Source</Filter>
     </ClCompile>
   </ItemGroup>
@@ -185,9 +188,6 @@
     <ClInclude Include="..\src\ScriptEngine\Lua\LuaFunctions.h">
       <Filter>ScriptEngine\LUA</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\RenderSystem\Task.h">
-      <Filter>RenderSystem\Header</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\Utility\optimisticLock\OptimisticLock.hpp">
       <Filter>Utility\OptimisticLock</Filter>
     </ClInclude>
@@ -198,9 +198,6 @@
       <Filter>RenderSystem\Header</Filter>
     </ClInclude>
     <ClInclude Include="..\src\RenderSystem\SettingHelpers.hpp">
-      <Filter>RenderSystem\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\RenderSystem\Renderable.h">
       <Filter>RenderSystem\Header</Filter>
     </ClInclude>
     <ClInclude Include="..\src\RenderSystem\Shader.h">
@@ -225,9 +222,6 @@
       <Filter>RenderSystem\Header</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Resource\ShaderResource.h">
-      <Filter>RenderSystem\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\RenderSystem\FixedStage.h">
       <Filter>RenderSystem\Header</Filter>
     </ClInclude>
     <ClInclude Include="..\src\D3D12\d3dx12.h">
@@ -270,6 +264,9 @@
       <Filter>D3D12\Header</Filter>
     </ClInclude>
     <ClInclude Include="..\src\D3D12\DX12RenderDevice.h">
+      <Filter>D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\DX12Pipeline.h">
       <Filter>D3D12\Header</Filter>
     </ClInclude>
   </ItemGroup>

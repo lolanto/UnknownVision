@@ -26,17 +26,11 @@ public:
 	};
 	void ShutDown() { m_state = DEVICE_STATE_SHUTDOWN; }
 	DeviceState State() const { return m_state; }
-
-	/** sampler只是描述性信息，暂不考虑是否临时资源 */
-	//SamplerDescriptor RequestSampler(FilterType filter, SamplerAddressMode u, SamplerAddressMode v,
-	//	SamplerAddressMode w, const float(&color)[4] = { .0f, .0f, .0f, .0f }) thread_safe {
-	//	return SamplerDescriptor(SamplerHandle(static_cast<SamplerHandle::ValueType>(m_nextSamplerHandle++)),
-	//		filter, u, v, w, color);
-	//}
-
+	virtual bool Present() = 0; /**< 将当前backbuffer内容进行换页 */
 
 	const uint32_t ScreenWidth, ScreenHeight; /**< 屏幕的宽高，单位像素 */
-
+/** 资源请求类的操作 */
+public:
 	/** TODO: 暂时只能请求一个二维纹理 */
 	virtual TextureHandle RequestTexture(uint32_t width, uint32_t height, ElementFormatType type,
 		ResourceStatus status) thread_safe {
@@ -56,8 +50,6 @@ public:
 	virtual bool RevertResource(TextureHandle handle) = 0 thread_safe;
 
 	virtual CommandUnit& RequestCommandUnit(COMMAND_UNIT_TYPE type) = 0;
-
-	virtual bool Present() = 0;
 
 	virtual SpecialTextureResource CurrentBackBufferHandle() = 0;
 

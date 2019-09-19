@@ -9,6 +9,8 @@ BEG_NAME_SPACE
 
 extern UINT DescriptorHandleIncrementSize[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];
 
+
+
 class BasicDX12DescriptorHeap {
 public:
 	struct HeapBlock {

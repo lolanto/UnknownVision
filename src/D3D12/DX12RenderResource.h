@@ -7,19 +7,10 @@
 
 BEG_NAME_SPACE
 
-extern class DX12RenderDevice GDevice;
-
 class DX12Buffer : public Buffer {
 public:
-	virtual bool Initialize(ResourceStatus status) override final {
-		m_resource = GDevice.ResourceManager().RequestBuffer(m_size, ResourceStatusToResourceFlag(status),
-			ResourceStatusToHeapType(status));
-		if (m_resource.first == nullptr) return false;
-		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-		cbvDesc.BufferLocation = m_resource.first->GetGPUVirtualAddress();
-		cbvDesc.SizeInBytes = m_size;
-		return true;
-	}
+	/** 请求固定的资源，资源的释放需要手动控制 */
+	virtual bool RequestPermenent(RenderDevice* cmdUnit, ResourceStatus status) override final ;
 	virtual ConstantBufferView* GetCBVPtr() override final {
 		return &m_cbv;
 	}
