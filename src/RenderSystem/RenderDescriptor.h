@@ -80,8 +80,6 @@ struct Parameter {
 	Parameter(const SamplerHandle& sampler) : sampler(sampler), type(PARAMETER_TYPE_SAMPLER) {}
 };
 
-using VertexAttributeDescs = std::vector<SubVertexAttributeDesc>;
-
 /** 专门用于存储shader名称
  * @remark 名称为Shader的源码路径，不带后缀! */
 struct ShaderNames {

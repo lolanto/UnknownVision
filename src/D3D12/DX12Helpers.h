@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "DX12Config.h"
-#include "../RenderSystem/FixedStage.h"
 #include "../UVType.h"
 #include "../Utility/InfoLog/InfoLog.h"
 #include <cassert>
@@ -408,6 +407,21 @@ D3D12_RASTERIZER_DESC AnalyseRasterizerOptionsFromRasterizeOptions(const Rasteri
 //D3D12_STATIC_SAMPLER_DESC AnalyseStaticSamplerFromSamplerDescriptor(const SamplerDescriptor& desc, uint8_t spaceIndex, uint8_t registerIndex) thread_safe;
 ///** 分析samplerState并生成DX12相应的设置 */
 //D3D12_SAMPLER_DESC AnalyseSamplerFromSamperDescriptor(const SamplerDescriptor& desc) thread_safe;
+
+D3D12_INPUT_ELEMENT_DESC AnalyseInputElementDescFromVertexAttribute(const VertexAttribute& vtxAtrri) {
+	D3D12_INPUT_ELEMENT_DESC desc;
+	desc.SemanticName = VertexAttributeTypeToString(vtxAtrri.type);
+	desc.SemanticIndex = vtxAtrri.index;
+	desc.Format = ElementFormatToDXGIFormat(vtxAtrri.format);
+	desc.InputSlot = vtxAtrri.location;
+	desc.AlignedByteOffset =
+		vtxAtrri.byteOffset == VertexAttribute::APPEND_FROM_PREVIOUS ? 
+		D3D12_APPEND_ALIGNED_ELEMENT : vtxAtrri.byteOffset;
+	/** TODO: 暂时不支持instance */
+	desc.InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
+	desc.InstanceDataStepRate = 0;
+	return desc;
+}
 
 END_NAME_SPACE
 

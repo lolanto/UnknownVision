@@ -17,12 +17,21 @@ struct DescriptorHeapRequirementDesc {
 
 struct DX12Shader {
 	SmartPTR<ID3DBlob> shaderByteCode;
-	std::map<std::string, D3D12_DESCRIPTOR_RANGE> range; /**< 参数的名称和其在当前shader中的绑定关系 */
+	std::map<std::string, D3D12_DESCRIPTOR_RANGE> ranges; /**< 参数的名称和其在当前shader中的绑定关系 */
+
+	DX12Shader() = default;
+	DX12Shader(DX12Shader&& rhs) {
+		shaderByteCode.Swap(rhs.shaderByteCode);
+		ranges.swap(rhs.ranges);
+	}
+	DX12Shader(const DX12Shader& ref) : shaderByteCode(ref.shaderByteCode), ranges(ref.ranges) {}
 };
 
 class DX12ShaderManager {
 public:
-	ShaderHandle Compile(const wchar_t* src, ShaderType type);
+	DX12ShaderManager() : m_nextShaderHandle(0) {}
+	ShaderHandle Compile(const wchar_t* srcFilePath, ShaderType type);
+	/** 根据Shader句柄获得Shader对象，假如句柄有误返回nullptr */
 	const DX12Shader* operator[](ShaderHandle handle) const {
 		auto& shaderItem = m_shaders.find(handle);
 		if (shaderItem != m_shaders.end())
@@ -32,7 +41,7 @@ public:
 	}
 private:
 	std::map<ShaderHandle, DX12Shader> m_shaders;
-	
+	ShaderHandle m_nextShaderHandle;
 };
 
 

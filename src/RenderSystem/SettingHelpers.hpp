@@ -11,11 +11,11 @@ VertexAttributeDescs VertexAttribute_PosNorTex() {
 		descs.resize(3);
 		auto iterator = descs.begin();
 		/** 位置信息 */
-		descs.emplace(iterator++, SubVertexAttributeDesc(VERTEX_ATTRIBUTE_TYPE_POSITION,
+		descs.emplace(iterator++, VertexAttribute(VERTEX_ATTRIBUTE_TYPE_POSITION,
 			ELEMENT_FORMAT_TYPE_R32G32B32_FLOAT, 0));
-		descs.emplace(iterator++, SubVertexAttributeDesc(VERTEX_ATTRIBUTE_TYPE_NORMAL,
+		descs.emplace(iterator++, VertexAttribute(VERTEX_ATTRIBUTE_TYPE_NORMAL,
 			ELEMENT_FORMAT_TYPE_R32G32B32_FLOAT, 0));
-		descs.emplace(iterator++, SubVertexAttributeDesc(VERTEX_ATTRIBUTE_TYPE_TEXTURE,
+		descs.emplace(iterator++, VertexAttribute(VERTEX_ATTRIBUTE_TYPE_TEXTURE,
 			ELEMENT_FORMAT_TYPE_R32G32_FLOAT, 0));
 	}
 }

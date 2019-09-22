@@ -5,7 +5,9 @@
 #include <string>
 
 BEG_NAME_SPACE
-
+/** 负责管理该Device对应的GPU
+ * 包括提供设备的状态查询和设置
+ * 与设备关联的资源的创建和删除 */
 class RenderDevice {
 public:
 	enum DeviceState : uint8_t {
@@ -15,6 +17,7 @@ public:
 		DEVICE_STATE_SHUTDOWN
 	};
 public:
+	/** 初始化相关函数和状态查询函数 */
 	RenderDevice(uint32_t width, uint32_t height) : ScreenWidth(width), ScreenHeight(height),
 		m_nextBufferHandle(NUMBER_OF_SPECIAL_BUFFER_RESOURCE), m_nextTextureHandle(NUMBER_OF_SPECIAL_TEXTURE_RESOURCE),
 		m_state(DEVICE_STATE_UNINITIALIZE), m_nextProgramHandle(0) {}
@@ -29,8 +32,8 @@ public:
 	virtual bool Present() = 0; /**< 将当前backbuffer内容进行换页 */
 
 	const uint32_t ScreenWidth, ScreenHeight; /**< 屏幕的宽高，单位像素 */
-/** 资源请求类的操作 */
 public:
+	/** 资源请求类的操作 */
 	/** TODO: 暂时只能请求一个二维纹理 */
 	virtual TextureHandle RequestTexture(uint32_t width, uint32_t height, ElementFormatType type,
 		ResourceStatus status) thread_safe {

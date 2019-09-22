@@ -24,7 +24,8 @@ allow_logical_operation enum ResourceUsages : uint8_t {
 	RESOURCE_USAGE_RENDER_TARGET = 0x08U,
 	RESOURCE_USAGE_SHADER_RESOURCE = 0x10U,
 	RESOURCE_USAGE_CONSTANT_BUFFER = 0x20U,
-	RESOURCE_USAGE_UNORDER_ACCESS = 0x40U
+	RESOURCE_USAGE_UNORDER_ACCESS = 0x40U,
+	RESOURCE_USAGE_STRUCTURED_BUFFER = 0x80U
 };
 
 allow_logical_operation enum ResourceFlags : uint8_t {
@@ -113,26 +114,6 @@ enum VertexAttributeType : uint8_t {
 	VERTEX_ATTRIBUTE_TYPE_TANGENT,
 	VERTEX_ATTRIBUTE_TYPE_TEXTURE,
 	VERTEX_ATTRIBUTE_TYPE_COLOR
-};
-
-/** 描述顶点缓冲中一个属性的子结构 */
-struct SubVertexAttributeDesc {
-	enum { APPEND_FROM_PREVIOUS = UINT8_MAX };
-	VertexAttributeType vertexAttribute; /**< 描述的顶点属性类型 */
-	uint8_t index = 0; /**< 同一个属性中的第几个，如uv0, uv1 */
-	ElementFormatType format; /**< 该属性的数据类型 */
-	uint8_t location = 0; /**< 该属性被绑定到哪个接口上，管线的"顶点缓冲接口"是有数量上限的 */
-	uint8_t byteOffset = 0; /**< 属性的每一个值在缓冲中间隔的距离, 假如为APPEND_FROM_PREVIOUS则表示直接接着上一个属性 */
-	SubVertexAttributeDesc() = default;
-	/** 构造一个子顶点属性描述对象
-	 * @param att 属性类型
-	 * @param format 顶点属性的格式
-	 * @param index 当前设置的是该属性数组的第几个元素，比如position0, position1或者normal2之类
-	 * @param location 存储该属性的顶点缓冲区会绑定到哪个接口(slot)上
-	 * @param byteOffset 该属性的值距离第一个属性值之间间隔的距离，单位是字节。设置为APPEND_FROM_PREVIOUS表示紧接着上一个属性，此时属性的声明顺序十分重要 */
-	SubVertexAttributeDesc(VertexAttributeType att, ElementFormatType format, uint8_t index,
-		uint8_t location = 0, uint8_t byteOffset = 0)
-		: vertexAttribute(att), index(index), format(format), location(location), byteOffset(byteOffset) {}
 };
 
 /** 固定的混合操作类型 */
