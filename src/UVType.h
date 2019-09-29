@@ -82,6 +82,17 @@ struct ResourceStatus {
 #undef IsFlag
 #undef CanBe
 
+enum RenderResourceViewType : uint8_t {
+	RENDER_RESOURCE_VIEW_CBV = 0,
+	RENDER_RESOURCE_VIEW_SRV,
+	RENDER_RESOURCE_VIEW_UAV,
+	RENDER_RESOURCE_VIEW_RTV,
+	RENDER_RESOURCE_VIEW_DSV,
+
+
+	RENDER_RESOURCE_VIEW_NUM
+};
+
 enum ElementFormatType : uint8_t {
 	ELEMENT_FORMAT_TYPE_INVALID = 0,/**< 无效的默认值 */
 	/** 以下格式可以等价为float1, float2, float3以及float4 */

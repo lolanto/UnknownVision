@@ -50,6 +50,8 @@ public:
 	virtual  std::vector<ParameterPackageInterface*> Pack() const = 0;
 	/** 务必在构造Shader之前完成设置!! */
 	void SetSamplerDescriptor(std::string name, SamplerDescriptor desc) { m_samplerDesces[name] = desc; }
+	/** 索引当前设置的sampler */
+	virtual std::map<std::string, SamplerDescriptor*> GetSamplerNameAndPointers() const = 0;
 	virtual ShaderType GetShaderType() const = 0;
 protected:
 	ShaderHandle m_handle;

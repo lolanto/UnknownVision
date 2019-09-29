@@ -26,15 +26,6 @@ public:
 	virtual RenderDevice* CreateDevice(void* parameters) { return nullptr; }
 	/** 初始化Shader对象，主要是配置ShaderHandle */
 	virtual bool InitializeShaderObject(BasicShader* shader) { return false; }
-	/** 构造GraphicsPipeline */
-	virtual GraphicsPipelineObject* BuildGraphicsPipelineObject(
-		VertexShader* vs, PixelShader* ps,
-		RasterizeOptionsFunc rastOpt = GDefaultRasterizeOptions,
-		OutputStageOptionsFunc outputOpt = GDefaultOutputStageOptions,
-		VertexAttributesFunc vtxAttribList = GDefaultVertexAttributeList
-	) {
-		return nullptr;
-	}
 };
 
 END_NAME_SPACE

@@ -98,23 +98,8 @@ RenderDevice * DX12RenderBackend::CreateDevice(void * parameters)
 
 bool DX12RenderBackend::InitializeShaderObject(BasicShader* shader) {
 	/** 为shader分配shader handle */
-	shader->m_handle = m_shaderManager.Compile(shader->m_shaderFile, shader->GetShaderType());
+	shader->m_handle = GShaderManager.Compile(shader->m_shaderFile, shader->GetShaderType());
 	return true;
-}
-
-GraphicsPipelineObject* DX12RenderBackend::BuildGraphicsPipelineObject(
-	VertexShader* vs, PixelShader* ps,
-	RasterizeOptionsFunc rastOpt, OutputStageOptionsFunc outputOpt,
-	VertexAttributesFunc vtxAttribList) {
-	/** 构造GraphicsPipeline不能缺少VS和PS，必须提前进行初始化 */
-	if (vs->m_handle == ShaderHandle::InvalidIndex() ||
-		ps->m_handle == ShaderHandle::InvalidIndex()) {
-		return nullptr;
-	}
-	DX12GraphicsPipelineObject graphicsPSO(vs, ps, rastOpt, outputOpt, vtxAttribList);
-	auto dx12vs = m_shaderManager[vs->GetHandle()];
-	auto dx12ps = m_shaderManager[ps->GetHandle()];
-	if (m_pipelineManager.Build(graphicsPSO, dx12vs, dx12ps) == false) return nullptr;	
 }
 
 //auto DX12RenderBackend::UpdateShaderInfo(const char * shaderName, ShaderType typeHint)

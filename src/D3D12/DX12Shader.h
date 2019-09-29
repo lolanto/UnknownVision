@@ -44,5 +44,6 @@ private:
 	ShaderHandle m_nextShaderHandle;
 };
 
+extern DX12ShaderManager GShaderManager; /**< 负责创建，存储和检索Shader Object */
 
 END_NAME_SPACE

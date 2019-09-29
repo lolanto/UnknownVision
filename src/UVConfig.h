@@ -24,6 +24,9 @@ constexpr uint32_t MAX_RENDER_TARGET = 8; /**< 可绑定的渲染对象的上限
 constexpr uint32_t MAX_VERTEX_BUFFER = 8; /**< 可绑定的顶点缓冲的上限 */
 constexpr uint8_t NUMBER_OF_BACK_BUFFERS = 2; /**< 交换链总共两个后台缓冲 */
 
+template<typename T, size_t num>
+constexpr size_t ArraySize(T(&a)[num]) { return num; }
+
 /** 使用constexpr相当于让变量内联 */
 
 constexpr char* VERTEX_BUFFER_NAME[MAX_VERTEX_BUFFER] = {

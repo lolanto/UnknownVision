@@ -7,7 +7,7 @@
 BEG_NAME_SPACE
 /** 负责管理该Device对应的GPU
  * 包括提供设备的状态查询和设置
- * 与设备关联的资源的创建和删除 */
+ * 与设备关联的资源的创建和删除(不直接创建，但需要作为参数传入到资源的创建函数中) */
 class RenderDevice {
 public:
 	enum DeviceState : uint8_t {
@@ -19,8 +19,7 @@ public:
 public:
 	/** 初始化相关函数和状态查询函数 */
 	RenderDevice(uint32_t width, uint32_t height) : ScreenWidth(width), ScreenHeight(height),
-		m_nextBufferHandle(NUMBER_OF_SPECIAL_BUFFER_RESOURCE), m_nextTextureHandle(NUMBER_OF_SPECIAL_TEXTURE_RESOURCE),
-		m_state(DEVICE_STATE_UNINITIALIZE), m_nextProgramHandle(0) {}
+		m_state(DEVICE_STATE_UNINITIALIZE) {}
 	virtual ~RenderDevice() = default;
 	/** @remark 必须在子类调用完成后调用该函数修改状态 */
 	virtual bool Initialize(std::string config) {
@@ -33,36 +32,22 @@ public:
 
 	const uint32_t ScreenWidth, ScreenHeight; /**< 屏幕的宽高，单位像素 */
 public:
-	/** 资源请求类的操作 */
-	/** TODO: 暂时只能请求一个二维纹理 */
-	virtual TextureHandle RequestTexture(uint32_t width, uint32_t height, ElementFormatType type,
-		ResourceStatus status) thread_safe {
-		return TextureHandle(static_cast<TextureHandle::ValueType>(m_nextTextureHandle++));
-	}
-
-	virtual TextureHandle RequestTexture(SpecialTextureResource specialResource) thread_safe {
-		return TextureHandle(static_cast<uint8_t>(specialResource));
-	}
-
-	/** 假如缓冲是作为顶点或者索引缓冲，则stride表明缓冲中一个元素的大小 */
-	virtual BufferHandle RequestBuffer(size_t size, ResourceStatus status, size_t stride = 0) thread_safe {
-		return BufferHandle(static_cast<BufferHandle::ValueType>(m_nextBufferHandle++));
-	}
-
-	virtual bool RevertResource(BufferHandle handle) = 0 thread_safe;
-	virtual bool RevertResource(TextureHandle handle) = 0 thread_safe;
-
 	virtual CommandUnit& RequestCommandUnit(COMMAND_UNIT_TYPE type) = 0;
 
 	virtual SpecialTextureResource CurrentBackBufferHandle() = 0;
 
+	/** 构造GraphicsPipeline */
+	virtual GraphicsPipelineObject* BuildGraphicsPipelineObject(
+		VertexShader* vs, PixelShader* ps,
+		RasterizeOptionsFunc rastOpt = GDefaultRasterizeOptions,
+		OutputStageOptionsFunc outputOpt = GDefaultOutputStageOptions,
+		VertexAttributesFunc vtxAttribList = GDefaultVertexAttributeList
+	) {
+		return nullptr;
+	}
+
 protected:
 	DeviceState m_state;
-	std::atomic<ProgramHandle::ValueType> m_nextProgramHandle;
-private:
-	std::atomic<BufferHandle::ValueType> m_nextBufferHandle;
-	std::atomic<TextureHandle::ValueType> m_nextTextureHandle;
-	std::atomic<SamplerHandle::ValueType> m_nextSamplerHandle;
 };
 
 END_NAME_SPACE

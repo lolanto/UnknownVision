@@ -2,7 +2,7 @@
 
 BEG_NAME_SPACE
 
-bool DX12Buffer::RequestPermenent(RenderDevice* dev, ResourceStatus status) {
+bool DX12Buffer::RequestPermenent(RenderDevice* dev) {
 
 }
 

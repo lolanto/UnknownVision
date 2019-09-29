@@ -1,5 +1,7 @@
 ﻿#pragma once
 #include "DX12Config.h"
+#include "DX12Pipeline.h"
+#include "DX12Shader.h"
 #include "../UVType.h"
 #include "../Utility/InfoLog/InfoLog.h"
 #include <cassert>
@@ -10,6 +12,8 @@ BEG_NAME_SPACE
 
 inline DXGI_FORMAT ElementFormatToDXGIFormat(ElementFormatType format) {
 	switch (format) {
+	case ELEMENT_FORMAT_TYPE_INVALID:
+		return DXGI_FORMAT_UNKNOWN;
 	case ELEMENT_FORMAT_TYPE_R16_FLOAT:
 		return DXGI_FORMAT_R16_FLOAT;
 	case ELEMENT_FORMAT_TYPE_R32_FLOAT:
@@ -386,7 +390,7 @@ D3D12_DEPTH_STENCIL_DESC AnalyseDepthStencilOptionsFromOutputStageOptions(const 
 	return desc;
 }
 /** 分析光栅化的设置并生成DX12相应的设置 */
-D3D12_RASTERIZER_DESC AnalyseRasterizerOptionsFromRasterizeOptions(const RasterizeOptions & rastOpt) thread_safe
+D3D12_RASTERIZER_DESC AnalyseRasterizerStatesFromRasterizeOptions(const RasterizeOptions & rastOpt) thread_safe
 {
 	D3D12_RASTERIZER_DESC desc;
 	desc.FillMode = FillModeToDX12FillMode(rastOpt.fillMode);
@@ -407,6 +411,67 @@ D3D12_RASTERIZER_DESC AnalyseRasterizerOptionsFromRasterizeOptions(const Rasteri
 //D3D12_STATIC_SAMPLER_DESC AnalyseStaticSamplerFromSamplerDescriptor(const SamplerDescriptor& desc, uint8_t spaceIndex, uint8_t registerIndex) thread_safe;
 ///** 分析samplerState并生成DX12相应的设置 */
 //D3D12_SAMPLER_DESC AnalyseSamplerFromSamperDescriptor(const SamplerDescriptor& desc) thread_safe;
+
+D3D12_STATIC_SAMPLER_DESC AnalyseStaticSamplerFromSamplerDescriptor(const SamplerDescriptor& desc, uint8_t spaceIndex, uint8_t registerIndex) thread_safe
+{
+	D3D12_STATIC_SAMPLER_DESC samplerDesc;
+	samplerDesc.RegisterSpace = spaceIndex;
+	samplerDesc.ShaderRegister = registerIndex;
+	samplerDesc.Filter = FilterTypeToDX12FilterType(desc.filter);
+	samplerDesc.AddressU = SamplerAddressModeToDX12TextureAddressMode(desc.uAddrMode);
+	samplerDesc.AddressV = SamplerAddressModeToDX12TextureAddressMode(desc.vAddrMode);
+	samplerDesc.AddressW = SamplerAddressModeToDX12TextureAddressMode(desc.wAddrMode);
+	/** 静态sampler不能提供可设置的边界颜色只能使用默认值黑/白 */
+	samplerDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
+	/** TODO: 以下设置暂时不支持，均采用默认操作 */
+	samplerDesc.MipLODBias = 0;
+	samplerDesc.MaxAnisotropy = 16;
+	samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	samplerDesc.MinLOD = 0.0f;
+	samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+	samplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	return samplerDesc;
+}
+
+D3D12_SAMPLER_DESC AnalyseSamplerFromSamplerDescriptor(const SamplerDescriptor& desc) thread_safe {
+	D3D12_SAMPLER_DESC samplerDesc;
+	samplerDesc.Filter = FilterTypeToDX12FilterType(desc.filter);
+	samplerDesc.AddressU = SamplerAddressModeToDX12TextureAddressMode(desc.uAddrMode);
+	samplerDesc.AddressV = SamplerAddressModeToDX12TextureAddressMode(desc.vAddrMode);
+	samplerDesc.AddressW = SamplerAddressModeToDX12TextureAddressMode(desc.wAddrMode);
+	samplerDesc.BorderColor[0] = desc.borderColor[0];
+	samplerDesc.BorderColor[1] = desc.borderColor[1];
+	samplerDesc.BorderColor[2] = desc.borderColor[2];
+	samplerDesc.BorderColor[3] = desc.borderColor[3];
+	/** TODO: 以下设置暂时不支持，均采用默认操作 */
+	samplerDesc.MipLODBias = 0;
+	samplerDesc.MaxAnisotropy = 16;
+	samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	samplerDesc.MinLOD = 0.0f;
+	samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+	return samplerDesc;
+}
+
+D3D12_SAMPLER_DESC AnalyseSamplerFromSamplerSettings(FilterType filter,
+	const SamplerAddressMode(&uvwMode)[3],
+	const float(&borderColor)[4]) thread_safe {
+	D3D12_SAMPLER_DESC samplerDesc;
+	samplerDesc.Filter = FilterTypeToDX12FilterType(filter);
+	samplerDesc.AddressU = SamplerAddressModeToDX12TextureAddressMode(uvwMode[0]);
+	samplerDesc.AddressV = SamplerAddressModeToDX12TextureAddressMode(uvwMode[1]);
+	samplerDesc.AddressW = SamplerAddressModeToDX12TextureAddressMode(uvwMode[2]);
+	samplerDesc.BorderColor[0] = borderColor[0];
+	samplerDesc.BorderColor[1] = borderColor[1];
+	samplerDesc.BorderColor[2] = borderColor[2];
+	samplerDesc.BorderColor[3] = borderColor[3];
+	/** TODO: 以下设置暂时不支持，均采用默认操作 */
+	samplerDesc.MipLODBias = 0;
+	samplerDesc.MaxAnisotropy = 16;
+	samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	samplerDesc.MinLOD = 0.0f;
+	samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+	return samplerDesc;
+}
 
 D3D12_INPUT_ELEMENT_DESC AnalyseInputElementDescFromVertexAttribute(const VertexAttribute& vtxAtrri) {
 	D3D12_INPUT_ELEMENT_DESC desc;

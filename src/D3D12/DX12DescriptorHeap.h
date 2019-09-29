@@ -7,7 +7,7 @@
 
 BEG_NAME_SPACE
 
-extern UINT DescriptorHandleIncrementSize[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];
+extern UINT GDescriptorHandleIncrementSize[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];
 
 
 
@@ -32,11 +32,11 @@ public:
 	const ID3D12DescriptorHeap* GetHeap() const { return m_descHeap.Get(); }
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(size_t beg) const { 
 		assert(beg < m_desc.NumDescriptors);
-		return { m_cpu_beg.ptr + beg * DescriptorHandleIncrementSize[m_desc.Flags] };
+		return { m_cpu_beg.ptr + beg * GDescriptorHandleIncrementSize[m_desc.Flags] };
 	}
 	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(size_t beg) const {
 		assert(beg < m_desc.NumDescriptors);
-		return { m_gpu_beg.ptr + beg * DescriptorHandleIncrementSize[m_desc.Flags] };
+		return { m_gpu_beg.ptr + beg * GDescriptorHandleIncrementSize[m_desc.Flags] };
 	}
 	virtual HeapBlock RequestBlock(size_t size) { return { 0, 0 }; };
 	virtual void Release(HeapBlock block) {};

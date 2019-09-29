@@ -155,7 +155,6 @@
     <ClInclude Include="..\src\D3D12\DX12DescriptorHeap.h" />
     <ClCompile Include="..\src\D3D12\DX12DescriptorHeap.cpp" />
     <ClCompile Include="..\src\D3D12\DX12Pipeline.cpp" />
-    <ClCompile Include="..\src\D3D12\DX12PipelineManager.cpp" />
     <ClCompile Include="..\src\D3D12\DX12ResourceManager.cpp" />
     <ClCompile Include="..\src\D3D12\DX12Config.cpp" />
     <ClCompile Include="..\src\D3D12\DX12RenderBackend.cpp">
@@ -188,7 +187,6 @@
     <ClInclude Include="..\src\D3D12\DX12HeapManager.h" />
     <ClInclude Include="..\src\D3D12\DX12Helpers.h" />
     <ClInclude Include="..\src\D3D12\DX12Pipeline.h" />
-    <ClInclude Include="..\src\D3D12\DX12PipelineManager.h" />
     <ClInclude Include="..\src\D3D12\DX12RenderBackend.h" />
     <ClInclude Include="..\src\D3D12\DX12RenderBasic.h" />
     <ClInclude Include="..\src\D3D12\DX12Config.h" />
