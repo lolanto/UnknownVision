@@ -237,13 +237,27 @@ bool DXCompilerHelper::CompileToByteCode(const wchar_t* srcFilePath, const char*
 		m_err = "library is invalid!";
 		return false;
 	}
+
+
+	bool bUseDXIL = profile[3] - '0' >= 6;
+	if (bUseDXIL == false) {
+		SmartPtr<ID3DBlob> errorMsg;
+		/** 使用FXC */
+		if (FAILED(D3DCompileFromFile(srcFilePath, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+			"main", profile, D3DCOMPILE_DEBUG, 0, outputBuffer.GetAddressOf(), errorMsg.GetAddressOf()))) {
+			m_err = reinterpret_cast<char*>(errorMsg->GetBufferPointer());
+			return false;
+		}
+		return true;
+	}
+	/**使用DXIL */
+	std::wstring&& pf = fromUTF8ToWideChar(profile);
 	SmartPtr<IDxcBlobEncoding> shaderSrc;
 	uint32_t pageCode = CP_UTF8;
 	if (FAILED(m_library->CreateBlobFromFile(srcFilePath, &pageCode, shaderSrc.ReleaseAndGetAddressOf()))) {
 		m_err = "load shader source file failed!";
 		return false;
 	}
-	std::wstring&& pf = fromUTF8ToWideChar(profile);
 	SmartPtr<IDxcOperationResult> compileOpResult;
 	SmartPtr<IDxcBlob> debugInfo;
 	wchar_t* suggestDebugInfoFileName;
@@ -299,7 +313,7 @@ bool DXCompilerHelper::CompileToByteCode(const wchar_t* srcFilePath, const char*
 
 auto DXCompilerHelper::RetrieveShaderDescriptionFromByteCode(SmartPtr<ID3DBlob>& byteCodes)
 	-> Microsoft::WRL::ComPtr<ID3D12ShaderReflection> {
-	SmartPtr<ID3D12ShaderReflection> shrReflect;
+	SmartPtr<ID3D12ShaderReflection> shrReflect = nullptr;
 	/** 加载byte code并创建用于获取shader描述信息的对象 */
 	SmartPtr<IDxcBlob> dxcBlob;
 	if (FAILED(byteCodes.As(&dxcBlob))) {
@@ -314,12 +328,20 @@ auto DXCompilerHelper::RetrieveShaderDescriptionFromByteCode(SmartPtr<ID3DBlob>&
 		return shrReflect;
 	}
 	uint32_t dxil = DXIL_FOURCC('D', 'X', 'I', 'L');
+	bool bUsedDXIL = true;
 	if (FAILED(reflection->FindFirstPartKind(dxil, &shaderIdx))) {
-		m_err = "find first part of dxil failed!";
+		bUsedDXIL = false;
+	}
+	if (bUsedDXIL == false) {
+		/** 考虑是使用FXC编译的 */
+		if (FAILED(D3DReflect(byteCodes->GetBufferPointer(), byteCodes->GetBufferSize(), IID_PPV_ARGS(&shrReflect)))) {
+			m_err = "Get shader reflection with FXC failed";
+			return shrReflect;
+		}
 		return shrReflect;
 	}
 	if (FAILED(reflection->GetPartReflection(shaderIdx, IID_PPV_ARGS(&shrReflect)))) {
-		m_err = "Get shader reflection failed";
+		m_err = "Get shader reflection with DXIL failed";
 		return shrReflect;
 	}
 

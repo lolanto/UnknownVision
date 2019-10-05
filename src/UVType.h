@@ -1,9 +1,8 @@
 ﻿#pragma once
 #include "UVConfig.h"
+#include "UVUtility.h"
 
 BEG_NAME_SPACE
-
-/** 所有特殊资源与设备相关，必须在设备初始化中完成 */
 
 enum SpecialTextureResource : uint8_t {
 	DEFAULT_BACK_BUFFER = 0, /**< 相当于是backbuffers的最小下标, backbuffers中的任一buffer = DEF_BACK_BUF + id */
@@ -27,6 +26,8 @@ allow_logical_operation enum ResourceUsages : uint8_t {
 	RESOURCE_USAGE_UNORDER_ACCESS = 0x40U,
 	RESOURCE_USAGE_STRUCTURED_BUFFER = 0x80U
 };
+
+ENUM_LOGICAL_OPERATION(ResourceUsages, uint8_t);
 
 allow_logical_operation enum ResourceFlags : uint8_t {
 	RESOURCE_FLAG_INVALID = 0x00U,
@@ -95,6 +96,7 @@ enum RenderResourceViewType : uint8_t {
 
 enum ElementFormatType : uint8_t {
 	ELEMENT_FORMAT_TYPE_INVALID = 0,/**< 无效的默认值 */
+	ELEMENT_FORMAT_TYPE_UNKNOWN,
 	/** 以下格式可以等价为float1, float2, float3以及float4 */
 	ELEMENT_FORMAT_TYPE_R16_FLOAT,
 	ELEMENT_FORMAT_TYPE_R32_FLOAT,
@@ -189,6 +191,13 @@ enum DescriptorHeapType : uint8_t {
 	DESCRIPTOR_HEAP_TYPE_UAV = 1 << 2,
 	DESCRIPTOR_HEAP_TYPE_SAMPLER = 1 << 3,
 	DESCRIPTOR_HEAP_TYPE_RTV = 1 << 4
+};
+
+enum COMMAND_UNIT_TYPE : uint8_t {
+	DEFAULT_COMMAND_UNIT = 0,
+	COMPUTE_COMMAND_UNIT,
+	TRANSFER_COMMAND_UNIT,
+	NUMBER_OF_COMMAND_UNIT_TYPE
 };
 
 ENUM_LOGICAL_OPERATION(DescriptorHeapType, uint8_t)

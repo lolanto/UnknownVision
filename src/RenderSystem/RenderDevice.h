@@ -32,9 +32,10 @@ public:
 
 	const uint32_t ScreenWidth, ScreenHeight; /**< 屏幕的宽高，单位像素 */
 public:
-	virtual CommandUnit& RequestCommandUnit(COMMAND_UNIT_TYPE type) = 0;
-
-	virtual SpecialTextureResource CurrentBackBufferHandle() = 0;
+	virtual CommandUnit* RequestCommandUnit(COMMAND_UNIT_TYPE type) = 0;
+	/** 释放指令单元，所有已录制未执行的指令都将丢失 */
+	virtual void FreeCommandUnit(CommandUnit** cmdUnit) = 0;
+	virtual void UpdatePerFrame() {}
 
 	/** 构造GraphicsPipeline */
 	virtual GraphicsPipelineObject* BuildGraphicsPipelineObject(
@@ -45,6 +46,8 @@ public:
 	) {
 		return nullptr;
 	}
+
+	GPUResource* BackBuffer() { return nullptr; }
 
 protected:
 	DeviceState m_state;

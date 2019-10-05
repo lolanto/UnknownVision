@@ -1,5 +1,5 @@
 ﻿#include "DX12RenderBackend.h"
-
+#include "DX12RenderDevice.h"
 #include "../Utility/WindowBase/win32/WindowWin32.h"
 #include "../Utility/InfoLog/InfoLog.h"
 
@@ -8,6 +8,13 @@
 #define XifFailed(function, behavior) if (FAILED(function)) behavior
 
 BEG_NAME_SPACE
+
+DX12RenderBackend::~DX12RenderBackend()
+{
+	for (auto devPtr : m_devices)
+		delete devPtr;
+}
+
 bool DX12RenderBackend::Initialize()
 {
 	if (m_isInitialized) return true;
@@ -61,7 +68,7 @@ RenderDevice * DX12RenderBackend::CreateDevice(void * parameters)
 		queDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 		queDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 		queDesc.NodeMask = 0; /**< 不使用多设备 */
-		queDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_HIGH; /**< CommandQueue需要分配优先级，这里测试使用高优先级 */
+		queDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL; /**< CommandQueue需要分配优先级 */
 		XifFailed(device->CreateCommandQueue(&queDesc, IID_PPV_ARGS(&cmdQueue)), {
 			return nullptr;
 			});
@@ -69,7 +76,7 @@ RenderDevice * DX12RenderBackend::CreateDevice(void * parameters)
 	/** 创建交换链 */
 	{
 		DXGI_SWAP_CHAIN_DESC1 swapChainDesc;
-		swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE; /**< 指定交换链缓冲的透明行为，暂且不进行特殊设置 */
+		swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED; /**< 指定交换链缓冲的透明行为，暂且不进行特殊设置 */
 		swapChainDesc.BufferCount = NUMBER_OF_BACK_BUFFERS; /**< 指定后台缓冲的数量 */
 		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT; /**< 交换链缓冲的用途，默认已有backbuffer */
 		swapChainDesc.Flags = 0; /**< 不进行特殊设置 */
@@ -81,7 +88,8 @@ RenderDevice * DX12RenderBackend::CreateDevice(void * parameters)
 		swapChainDesc.SampleDesc.Quality = 0;
 		swapChainDesc.Scaling = DXGI_SCALING_NONE; /**< 当窗口被拉伸时不进行适应性操作 */
 		swapChainDesc.Stereo = false;
-		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+		
 		XifFailed(m_factory->CreateSwapChainForHwnd(cmdQueue.Get(),
 			win->hWnd(), &swapChainDesc,
 			nullptr,  /**< 不使用全屏，可直接传入null*/

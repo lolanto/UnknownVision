@@ -3,53 +3,29 @@
 
 BEG_NAME_SPACE
 
-class SampleShaderVS : public BasicShader {
-public:
-	SampleShaderVS() : BasicShader("hellovs") {
-		m_mvp.name = "mvp";
-	}
+inline std::vector<VertexAttribute> SampleVertexAttributes() {
+	VertexAttribute position = VertexAttribute(VERTEX_ATTRIBUTE_TYPE_POSITION,
+		ELEMENT_FORMAT_TYPE_R32G32B32_FLOAT,
+		0, 0, VertexAttribute::APPEND_FROM_PREVIOUS);
+	return { position };
+}
 
-	virtual size_t GetNumParameters(ShaderParameterType type) const override final {
-		uint8_t paraType = static_cast<uint8_t>(type);
-		size_t res = 0;
-		if (paraType & SHADER_PARAMETER_TYPE_CBV) res += 1;
-		return res;
+class SampleShaderVS : public VertexShader {
+public:
+	SampleShaderVS() : VertexShader(L"vs.hlsl") {}
+
+	virtual  std::vector<ParameterPackageInterface*> Pack() const override final {
+		return {};
 	}
-	virtual std::vector<ParameterPackage> Pack() const override final {
-		std::vector<ParameterPackage> packages;
-		ParameterPackage pack;
-		pack.PackBack(m_mvp);
-		packages.push_back(pack);
-		return packages;
-	}
-	void SetParameters(Buffer* mvp) { m_mvp.buffer = mvp; }
-private:
-	ShaderParameter m_mvp;
-	std::string m_sourceCode;
 };
 
-class SampleShaderPS : public BasicShader {
+class SampleShaderPS : public PixelShader {
 public:
-	SampleShaderPS() : BasicShader("hellops") {
-		m_tex.name = "tex";
+	SampleShaderPS() : PixelShader(L"ps.hlsl") {}
+
+	virtual std::vector<ParameterPackageInterface*> Pack() const override final {
+		return {};
 	}
-	virtual size_t GetNumParameters(ShaderParameterType type) const override final {
-		uint8_t paraType = static_cast<uint8_t>(type);
-		size_t res = 0;
-		if (paraType & SHADER_PARAMETER_TYPE_SRV) res += 1;
-		return res;
-	}
-	virtual std::vector<ParameterPackage> Pack() const override final {
-		std::vector<ParameterPackage> packages;
-		ParameterPackage pack;
-		pack.PackBack(m_tex);
-		packages.push_back(pack);
-		return packages;
-	}
-	void SetParameters(Texture2D* tex) { m_tex.texture2d = tex; }
-private:
-	ShaderParameter m_tex;
-	std::string m_sourceCode;
 };
 
 END_NAME_SPACE

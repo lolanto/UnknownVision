@@ -20,7 +20,7 @@ constexpr static uint32_t TEXTURE_SIZE_USED_COMMITTED_RESOURCE =
 /** 假如缓冲区大于等于该值，则一旦不被使用就应该立即释放 暂时定为heap管理的堆大小的2/3 */
 constexpr static uint32_t TEXTURE_SIZE_RELEASE_IMMEDIATELY = (HEAP_CHUNK_SIZE / 3) * 2;
 
-class DX12ResourceManager {
+class DX12ResourceManager : public Uncopyable {
 public:
 	/** 分配出去的资源块 */
 	struct ResourceInfo {
@@ -33,11 +33,9 @@ public:
 public:
 	DX12ResourceManager(ID3D12Device* device) 
 		: m_pDevice(device), m_pAllocator(nullptr) {}
+	~DX12ResourceManager();
 	/** 禁止非右值传递 */
-	~DX12ResourceManager() = default; /**< 假如有资源正在被引用，可能会造成错误 */
-	DX12ResourceManager(const DX12ResourceManager&) = delete;
 	DX12ResourceManager(DX12ResourceManager&& rhs) { swapWithRValue(std::move(rhs)); }
-	DX12ResourceManager& operator=(const DX12ResourceManager&) = delete;
 	DX12ResourceManager& operator=(DX12ResourceManager&& rhs) { swapWithRValue(std::move(rhs)); return *this; }
 
 public:
@@ -66,15 +64,15 @@ public:
 		D3D12_RESOURCE_FLAGS flags,
 		uint16_t mipLevel, bool bForceCommitted)->std::pair<ID3D12Resource*, D3D12_RESOURCE_STATES>;
 	/** 向管理器归还资源
- * @param res 之前请求的纹理的指针
+ * @param pRes 之前请求的资源指针
  * @return 归还成功返回true, 失败返回false */
-	bool ReleaseResource(ID3D12Resource*);
+	bool ReleaseResource(ID3D12Resource* pRes);
 private:
 	inline void swapWithRValue(DX12ResourceManager&& rvalue);
 private:
 	D3D12MA::Allocator* m_pAllocator;
 	ID3D12Device* m_pDevice;
-	std::map<ID3D12Resource*, ResourceInfo> m_resourceRepository;
+	std::map<ID3D12Resource*, ResourceInfo> m_resourceRepository; /**< 所有创建的资源都存储于此 */
 };
 
 END_NAME_SPACE

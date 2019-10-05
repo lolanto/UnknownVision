@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include "../UVType.h"
-#include "ShaderResource.h"
 
 BEG_NAME_SPACE
 
@@ -44,49 +43,36 @@ struct RenderResourceCreationDescription {
  * 虽然这符合目前各个图形API的创建规范，但自由度不高
  * 最显著的好处是方便资源的管理，提前预设不允许改变可以减少应对改变的实现成本*/
 
-class RenderResource {
+class ConstantBufferView;
+class ShaderResourceView;
+class UnorderAccessView;
+class RenderTargetView;
+class DepthStencilView;
+class VertexBufferView;
+class IndexBufferView;
+
+class GPUResource : public Uncopyable {
+	friend class DX12CommandUnit;
 public:
+	virtual void SetName(const wchar_t* name) {}
+	virtual void* GetResource() { return nullptr; }
 	virtual ConstantBufferView* GetCBVPtr() { return nullptr; }
 	virtual ShaderResourceView* GetSRVPtr() { return nullptr; }
 	virtual UnorderAccessView* GetUAVPtr() { return nullptr; }
 	virtual RenderTargetView* GetRTVPtr() { return nullptr; }
 	virtual DepthStencilView* GetDSVPtr() { return nullptr; }
+	virtual VertexBufferView* GetVBVPtr() { return nullptr; }
+	virtual IndexBufferView* GetIBVPtr() { return nullptr; }
 	virtual bool Avaliable() const { return false; }
 	/** 请求临时资源，该资源会在对应的CommandUnit执行完指令后被释放 */
 	virtual bool RequestTransient(CommandUnit* cmdUnit) { return false; };
 	/** 请求固定的资源，资源的释放需要手动控制 */
-	virtual bool RequestPermenent(RenderDevice* cmdUnit) { return false; };
+	virtual bool RequestPermenent(CommandUnit* cmdUnit) { return false; };
 	/** 用来手动释放资源，临时资源也可以提前进行手动释放，保证释放空资源不会有影响 */
 	virtual void Release() = 0;
 protected:
 	ResourceStatus m_status;
-};
-
-class Texture : public RenderResource {
-public:
-	bool IsTexture1D() const { return m_width != 0 && m_height == 0 && m_slice == 0; }
-	bool IsTexture2D() const { return m_width != 0 && m_height != 0 && m_slice == 0; }
-	bool IsTexture3D() const { return m_width != 0 && m_height != 0 && m_slice != 0; }
-public:
-	size_t& Width() { return m_width; }
-	size_t Width() const { return m_width; }
-	size_t& Height() { return m_height; }
-	size_t Height() const { return m_height; }
-	size_t& Slice() { return m_slice; }
-	size_t Slice() const { return m_slice; }
-protected:
-	size_t m_width;
-	size_t m_height;
-	size_t m_slice;
-};
-
-class Buffer : public RenderResource {
-public:
-	virtual void Reset() = 0;
-	size_t& Size() { return m_size; }
-	size_t Size() const { return m_size; }
-protected:
-	size_t m_size;
+	ResourceStates m_state;
 };
 
 /** 通用的采样器描述信息集合 */

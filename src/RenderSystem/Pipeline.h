@@ -32,6 +32,23 @@ struct OutputStageOptions {
 	}
 };
 
+
+
+using RasterizeOptionsFunc = std::function < RasterizeOptions()>;
+using OutputStageOptionsFunc = std::function<OutputStageOptions()>;
+
+inline RasterizeOptions GDefaultRasterizeOptions() {
+	return RasterizeOptions();
+}
+
+inline OutputStageOptions GDefaultOutputStageOptions() {
+	OutputStageOptions res;
+	res.enableDepthTest = false;
+	res.rtvFormats[0] = ELEMENT_FORMAT_TYPE_R8G8B8A8_UNORM;
+	res.dsvFormat = ELEMENT_FORMAT_TYPE_UNKNOWN;
+	return res;
+}
+
 /** 描述顶点缓冲中一个属性的子结构 */
 struct VertexAttribute {
 	enum { APPEND_FROM_PREVIOUS = UINT8_MAX };
@@ -51,25 +68,11 @@ struct VertexAttribute {
 		uint8_t location = 0, uint8_t byteOffset = 0)
 		: type(type), index(index), format(format), location(location), byteOffset(byteOffset) {}
 };
-
-using RasterizeOptionsFunc = std::function < RasterizeOptions()>;
-using OutputStageOptionsFunc = std::function<OutputStageOptions()>;
 using VertexAttributesFunc = std::function<std::vector<VertexAttribute>()>;
-
-RasterizeOptions GDefaultRasterizeOptions() {
-	return RasterizeOptions();
-}
-
-OutputStageOptions GDefaultOutputStageOptions() {
-	OutputStageOptions res;
-	res.rtvFormats[0] = ELEMENT_FORMAT_TYPE_R32G32B32A32_FLOAT;
-	return res;
-}
-
 /** 默认的输入结构包括:
  * position0: float3 存放于slot0
  * texcoord0: float2 存放于slot1 */
-std::vector<VertexAttribute> GDefaultVertexAttributeList() {
+inline std::vector<VertexAttribute> GDefaultVertexAttributeList() {
 	VertexAttribute position = VertexAttribute(VERTEX_ATTRIBUTE_TYPE_POSITION,
 		ELEMENT_FORMAT_TYPE_R32G32B32_FLOAT,
 		0, 0, VertexAttribute::APPEND_FROM_PREVIOUS);
@@ -79,14 +82,28 @@ std::vector<VertexAttribute> GDefaultVertexAttributeList() {
 	return { position, texcoord0 };
 }
 
+struct ViewPort {
+	float topLeftX, topLeftY;
+	float width, height;
+	float minDepth, maxDepth;
+};
+
+struct ScissorRect {
+	size_t left, top, right, bottom;
+};
+
 class GraphicsPipelineObject {
 public:
 	GraphicsPipelineObject(VertexShader* vs, PixelShader* ps,
-		RasterizeOptionsFunc rasOpt = GDefaultRasterizeOptions,
+		RasterizeOptionsFunc rastOpt = GDefaultRasterizeOptions,
 		OutputStageOptionsFunc outputOpt = GDefaultOutputStageOptions,
 		VertexAttributesFunc vtxAttribList = GDefaultVertexAttributeList)
 		: rastOpt(rastOpt), outputOpt(outputOpt), vtxAttribList(vtxAttribList),
 		vs(vs), ps(ps) {}
+	GraphicsPipelineObject(GraphicsPipelineObject&& rhs) 
+		: rastOpt(rhs.rastOpt), outputOpt(rhs.outputOpt), vtxAttribList(rhs.vtxAttribList),
+		vs(rhs.vs), ps(rhs.ps) {}
+	virtual ~GraphicsPipelineObject() = default;
 public:
 	/** 由于以下三个结构体并不需要长期存在，所以考虑使用函数生成的方式在使用时直接生成 */
 	const RasterizeOptionsFunc rastOpt;

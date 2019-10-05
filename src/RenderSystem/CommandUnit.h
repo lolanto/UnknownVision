@@ -1,37 +1,46 @@
-﻿/** 指令的发送器抽象，继承者需要对诸多GPU指令进行封装 */
-#pragma once
+﻿#pragma once
 #include "../UVType.h"
 #include <vector>
 #include <array>
 BEG_NAME_SPACE
 
-class Buffer;
+class RenderDevice;
+class GraphicsPipelineObject;
+class GPUResource;
+struct ViewPort;
+struct ScissorRect;
 
-/** 资源应用类指令的接口集合 */
+/** 指令队列的编辑器，按顺序向底层的CommandList写入指令 */
 class CommandUnit {
 public:
-
-	virtual ~CommandUnit() = default;
+	CommandUnit(COMMAND_UNIT_TYPE type = static_cast<COMMAND_UNIT_TYPE>(0xff)) : CommandUnitType(type) {}
 public:
-	virtual bool Active() = 0;
-	virtual bool Fetch() = 0;
-	virtual bool FetchAndPresent() = 0;
-	virtual bool Wait() = 0;
-	virtual bool Reset() = 0;
-	/** 仅针对CPU可写的缓冲 */
-	virtual bool UpdateBufferWithSysMem(BufferHandle dest, void* src, size_t size) = 0;
-	/** 仅针对可读回的，以及CPU可读的缓冲 */
-	virtual bool ReadBackToSysMem(BufferHandle src, void* dest, size_t size) = 0;
-	virtual bool CopyBetweenGPUBuffer(BufferHandle src, BufferHandle dest, size_t srcOffset, size_t destOffset, size_t size) = 0;
-	virtual bool TransferState(BufferHandle buf, ResourceStates newState) = 0;
-	virtual bool TransferState(TextureHandle tex, ResourceStates newState) = 0;
-	virtual bool TransferState(Buffer* buf, ResourceStates newState) = 0;
-	//virtual bool UseProgram(ProgramHandle program) = 0;
-
-	//virtual bool BindVertexBuffers(const std::vector<BufferHandle>& vtxBuffers) = 0;
-	//virtual bool BindIndexBuffer(BufferHandle buf) = 0;
-	virtual bool BindRenderTargetsAndDepthStencilBuffer(const std::vector<TextureHandle>& renderTargets, TextureHandle depthStencil) = 0;
-	virtual bool ClearRenderTarget(TextureHandle renderTarget, const std::array<float, 4>& color) = 0;
+	virtual RenderDevice* GetDevice() { return nullptr; }
+	virtual ~CommandUnit() = default;
+	const COMMAND_UNIT_TYPE CommandUnitType;
+public:
+	/** 提交当前录制的指令 */
+	virtual size_t Flush(bool bWaitForCompletion = false) = 0;
+	/** 绑定pipeline */
+	virtual void BindPipeline(GraphicsPipelineObject* gpo) = 0;
+	/** 绑定顶点缓冲 */
+	virtual void BindVertexBuffers(size_t startSlot, size_t numberOfBuffers, GPUResource** ppBuffers) = 0;
+	/** 绑定索引缓冲 */
+	virtual void BindIndexBuffer(GPUResource* pBuffer) = 0;
+	/** 绑定渲染目标 */
+	virtual void BindRenderTargets(GPUResource** ppRenderTargets, size_t numRenderTargets, GPUResource* pDepthStencil) = 0;
+	/** 发起Draw指令 */
+	virtual void Draw(size_t startOfIndex, size_t indexCount, size_t startOfVertex) = 0;
+	/** 修改资源状态 */
+	virtual void TransferState(GPUResource* pResource, ResourceStates newState) = 0;
+	/** 翻转swapchain */
+	virtual void Present() = 0;
+	/** 绑定viewport */
+	virtual void BindViewports(size_t size, ViewPort* viewports) = 0;
+	/** 绑定scissor rect */
+	virtual void BindScissorRects(size_t size, ScissorRect* scissorRects) = 0;
+	/** 清空渲染目标 */
+	virtual void ClearRenderTarget(GPUResource* renderTarget, const float* clearColor) = 0;
 };
 
 END_NAME_SPACE

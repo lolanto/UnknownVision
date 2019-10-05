@@ -12,6 +12,7 @@ BEG_NAME_SPACE
 
 inline DXGI_FORMAT ElementFormatToDXGIFormat(ElementFormatType format) {
 	switch (format) {
+	case ELEMENT_FORMAT_TYPE_UNKNOWN:
 	case ELEMENT_FORMAT_TYPE_INVALID:
 		return DXGI_FORMAT_UNKNOWN;
 	case ELEMENT_FORMAT_TYPE_R16_FLOAT:
@@ -63,6 +64,18 @@ inline D3D12_PRIMITIVE_TOPOLOGY_TYPE PrimitiveTypeToPrimitiveTopologyType(Primit
 	default:
 		FLOG("%s: Doesn't support this primitive type\n", __FUNCTION__);
 		return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
+	}
+}
+
+inline D3D_PRIMITIVE_TOPOLOGY PrimitiveTypeToPrimitiveTopology(PrimitiveType type) {
+	switch (type)
+	{
+	case UnknownVision::PRIMITIVE_TYPE_POINT:
+		return  D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+	case UnknownVision::PRIMITIVE_TYPE_TRIANGLE_LIST:
+		return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	default:
+		assert(false);
 	}
 }
 
@@ -182,7 +195,34 @@ inline D3D12_RESOURCE_STATES ResourceStateToDX12ResourceState(const ResourceStat
 	return res;
 }
 
-D3D12_SHADER_VISIBILITY ShaderTypeToDX12ShaderVisibility(ShaderType type) {
+inline ResourceStates DX12ResourceStateToResourceState(const D3D12_RESOURCE_STATES state) {
+	ResourceStates res = RESOURCE_STATE_UNKNOWN;
+	if (state & D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER) {
+		res |= RESOURCE_STATE_VERTEX_BUFFER;
+		res |= RESOURCE_STATE_CONSTANT_BUFFER;
+	}
+	if (state & D3D12_RESOURCE_STATE_COPY_DEST)
+		res |= RESOURCE_STATE_COPY_DEST;
+	if (state & D3D12_RESOURCE_STATE_COPY_SOURCE)
+		res |= RESOURCE_STATE_COPY_SRC;
+	if (state & D3D12_RESOURCE_STATE_DEPTH_READ)
+		res |= RESOURCE_STATE_DEPTH_READ;
+	if (state & D3D12_RESOURCE_STATE_DEPTH_WRITE)
+		res |= RESOURCE_STATE_DEPTH_WRITE;
+	if (state & D3D12_RESOURCE_STATE_INDEX_BUFFER)
+		res |= RESOURCE_STATE_INDEX_BUFFER;
+	if (state & D3D12_RESOURCE_STATE_PRESENT)
+		res |= RESOURCE_STATE_PRESENT;
+	if (state & D3D12_RESOURCE_STATE_RENDER_TARGET)
+		res |= RESOURCE_STATE_RENDER_TARGET;
+	if (state & D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE || state & D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
+		res |= RESOURCE_STATE_SHADER_RESOURCE;
+	if (state & D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+		res |= RESOURCE_STATE_UNORDER_ACCESS;
+	return res;
+}
+
+inline D3D12_SHADER_VISIBILITY ShaderTypeToDX12ShaderVisibility(ShaderType type) {
 	switch (type)
 	{
 	case UnknownVision::SHADER_TYPE_VERTEX_SHADER:
@@ -354,7 +394,7 @@ struct RootSignatureQueryAnswer {
 };
 
 /** 分析输出阶段中关于blending过程的内容，并生成blending设置 */
-D3D12_BLEND_DESC AnalyseBlendingOptionsFromOutputStageOptions(const OutputStageOptions & osOpt) thread_safe
+inline D3D12_BLEND_DESC AnalyseBlendingOptionsFromOutputStageOptions(const OutputStageOptions & osOpt) thread_safe
 {
 	/** TODO: 完善对blend的支持，目前仅提供默认(无blend)操作 */
 	D3D12_BLEND_DESC desc;
@@ -373,7 +413,7 @@ D3D12_BLEND_DESC AnalyseBlendingOptionsFromOutputStageOptions(const OutputStageO
 	return desc;
 }
 /** 分析输出阶段中关于Depth和stencil过程的设置，并生成Depth Stencil设置 */
-D3D12_DEPTH_STENCIL_DESC AnalyseDepthStencilOptionsFromOutputStageOptions(const OutputStageOptions & osOpt) thread_safe
+inline D3D12_DEPTH_STENCIL_DESC AnalyseDepthStencilOptionsFromOutputStageOptions(const OutputStageOptions & osOpt) thread_safe
 {
 	/** TODO: 完善深度模板操作的支持，目前仅支持默认的深度测试，不支持模板测试 */
 	D3D12_DEPTH_STENCIL_DESC desc;
@@ -390,7 +430,7 @@ D3D12_DEPTH_STENCIL_DESC AnalyseDepthStencilOptionsFromOutputStageOptions(const 
 	return desc;
 }
 /** 分析光栅化的设置并生成DX12相应的设置 */
-D3D12_RASTERIZER_DESC AnalyseRasterizerStatesFromRasterizeOptions(const RasterizeOptions & rastOpt) thread_safe
+inline D3D12_RASTERIZER_DESC AnalyseRasterizerStatesFromRasterizeOptions(const RasterizeOptions & rastOpt) thread_safe
 {
 	D3D12_RASTERIZER_DESC desc;
 	desc.FillMode = FillModeToDX12FillMode(rastOpt.fillMode);
@@ -412,7 +452,7 @@ D3D12_RASTERIZER_DESC AnalyseRasterizerStatesFromRasterizeOptions(const Rasteriz
 ///** 分析samplerState并生成DX12相应的设置 */
 //D3D12_SAMPLER_DESC AnalyseSamplerFromSamperDescriptor(const SamplerDescriptor& desc) thread_safe;
 
-D3D12_STATIC_SAMPLER_DESC AnalyseStaticSamplerFromSamplerDescriptor(const SamplerDescriptor& desc, uint8_t spaceIndex, uint8_t registerIndex) thread_safe
+inline D3D12_STATIC_SAMPLER_DESC AnalyseStaticSamplerFromSamplerDescriptor(const SamplerDescriptor& desc, uint8_t spaceIndex, uint8_t registerIndex) thread_safe
 {
 	D3D12_STATIC_SAMPLER_DESC samplerDesc;
 	samplerDesc.RegisterSpace = spaceIndex;
@@ -433,7 +473,7 @@ D3D12_STATIC_SAMPLER_DESC AnalyseStaticSamplerFromSamplerDescriptor(const Sample
 	return samplerDesc;
 }
 
-D3D12_SAMPLER_DESC AnalyseSamplerFromSamplerDescriptor(const SamplerDescriptor& desc) thread_safe {
+inline D3D12_SAMPLER_DESC AnalyseSamplerFromSamplerDescriptor(const SamplerDescriptor& desc) thread_safe {
 	D3D12_SAMPLER_DESC samplerDesc;
 	samplerDesc.Filter = FilterTypeToDX12FilterType(desc.filter);
 	samplerDesc.AddressU = SamplerAddressModeToDX12TextureAddressMode(desc.uAddrMode);
@@ -452,7 +492,7 @@ D3D12_SAMPLER_DESC AnalyseSamplerFromSamplerDescriptor(const SamplerDescriptor& 
 	return samplerDesc;
 }
 
-D3D12_SAMPLER_DESC AnalyseSamplerFromSamplerSettings(FilterType filter,
+inline D3D12_SAMPLER_DESC AnalyseSamplerFromSamplerSettings(FilterType filter,
 	const SamplerAddressMode(&uvwMode)[3],
 	const float(&borderColor)[4]) thread_safe {
 	D3D12_SAMPLER_DESC samplerDesc;
@@ -473,7 +513,7 @@ D3D12_SAMPLER_DESC AnalyseSamplerFromSamplerSettings(FilterType filter,
 	return samplerDesc;
 }
 
-D3D12_INPUT_ELEMENT_DESC AnalyseInputElementDescFromVertexAttribute(const VertexAttribute& vtxAtrri) {
+inline D3D12_INPUT_ELEMENT_DESC AnalyseInputElementDescFromVertexAttribute(const VertexAttribute& vtxAtrri) {
 	D3D12_INPUT_ELEMENT_DESC desc;
 	desc.SemanticName = VertexAttributeTypeToString(vtxAtrri.type);
 	desc.SemanticIndex = vtxAtrri.index;
@@ -486,6 +526,26 @@ D3D12_INPUT_ELEMENT_DESC AnalyseInputElementDescFromVertexAttribute(const Vertex
 	desc.InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
 	desc.InstanceDataStepRate = 0;
 	return desc;
+}
+
+inline D3D12_VIEWPORT ViewPortToDX12ViewPort(const ViewPort& input) {
+	D3D12_VIEWPORT output;
+	output.Height = input.height;
+	output.Width = input.width;
+	output.MaxDepth = input.maxDepth;
+	output.MinDepth = input.minDepth;
+	output.TopLeftX = input.topLeftX;
+	output.TopLeftY = input.topLeftY;
+	return output;
+}
+
+inline D3D12_RECT ScissorRectToDX12ScissorRect(const ScissorRect& input) {
+	D3D12_RECT output;
+	output.top = input.top;
+	output.left = input.left;
+	output.right = input.right;
+	output.bottom = input.bottom;
+	return output;
 }
 
 END_NAME_SPACE

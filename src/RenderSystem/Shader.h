@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "../UVConfig.h"
 #include "../UVType.h"
-#include "../Resource/RenderResource.h"
+#include "../GPUResource/GPUResource.h"
 #include "CommandUnit.h"
 
 #include <string>
@@ -51,7 +51,7 @@ public:
 	/** 务必在构造Shader之前完成设置!! */
 	void SetSamplerDescriptor(std::string name, SamplerDescriptor desc) { m_samplerDesces[name] = desc; }
 	/** 索引当前设置的sampler */
-	virtual std::map<std::string, SamplerDescriptor*> GetSamplerNameAndPointers() const = 0;
+	virtual std::map<std::string, SamplerDescriptor*> GetSamplerNameAndPointers() const { return {}; };
 	virtual ShaderType GetShaderType() const = 0;
 protected:
 	ShaderHandle m_handle;
@@ -62,10 +62,14 @@ protected:
 
 class VertexShader : public BasicShader {
 public:
+	VertexShader(const wchar_t* shaderFile) : BasicShader(shaderFile) {}
+public:
 	ShaderType GetShaderType() const override final { return SHADER_TYPE_VERTEX_SHADER; }
 };
 
 class PixelShader : public BasicShader {
+public:
+	PixelShader(const wchar_t* shaderFile) : BasicShader(shaderFile) {}
 public:
 	ShaderType GetShaderType() const override final { return SHADER_TYPE_PIXEL_SHADER; }
 };

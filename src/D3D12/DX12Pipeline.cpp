@@ -13,7 +13,7 @@ void DX12GraphicsPipelineObject::Reset() {
 	m_cachedViews.clear();
 }
 
-bool DX12PipelineManager::Build(DX12GraphicsPipelineObject& pipelineObject, const DX12Shader* vs, const DX12Shader* ps)
+DX12GraphicsPipelineObject* DX12PipelineManager::Build(DX12GraphicsPipelineObject& pipelineObject, const DX12Shader* vs, const DX12Shader* ps)
 {
 	pipelineObject.Reset();
 	/** 分析shader object构造root signature */
@@ -88,7 +88,7 @@ bool DX12PipelineManager::Build(DX12GraphicsPipelineObject& pipelineObject, cons
 	{
 		SmartPTR<ID3DBlob> rootSignatureBlob;
 		SmartPTR<ID3DBlob> errorBlob;
-		if (FAILED(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_1,
+		if (FAILED(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1,
 			rootSignatureBlob.GetAddressOf(), errorBlob.GetAddressOf()))) {
 			assert(false); /**< Root Signature 编译失败 */
 		}
@@ -100,6 +100,7 @@ bool DX12PipelineManager::Build(DX12GraphicsPipelineObject& pipelineObject, cons
 	pipelineObject.m_DescriptorTableSettings.swap(descriptorTableSettings);
 	/** 分析光栅方式，输入输出构造pso */
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPSODesc;
+	memset(&graphicsPSODesc, 0, sizeof(graphicsPSODesc));
 	graphicsPSODesc.NodeMask = 0;
 	/** Output Stage */
 	{
@@ -159,7 +160,8 @@ bool DX12PipelineManager::Build(DX12GraphicsPipelineObject& pipelineObject, cons
 	assert(SUCCEEDED(m_pDevice->CreateGraphicsPipelineState(
 		&graphicsPSODesc, IID_PPV_ARGS(&pipelineObject.m_pso))));
 
-	return true;
+	m_graphicsPSOs.push_back(std::move(pipelineObject));
+	return &m_graphicsPSOs.back();
 }
 
 END_NAME_SPACE

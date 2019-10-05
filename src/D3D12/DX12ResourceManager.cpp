@@ -14,6 +14,17 @@ bool DX12ResourceManager::Initialize() {
 	return true;
 }
 
+DX12ResourceManager::~DX12ResourceManager() {
+
+	/** Note: 确保调用时所有资源的引用都已经被释放 */
+	for (auto& resource : m_resourceRepository) {
+		resource.first->Release();
+		resource.second.pAllocation->Release();
+	}
+	m_pAllocator->Release();
+
+}
+
 auto DX12ResourceManager::RequestBuffer(size_t size, D3D12_RESOURCE_FLAGS flags,
 	D3D12_HEAP_TYPE heapType, bool bForceCommitted)
 ->std::pair<ID3D12Resource*, D3D12_RESOURCE_STATES> {
@@ -72,8 +83,8 @@ auto DX12ResourceManager::RequestTexture(uint32_t width, uint32_t height, uint32
 	return { newResource.pResource, state };
 }
 
-bool DX12ResourceManager::ReleaseResource(ID3D12Resource* res) {
-	auto target = m_resourceRepository.find(res);
+bool DX12ResourceManager::ReleaseResource(ID3D12Resource* pRes) {
+	auto target = m_resourceRepository.find(pRes);
 	if (target != m_resourceRepository.end()) {
 		m_resourceRepository.erase(target);
 		return true;

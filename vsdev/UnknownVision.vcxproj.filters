@@ -73,6 +73,15 @@
     <Filter Include="D3D12\Source">
       <UniqueIdentifier>{92516d57-5bf9-484c-abcb-7611e903eea5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="RenderSystem\Header\GPUResources">
+      <UniqueIdentifier>{c67c0343-a0e4-47aa-bbf2-ecbb6bb92df4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D12\GPUResource">
+      <UniqueIdentifier>{a1bedad7-06dc-4077-a5c7-96a8dc0ff934}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D12\CommandUnit">
+      <UniqueIdentifier>{b0de942c-bf08-48fc-8e52-1503905d37ce}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\Utility\FileContainer\FileContainer.cpp">
@@ -105,16 +114,10 @@
     <ClCompile Include="..\src\Shader\SampleShader.cpp">
       <Filter>Shader</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\D3D12\DX12CommandUnit.cpp">
-      <Filter>D3D12\Source</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\D3D12\DX12Config.cpp">
       <Filter>D3D12\Source</Filter>
     </ClCompile>
     <ClCompile Include="..\src\D3D12\DX12DescriptorHeap.cpp">
-      <Filter>D3D12\Source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\D3D12\DX12PipelineManager.cpp">
       <Filter>D3D12\Source</Filter>
     </ClCompile>
     <ClCompile Include="..\src\D3D12\DX12RenderBackend.cpp">
@@ -135,7 +138,16 @@
     <ClCompile Include="..\src\D3D12\DX12Pipeline.cpp">
       <Filter>D3D12\Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\D3D12\DX12Buffer.cpp">
+    <ClCompile Include="..\src\D3D12\CommandUnit\DX12CommandUnit.cpp">
+      <Filter>D3D12\CommandUnit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\CommandUnit\DX12CommandAllocatorPool.cpp">
+      <Filter>D3D12\CommandUnit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\D3D12\CommandUnit\DX12CommandListManager.cpp">
+      <Filter>D3D12\CommandUnit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdPart\DirectXMemoryAllocator\D3D12MemAlloc.cpp">
       <Filter>D3D12\Source</Filter>
     </ClCompile>
   </ItemGroup>
@@ -171,9 +183,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\src\UVRoot.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\DirectXHelper.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Utility\DXCompilerHelper\DXCompilerHelper.h">
@@ -218,16 +227,7 @@
     <ClInclude Include="..\src\RenderSystem\RenderBackend.h">
       <Filter>RenderSystem\Header</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\Resource\RenderResource.h">
-      <Filter>RenderSystem\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Resource\ShaderResource.h">
-      <Filter>RenderSystem\Header</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\D3D12\d3dx12.h">
-      <Filter>D3D12\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\D3D12\DX12CommandUnit.h">
       <Filter>D3D12\Header</Filter>
     </ClInclude>
     <ClInclude Include="..\src\D3D12\DX12Config.h">
@@ -242,13 +242,7 @@
     <ClInclude Include="..\src\D3D12\DX12Helpers.h">
       <Filter>D3D12\Header</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\D3D12\DX12PipelineManager.h">
-      <Filter>D3D12\Header</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\D3D12\DX12RenderBasic.h">
-      <Filter>D3D12\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\D3D12\DX12RenderResource.h">
       <Filter>D3D12\Header</Filter>
     </ClInclude>
     <ClInclude Include="..\src\D3D12\DX12ResourceManager.h">
@@ -268,6 +262,39 @@
     </ClInclude>
     <ClInclude Include="..\src\D3D12\DX12Pipeline.h">
       <Filter>D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GPUResource\ShaderResource.h">
+      <Filter>RenderSystem\Header\GPUResources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GPUResource\GPUResource.h">
+      <Filter>RenderSystem\Header\GPUResources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GPUResource\Buffer.h">
+      <Filter>RenderSystem\Header\GPUResources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\GPUResource\DX12StaticVertexBuffer.h">
+      <Filter>D3D12\GPUResource</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\CommandUnit\DX12CommandUnit.h">
+      <Filter>D3D12\CommandUnit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\CommandUnit\DX12CommandAllocatorPool.h">
+      <Filter>D3D12\CommandUnit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\CommandUnit\DX12CommandListManager.h">
+      <Filter>D3D12\CommandUnit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\UVUtility.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\GPUResource\DX12StaticIndexBuffer.h">
+      <Filter>D3D12\GPUResource</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GPUResource\Canvas2D.h">
+      <Filter>RenderSystem\Header\GPUResources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\D3D12\GPUResource\DX12Canvas2D.h">
+      <Filter>D3D12\GPUResource</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

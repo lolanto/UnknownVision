@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "../RenderSystem/RenderBasic.h"
 #include "DX12Config.h"
 #include "DX12Helpers.h"
 #include "DX12ResourceManager.h"

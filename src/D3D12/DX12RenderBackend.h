@@ -8,10 +8,7 @@ class DX12RenderDevice;
 
 class DX12RenderBackend : public RenderBackend {
 public:
-	~DX12RenderBackend() {
-		for (auto devPtr : m_devices)
-			delete devPtr;
-	}
+	virtual ~DX12RenderBackend();
 public:
 	bool Initialize() final;
 	bool isInitialized() const final { return m_isInitialized; }

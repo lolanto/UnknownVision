@@ -2,14 +2,16 @@
 
 BEG_NAME_SPACE
 
+DX12ShaderManager GShaderManager;
+
 ShaderHandle DX12ShaderManager::Compile(const wchar_t* srcFilePath, ShaderType type)
 {
 	/** TODO: 避免相同Shader多次编译 */
 	DXCompilerHelper dxc;
 	std::string profile;
 	switch (type) {
-	case SHADER_TYPE_VERTEX_SHADER: profile = "vs_6_0"; break;
-	case SHADER_TYPE_PIXEL_SHADER: profile = "ps_6_0"; break;
+	case SHADER_TYPE_VERTEX_SHADER: profile = "vs_5_1"; break;
+	case SHADER_TYPE_PIXEL_SHADER: profile = "ps_5_1"; break;
 	default:
 		assert(false);
 	}
