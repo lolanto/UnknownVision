@@ -35,11 +35,12 @@ void DX12CommandUnit::BindPipeline(GraphicsPipelineObject * gpo)
 
 void DX12CommandUnit::BindVertexBuffers(size_t startSlot, size_t numberOfBuffers, GPUResource** ppBuffers)
 {
-	std::vector<D3D12_VERTEX_BUFFER_VIEW> vbvs(numberOfBuffers);
+	static D3D12_VERTEX_BUFFER_VIEW vbvs[MAX_VERTEX_BUFFER];
+	assert(numberOfBuffers <= MAX_VERTEX_BUFFER);
 	for (size_t i = 0; i < numberOfBuffers; ++i) {
 		vbvs[i] = dynamic_cast<DX12VertexBufferView*>(ppBuffers[i]->GetVBVPtr())->m_view;
 	}
-	m_graphicsCmdList->IASetVertexBuffers(startSlot, numberOfBuffers, vbvs.data());
+	m_graphicsCmdList->IASetVertexBuffers(startSlot, numberOfBuffers, vbvs);
 }
 
 void DX12CommandUnit::BindIndexBuffer(GPUResource * pBuffer)
@@ -50,24 +51,16 @@ void DX12CommandUnit::BindIndexBuffer(GPUResource * pBuffer)
 
 void DX12CommandUnit::BindRenderTargets(GPUResource ** ppRenderTargets, size_t numRenderTargets, GPUResource* pDepthStencil)
 {
-	size_t RTVHead = m_transientDescriptorHeapForRTV.RequestBlock(numRenderTargets);
-	auto dev = m_pDevice->GetDevice();
+	static D3D12_CPU_DESCRIPTOR_HANDLE RTVHandles[MAX_RENDER_TARGET];
 	for (size_t i = 0; i < numRenderTargets; ++i) {
-		auto handle = m_transientDescriptorHeapForRTV.GetCPUHandle(RTVHead + i);
-		auto pRTV = dynamic_cast<DX12RenderTargetView*>(ppRenderTargets[i]->GetRTVPtr());
-		dev->CreateRenderTargetView(pRTV->m_res, &pRTV->m_desc, handle);
+		/** TODO: 暂时不支持临时资源 */
+		assert(ppRenderTargets[i]->IsPermenent());
+		RTVHandles[i] = dynamic_cast<DX12RenderTargetView*>
+			(ppRenderTargets[i]->GetRTVPtr())->m_handle;
 	}
-	auto RTVHandle = m_transientDescriptorHeapForRTV.GetCPUHandle(RTVHead);
-	if (pDepthStencil) {
-		size_t DSVHead = m_transientDescriptorHeapForDSV.RequestBlock(1);
-		auto DSVHandle = m_transientDescriptorHeapForDSV.GetCPUHandle(DSVHead);
-		auto pDSV = dynamic_cast<DX12DepthStencilView*>(pDepthStencil->GetDSVPtr());
-		dev->CreateDepthStencilView(pDSV->m_res, &pDSV->m_desc, DSVHandle);
-		m_graphicsCmdList->OMSetRenderTargets(numRenderTargets, &RTVHandle, true, &DSVHandle);
-		return;
-	}
+	/** TODO: 还需要设置DSV */
 	/** TODO: 不清楚Depth Stencil是否非要不可 */
-	m_graphicsCmdList->OMSetRenderTargets(numRenderTargets, &RTVHandle, true, nullptr);
+	m_graphicsCmdList->OMSetRenderTargets(numRenderTargets, RTVHandles, true, nullptr);
 }
 
 void DX12CommandUnit::Draw(size_t startOfIndex, size_t indexCount, size_t startOfVertex)
@@ -113,11 +106,9 @@ void DX12CommandUnit::BindScissorRects(size_t size, ScissorRect * scissorRects)
 
 void DX12CommandUnit::ClearRenderTarget(GPUResource * renderTarget, const float * clearColor)
 {
-	size_t RTVHead = m_transientDescriptorHeapForRTV.RequestBlock(1);
-	auto dev = m_pDevice->GetDevice();
-	auto pRTV = dynamic_cast<DX12RenderTargetView*>(renderTarget->GetRTVPtr());
-	auto handle = m_transientDescriptorHeapForRTV.GetCPUHandle(RTVHead);
-	dev->CreateRenderTargetView(pRTV->m_res, &pRTV->m_desc, handle);
+	/** TODO: 暂时只支持permanent资源 */
+	assert(renderTarget->IsPermenent());
+	auto handle = dynamic_cast<DX12RenderTargetView*>(renderTarget->GetRTVPtr())->m_handle;
 	m_graphicsCmdList->ClearRenderTargetView(handle, clearColor, 0, nullptr);
 }
 
@@ -138,9 +129,7 @@ bool DX12CommandUnit::Initalize(
 	m_pAllocator = allocator;
 	//m_graphicsCmdList->Reset(m_pAllocator, nullptr); 刚创建的commandList已经有一个匹配的Allocator而且当前CommandList已经处在open状态
 
-	m_transientDescriptorHeapForGPU.Initialize(m_pDevice->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
-	m_transientDescriptorHeapForRTV.Initialize(m_pDevice->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, false, 32);
-	m_transientDescriptorHeapForDSV.Initialize(m_pDevice->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, false, 32);
+	m_transientDescriptorHeapForGPU.Initialize(m_pDevice->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true);
 	return true;
 }
 
@@ -152,8 +141,6 @@ bool DX12CommandUnit::Reset(ID3D12CommandAllocator * allocator)
 	m_graphicsCmdList->Reset(m_pAllocator, nullptr);
 
 	m_transientDescriptorHeapForGPU.Reset();
-	m_transientDescriptorHeapForRTV.Reset();
-	m_transientDescriptorHeapForDSV.Reset();
 	return true;
 }
 
@@ -173,18 +160,12 @@ std::function<bool()> DX12CommandUnit::cleanupFunction(size_t fenceValue, DX12Co
 {
 	std::vector<ID3D12Resource*> transientResource;
 	transientResource.swap(m_transientResources);
-	TransientDX12DescriptorHeap transientDescriptorHeapForDSV = m_transientDescriptorHeapForDSV;
-	TransientDX12DescriptorHeap transientDescriptorHeapForRTV = m_transientDescriptorHeapForRTV;
 	TransientDX12DescriptorHeap transientDescriptorHeapForGPU = m_transientDescriptorHeapForGPU;
-	m_transientDescriptorHeapForGPU.Initialize(m_pDevice->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
-	m_transientDescriptorHeapForRTV.Initialize(m_pDevice->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, false, 32);
-	m_transientDescriptorHeapForDSV.Initialize(m_pDevice->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, false, 32);
+	m_transientDescriptorHeapForGPU.Initialize(m_pDevice->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true);
 
 	DX12RenderDevice* pDevice = m_pDevice;
 	return
 		[transientResource, fenceValue, &queue, pDevice, 
-		transientDescriptorHeapForRTV, 
-		transientDescriptorHeapForDSV,
 		transientDescriptorHeapForGPU]()mutable->bool {
 		if (queue.IsFenceComplete(fenceValue)) {
 			/** 指令执行完成，释放资源 */
@@ -192,8 +173,6 @@ std::function<bool()> DX12CommandUnit::cleanupFunction(size_t fenceValue, DX12Co
 			for (auto resource : transientResource) {
 				assert(resMgr.ReleaseResource(resource));
 			}
-			transientDescriptorHeapForRTV.Reset();
-			transientDescriptorHeapForDSV.Reset();
 			transientDescriptorHeapForGPU.Reset();
 			return true;
 		}

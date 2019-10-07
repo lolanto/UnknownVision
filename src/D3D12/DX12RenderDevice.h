@@ -17,7 +17,7 @@ private:
 		void SetName(const wchar_t* name) override { m_pBackBuffer->SetName(name); }
 		void* GetResource() override { if (m_pBackBuffer) return m_pBackBuffer; }
 		DX12SwapChainBufferWrapper() = default;
-		void Initialize(ID3D12Resource* res);
+		void Initialize(ID3D12Resource* res, DX12RenderDevice& device);
 	public:
 		ShaderResourceView* GetSRVPtr() { return &m_srv; }
 		RenderTargetView* GetRTVPtr() { return &m_rtv; }
@@ -58,6 +58,11 @@ public:
 	DX12CommandUnitManager& CommandUnitManager() { return m_commandUnitManager; }
 	std::optional<D3D12_CPU_DESCRIPTOR_HANDLE> PickupRenderTarget(TextureHandle tex) thread_safe;
 	std::optional<D3D12_CPU_DESCRIPTOR_HANDLE> PickupDepthStencilTarget(TextureHandle tex) thread_safe;
+	/** 获得长期存储的descriptor heap */
+	DiscretePermanentDX12DescriptorHeap& GetRTVDescriptorHeap() { return m_rtvDescriptorHeap; }
+	DiscretePermanentDX12DescriptorHeap& GetDSVDescriptorHeap() { return m_dsvDescriptorHeap; }
+	/** 添加异步任务，通常是GPU相关的任务
+	 * 比如直到某个queue完成后才释放某个资源 */
 	void AddAsyncTask(std::function<bool()>&& task) { m_asyncTaskPerFrame.push_back(task); }
 private:
 	DX12RenderDevice(DX12RenderBackend& backend,
@@ -81,15 +86,15 @@ private:
 	 * 初始情况下为0，代表没有任何指令在处理这些backbuffer */
 	size_t m_backBufferFenceValues[NUMBER_OF_BACK_BUFFERS];
 
-	D3D12_VIEWPORT m_viewport;
-	D3D12_RECT m_scissorRect;
-
 	std::atomic_uint64_t m_totalFrame;
 
 	DX12ResourceManager m_resourceManager; /**< 资源管理器 */
 	DX12PipelineManager m_pipelineManager; /**< 负责创建，存储和检索Pipeline Object */
 	DX12CommandListManager m_commandListManager; /**< 对DX12 CommandQueue和Allocator的封装 */
 	DX12CommandUnitManager m_commandUnitManager;
+
+	DiscretePermanentDX12DescriptorHeap m_rtvDescriptorHeap; /**< 存储长期的RTV handle */
+	DiscretePermanentDX12DescriptorHeap m_dsvDescriptorHeap; /**< 存储长期的DSV handle */
 
 	std::vector< std::function<bool()> > m_asyncTaskPerFrame; /**< 需要异步(延迟)执行的任务 */
 };

@@ -74,8 +74,9 @@ int main() {
 		cmdUnit->BindRenderTargets(rts, 1, nullptr);
 		cmdUnit->Draw(0, 3, 0);
 		cmdUnit->TransferState(pDevice->BackBuffer(), RESOURCE_STATE_PRESENT);
-		cmdUnit->Flush(true);
+		cmdUnit->Flush(false);
 		cmdUnit->Present();
+		pDevice->UpdatePerFrame();
 	};
 	win.Run();
 	return 0;

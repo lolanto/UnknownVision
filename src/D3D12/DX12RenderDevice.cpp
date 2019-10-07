@@ -8,13 +8,18 @@ BEG_NAME_SPACE
 
 UINT GDescriptorHandleIncrementSize[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];
 
-void DX12RenderDevice::DX12SwapChainBufferWrapper::Initialize(ID3D12Resource * res)
+void DX12RenderDevice::DX12SwapChainBufferWrapper::Initialize(ID3D12Resource * res, DX12RenderDevice& device)
 {
-	m_rtv.m_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-	m_rtv.m_desc.Format = BACK_BUFFER_FORMAT;
-	m_rtv.m_desc.Texture2D.MipSlice = 0;
-	m_rtv.m_desc.Texture2D.PlaneSlice = 0;
-	m_rtv.m_res = res;
+	m_bPermenent = true;
+	D3D12_RENDER_TARGET_VIEW_DESC desc;
+	desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+	desc.Format = BACK_BUFFER_FORMAT;
+	desc.Texture2D.MipSlice = 0;
+	desc.Texture2D.PlaneSlice = 0;
+	auto handle = device.GetRTVDescriptorHeap().RequestBlock();
+	device.GetDevice()->CreateRenderTargetView(res, &desc, handle);
+	m_rtv.m_handle = handle;
+
 	m_srv.m_desc.Format = BACK_BUFFER_FORMAT;
 	m_srv.m_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	m_srv.m_desc.Texture2D.MipLevels = 1;
@@ -100,37 +105,22 @@ DX12RenderDevice::~DX12RenderDevice()
 
 bool DX12RenderDevice::Initialize(std::string config)
 {
+	/** 初始化必须的组件 */
+	assert(m_resourceManager.Initialize());
+	assert(m_rtvDescriptorHeap.Initialize(m_device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
+	assert(m_dsvDescriptorHeap.Initialize(m_device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV));
+
 	/** 构建特殊资源 */
 	for (uint8_t idx = 0; idx < NUMBER_OF_BACK_BUFFERS; ++idx) {
 		XifFailed(m_swapChain->GetBuffer(idx, IID_PPV_ARGS(&m_backBuffers[idx])), {
 			FLOG("%s: Create Back buffer %d FAILED!\n", __FUNCTION__, idx);
 			return false;
 		});
-		m_swapChainResources[idx].Initialize(m_backBuffers[idx].Get());
+		m_swapChainResources[idx].Initialize(m_backBuffers[idx].Get(), *this);
 		m_backBuffers[idx]->SetName(L"BackBuffer");
 	}
 
-#ifdef _DEBUG
-	/** 检查所有的特殊资源都已经构建完成 */
-	//for (uint8_t i = 0; i < NUMBER_OF_SPECIAL_BUFFER_RESOURCE; ++i) {
-	//	auto res = m_buffers.find(BufferHandle(i));
-	//	assert(res != m_buffers.end() && res->second.ptr != nullptr);
-	//}
-	//for (uint8_t i = 0; i < NUMBER_OF_SPECIAL_TEXTURE_RESOURCE; ++i) {
-	//	auto res = m_textures.find(TextureHandle(i));
-	//	assert(res != m_textures.end() && res->second.ptr != nullptr);
-	//}
-#endif // _DEBUG
-	/** 构造默认viewport和裁剪矩形 */
-	/** TODO: 提供用户定义viewport设置以及裁剪矩阵设置 */
-	m_viewport.Width = ScreenWidth; m_viewport.Height = ScreenHeight;
-	m_viewport.MaxDepth = 1.0f; m_viewport.MinDepth = 0.0f;
-	m_viewport.TopLeftX = m_viewport.TopLeftY = 0;
-	m_scissorRect.top = m_scissorRect.left = 0;
-	m_scissorRect.right = ScreenWidth; m_scissorRect.bottom = ScreenHeight;
-	/** 初始化必须的组件 */
 	RenderDevice::Initialize(config);
-	assert(m_resourceManager.Initialize());
 	return true;
 }
 

@@ -69,8 +69,6 @@ private:
 
 	std::vector<ID3D12Resource*> m_transientResources; /**< 指令执行完毕后删除的临时资源 */
 	TransientDX12DescriptorHeap m_transientDescriptorHeapForGPU; /**< 临时的Descriptor heap */
-	TransientDX12DescriptorHeap m_transientDescriptorHeapForRTV;
-	TransientDX12DescriptorHeap m_transientDescriptorHeapForDSV;
 };
 
 class DX12CommandUnitManager {

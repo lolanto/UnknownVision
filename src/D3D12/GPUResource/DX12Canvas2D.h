@@ -26,6 +26,7 @@ public:
 
 		DX12RenderDevice* dxDev = dynamic_cast<DX12RenderDevice*>(cmdUnit->GetDevice());
 		if (dxDev == nullptr) return false;
+		m_pDevice = dxDev;
 		DX12ResourceManager& resMgr = dxDev->ResourceManager();
 		auto[pRes, state] = resMgr.RequestTexture(m_width, m_height, 0,
 			ElementFormatToDXGIFormat(m_format),
@@ -37,11 +38,18 @@ public:
 		m_state = DX12ResourceStateToResourceState(state);
 		m_pResMgr = &resMgr;
 		
-		m_rtv.m_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-		m_rtv.m_desc.Format = ElementFormatToDXGIFormat(m_format);
-		m_rtv.m_desc.Texture2D.MipSlice = 0;
-		m_rtv.m_desc.Texture2D.PlaneSlice = 0;
-		m_rtv.m_res = m_pCanvas;
+		/** 构造render target view */
+		{
+			D3D12_RENDER_TARGET_VIEW_DESC desc;
+			desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+			desc.Format = ElementFormatToDXGIFormat(m_format);
+			desc.Texture2D.MipSlice = 0;
+			desc.Texture2D.PlaneSlice = 0;
+
+			D3D12_CPU_DESCRIPTOR_HANDLE handle = dxDev->GetRTVDescriptorHeap().RequestBlock();
+			dxDev->GetDevice()->CreateRenderTargetView(pRes, &desc, handle);
+			m_rtv.m_handle = handle;
+		}
 
 		m_srv.m_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 		m_srv.m_desc.Format = ElementFormatToDXGIFormat(m_format);
@@ -50,18 +58,26 @@ public:
 		m_srv.m_desc.Texture2D.PlaneSlice = 0;
 		m_srv.m_desc.Texture2D.ResourceMinLODClamp = 0;
 		m_srv.m_res = m_pCanvas;
+		m_bPermenent = true;
 		return true;
 	}
-	/** 用来手动释放资源，临时资源也可以提前进行手动释放，保证释放空资源不会有影响 */
+	/** 用来手动释放资源，临时资源也可以提前进行手动释放，释放时需要保证资源不被使用
+	 * 保证释放空资源不会有影响 */
 	virtual void Release() {
 		if (m_pCanvas == nullptr) return;
 		m_pResMgr->ReleaseResource(m_pCanvas);
 		m_pCanvas = nullptr;
+		if (m_bPermenent) {
+			/** 假如是长期存储的资源，views也是长期存储，故需要进行释放 */
+			m_pDevice->GetRTVDescriptorHeap().Release(m_rtv.m_handle);
+			m_rtv.m_handle.ptr = SIZE_MAX;
+		}
 		DiscreteCanvas2D::Release();
 	}
 private:
 	ID3D12Resource* m_pCanvas;
 	DX12ResourceManager* m_pResMgr;
+	DX12RenderDevice* m_pDevice;
 	DX12RenderTargetView m_rtv;
 	DX12ShaderResourceView m_srv;
 };

@@ -548,5 +548,10 @@ inline D3D12_RECT ScissorRectToDX12ScissorRect(const ScissorRect& input) {
 	return output;
 }
 
+/** 对指针进行hash!! */
+inline uint64_t DX12ResourcesHash(size_t count, ID3D12Resource** ppResource) {
+	return 0;
+}
+
 END_NAME_SPACE
 

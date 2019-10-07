@@ -54,7 +54,7 @@ public:
 		m_ibv.m_view.BufferLocation = pRes->GetGPUVirtualAddress();
 		m_ibv.m_view.SizeInBytes = sizeOfBufferInByte;
 		m_ibv.m_view.Format = DXGI_FORMAT_R32_UINT;
-		m_ibv.m_res = m_pIndexBuffer;
+		m_bPermenent = true;
 		return true;
 	}
 	/** 用来手动释放资源，临时资源也可以提前进行手动释放，保证释放空资源不会有影响 */

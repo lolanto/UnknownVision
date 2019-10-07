@@ -66,13 +66,16 @@ public:
 	virtual bool Avaliable() const { return false; }
 	/** 请求临时资源，该资源会在对应的CommandUnit执行完指令后被释放 */
 	virtual bool RequestTransient(CommandUnit* cmdUnit) { return false; };
-	/** 请求固定的资源，资源的释放需要手动控制 */
+	/** 请求固定的资源，资源的释放需要手动控制，或者等到程序结束后释放 */
 	virtual bool RequestPermenent(CommandUnit* cmdUnit) { return false; };
 	/** 用来手动释放资源，临时资源也可以提前进行手动释放，保证释放空资源不会有影响 */
 	virtual void Release() = 0;
+	/** 确认该资源是否是长期存储的 */
+	bool IsPermenent() { return m_bPermenent; }
 protected:
 	ResourceStatus m_status;
 	ResourceStates m_state;
+	bool m_bPermenent;
 };
 
 /** 通用的采样器描述信息集合 */

@@ -70,7 +70,7 @@ bool DX12StaticVertexBuffer<T>::RequestPermenent(CommandUnit* cmdUnit) {
 	m_vbv.m_view.BufferLocation = pRes->GetGPUVirtualAddress();
 	m_vbv.m_view.SizeInBytes = sizeOfBufferInByte;
 	m_vbv.m_view.StrideInBytes = sizeof(StaticVertexBuffer<T>::VertexDataType);
-	m_vbv.m_res = m_pVertexBuffer;
+	m_bPermenent = true;
 	return true;
 }
 
