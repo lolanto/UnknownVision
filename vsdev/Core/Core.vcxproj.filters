@@ -1,0 +1,186 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="GraphicsInterface">
+      <UniqueIdentifier>{fa72c09a-22bc-4457-9822-c6f7d4584b52}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderGraph">
+      <UniqueIdentifier>{d5485db2-e130-44fb-aaa0-cabbebd21565}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility">
+      <UniqueIdentifier>{b47cc779-3dbe-420d-9cc4-9706f030695a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GraphicsImpl">
+      <UniqueIdentifier>{46797382-0944-4bd0-a991-5924d214fe50}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GraphicsImpl\D3D12">
+      <UniqueIdentifier>{f59329f6-b0e1-4b55-8999-d2dfe81c696c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GraphicsImpl\D3D12\Header">
+      <UniqueIdentifier>{771c82f2-65a7-492a-a3f1-56044cb52a17}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GraphicsImpl\D3D12\Source">
+      <UniqueIdentifier>{1d8b3091-7f51-4d19-b827-3d8664041b55}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\DXCompilerHelper">
+      <UniqueIdentifier>{c5fd7448-4c9c-49a3-a349-683b3eb82509}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\TypeRestriction">
+      <UniqueIdentifier>{919bd439-0784-40fe-a023-d268a762fbc6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\InfoLog">
+      <UniqueIdentifier>{4dfcfd83-b980-47af-9a38-6ddfe9f94302}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GraphicsImpl\D3D12\D3D12MemAlloc">
+      <UniqueIdentifier>{6e93d553-eccb-4a1f-81a0-dacf9fc8bb36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\MathInterface">
+      <UniqueIdentifier>{5587fc45-7a9c-47b5-8427-e7997fe70e0b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Core\GraphicsInterface\BindingBoard.h">
+      <Filter>GraphicsInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\GraphicsInterface\CommandUnit.h">
+      <Filter>GraphicsInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\GraphicsInterface\Pipeline.h">
+      <Filter>GraphicsInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\GraphicsInterface\RenderBackend.h">
+      <Filter>GraphicsInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\GraphicsInterface\RenderDevice.h">
+      <Filter>GraphicsInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\GraphicsInterface\Shader.h">
+      <Filter>GraphicsInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\UVConfig.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\UVType.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\UVUtility.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\D3D12\d3dx12.h">
+      <Filter>GraphicsImpl\D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\D3D12\DX12BindingBoard.h">
+      <Filter>GraphicsImpl\D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\D3D12\DX12CommandAllocatorPool.h">
+      <Filter>GraphicsImpl\D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\D3D12\DX12CommandUnit.h">
+      <Filter>GraphicsImpl\D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\D3D12\DX12Config.h">
+      <Filter>GraphicsImpl\D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\D3D12\DX12DescriptorHeap.h">
+      <Filter>GraphicsImpl\D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\D3D12\DX12GPUResource.h">
+      <Filter>GraphicsImpl\D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\D3D12\DX12Helpers.h">
+      <Filter>GraphicsImpl\D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\D3D12\DX12Pipeline.h">
+      <Filter>GraphicsImpl\D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\D3D12\DX12RenderBackend.h">
+      <Filter>GraphicsImpl\D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\D3D12\DX12RenderDevice.h">
+      <Filter>GraphicsImpl\D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\D3D12\DX12ResourceManager.h">
+      <Filter>GraphicsImpl\D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\D3D12\DX12Shader.h">
+      <Filter>GraphicsImpl\D3D12\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Utility\DXCompilerHelper\DXCompilerHelper.h">
+      <Filter>Utility\DXCompilerHelper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Utility\TypeRestriction\TypeRestriction.h">
+      <Filter>Utility\TypeRestriction</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Core\GraphicsInterface\GPUResource.h">
+      <Filter>GraphicsInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Utility\InfoLog\InfoLog.h">
+      <Filter>Utility\InfoLog</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rdPart\include\DirectXMemoryAllocator\D3D12MemAlloc.h">
+      <Filter>GraphicsImpl\D3D12\D3D12MemAlloc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Utility\MathInterface\MathInterface.hpp">
+      <Filter>Utility\MathInterface</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Core\D3D12\DX12Shader.cpp">
+      <Filter>GraphicsImpl\D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Core\D3D12\DX12BindingBoard.cpp">
+      <Filter>GraphicsImpl\D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Core\D3D12\DX12CommandAllocatorPool.cpp">
+      <Filter>GraphicsImpl\D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Core\D3D12\DX12CommandUnit.cpp">
+      <Filter>GraphicsImpl\D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Core\D3D12\DX12Config.cpp">
+      <Filter>GraphicsImpl\D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Core\D3D12\DX12DescriptorHeap.cpp">
+      <Filter>GraphicsImpl\D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Core\D3D12\DX12Pipeline.cpp">
+      <Filter>GraphicsImpl\D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Core\D3D12\DX12RenderBackend.cpp">
+      <Filter>GraphicsImpl\D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Core\D3D12\DX12RenderDevice.cpp">
+      <Filter>GraphicsImpl\D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Core\D3D12\DX12ResourceManager.cpp">
+      <Filter>GraphicsImpl\D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Utility\DXCompilerHelper\DXCompilerHelper.cpp">
+      <Filter>Utility\DXCompilerHelper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Utility\InfoLog\InfoLog.cpp">
+      <Filter>Utility\InfoLog</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Core\D3D12\DX12GPUResource.cpp">
+      <Filter>GraphicsImpl\D3D12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3rdPart\include\DirectXMemoryAllocator\D3D12MemAlloc.cpp">
+      <Filter>GraphicsImpl\D3D12\D3D12MemAlloc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Core\UVMarco.h">
+      <Filter>头文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

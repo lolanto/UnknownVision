@@ -1,0 +1,5 @@
+#include "DX12Config.h"
+
+BEG_NAME_SPACE
+
+END_NAME_SPACE

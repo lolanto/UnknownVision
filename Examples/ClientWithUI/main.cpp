@@ -1,0 +1,216 @@
+#include <GLFW/glfw3.h>
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
+#include <GraphicsInterface/RenderBackend.h>
+#include <GraphicsInterface/RenderDevice.h>
+#include <GraphicsInterface/Pipeline.h>
+#include "../Utility/Image/Image.h"
+#include <GraphicsInterface/BindingBoard.h>
+#include "../Utility/IMGUI_IMPL/imgui_impl_uv_helper.h"
+#include "../Utility/GeneralCamera/GeneralCamera.h"
+#include <../Utility/MathInterface/MathInterface.hpp>
+#include <iostream>
+#include <random>
+#include <stack>
+#include <iostream>
+using namespace UnknownVision;
+
+constexpr uint32_t gWidth = 1280	;
+constexpr uint32_t gHeight = 800;
+
+const float BLUE[4] = { 0.2f, 0.4f, 0.8f, 1.0f };
+
+struct {
+	std::unique_ptr<UVCameraUtility::ICamera> camera;
+	std::unique_ptr<UVCameraUtility::ICameraController> cameraController;
+	IMath::IDOUBLE2 mouse_pos;
+	RenderBackend* pBackend;
+	RenderDevice* pDevice;
+	GLFWwindow* pWindow;
+	float deltaTime;
+} GlobalData;
+
+auto IMGUI_FRAME_FUNC = []() {
+	ImGui::Begin("Controller Pad");
+	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+	ImGui::End();
+};
+
+
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, GLFW_TRUE);
+	if (key == GLFW_KEY_W && action != GLFW_REPEAT) GlobalData.cameraController->KeyCallback(UVCameraUtility::KEY_BUTTON_W, action == GLFW_PRESS);
+	if (key == GLFW_KEY_S && action != GLFW_REPEAT) GlobalData.cameraController->KeyCallback(UVCameraUtility::KEY_BUTTON_S, action == GLFW_PRESS);
+	if (key == GLFW_KEY_A && action != GLFW_REPEAT) GlobalData.cameraController->KeyCallback(UVCameraUtility::KEY_BUTTON_A, action == GLFW_PRESS);
+	if (key == GLFW_KEY_D && action != GLFW_REPEAT) GlobalData.cameraController->KeyCallback(UVCameraUtility::KEY_BUTTON_D, action == GLFW_PRESS);
+}
+
+static void mousebutton_callback(GLFWwindow* window, int button, int action, int mods) {
+	if (GlobalData.camera != nullptr && GlobalData.cameraController != nullptr) {
+		switch (button) {
+		case GLFW_MOUSE_BUTTON_RIGHT:
+			GlobalData.cameraController->MouseCallback((float)GlobalData.mouse_pos.x, (float)GlobalData.mouse_pos.y, UVCameraUtility::MOUSE_BUTTON_RIGHT, action == GLFW_PRESS);
+			break;
+		case GLFW_MOUSE_BUTTON_LEFT:
+			GlobalData.cameraController->MouseCallback((float)GlobalData.mouse_pos.x, (float)GlobalData.mouse_pos.y, UVCameraUtility::MOUSE_BUTTON_LEFT, action == GLFW_PRESS);
+			break;
+		case GLFW_MOUSE_BUTTON_MIDDLE:
+			GlobalData.cameraController->MouseCallback((float)GlobalData.mouse_pos.x, (float)GlobalData.mouse_pos.y, UVCameraUtility::MOUSE_BUTTON_MID, action == GLFW_PRESS);
+			break;
+		}
+	}
+}
+
+static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	if (GlobalData.camera != nullptr && GlobalData.cameraController != nullptr) {
+		GlobalData.mouse_pos = { xpos, ypos };
+		GlobalData.cameraController->MouseCallback((float)xpos, (float)ypos, UVCameraUtility::MOUSE_BUTTON_NONE, false);
+	}
+}
+
+static void createCameraAndItsController() {
+	UVCameraUtility::CAMERA_DESC desc;
+	desc.farPlane = 100.0f;
+	desc.nearPlane = 0.1f;
+	desc.fov = 0.6f;
+	desc.position = { 0.0f, 0.0f, -5.0f };
+	desc.lookAt = { 0.0f, 0.0f, 0.0f };
+	desc.height = gHeight;
+	desc.width = gWidth;
+	auto [c, ctrl] = UVCameraUtility::CreateCamera(desc, UVCameraUtility::CONTROLLER_TYPE_EPIC);
+	GlobalData.camera.reset(c);
+	GlobalData.cameraController.reset(ctrl);
+}
+
+static void Setup() {
+	MImage::Image::Init();
+	GlobalData.pWindow = setupIMGUI(gWidth, gHeight, "test");
+	createCameraAndItsController();
+	GlobalData.pBackend = RenderBackend::Get();
+	GlobalData.pBackend->Initialize();
+	DX12BackendUsedData bkData = { reinterpret_cast<size_t>(glfwGetWin32Window(GlobalData.pWindow)), gWidth, gHeight };
+	GlobalData.pDevice = GlobalData.pBackend->CreateDevice(&bkData);
+	GlobalData.pDevice->Initialize("");
+	setupIMGUI_Callback(GlobalData.pWindow, GlobalData.pDevice, GlobalData.pBackend, mousebutton_callback, key_callback);
+	glfwSetCursorPosCallback(GlobalData.pWindow, cursor_position_callback);
+}
+
+static void Shutdown() {
+	shutdownIMGUI(GlobalData.pWindow, GlobalData.pDevice);
+	MImage::Image::Shutdown();
+}
+
+float VTXBufferData[] = {
+	-1.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+	1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+	1.0f, -1.0f, 0.0f, 1.0f, 1.0f,
+	-1.0f, -1.0f, 0.0f, 0.0f, 1.0f
+};
+
+uint32_t IDXBufferData[] = {
+	0, 1, 2,
+	0, 2, 3
+};
+
+#include "../Shaders/LoadTextureShader.hpp"
+
+int main() {
+	auto filePathHelper = [](const char* root, const char* file = nullptr)->std::filesystem::path {
+		std::filesystem::path p(root);
+		if (file) p.replace_filename(file);
+		return p;
+	};
+	Setup();
+	
+	std::unique_ptr<MImage::Image> img = MImage::Image::LoadImageFromFile(filePathHelper(__FILE__, "UV_Grid_Sm.jpg"));
+	img->ConvertPixelFormat(MImage::IMAGE_FORMAT_R8G8B8A8);
+	LoadTextureVS vs;
+	LoadTexturePS ps;
+	GlobalData.pBackend->InitializeShaderObject(&vs);
+	GlobalData.pBackend->InitializeShaderObject(&ps);
+	auto pso = GlobalData.pDevice->BuildGraphicsPipelineObject(&vs, &ps, GDefaultRasterizeOptions, GDefaultOutputStageOptions, LoadTextureVS::GetVertexAttributes);
+	std::unique_ptr<Buffer> vtxBuffer (GlobalData.pDevice->CreateBuffer(4, sizeof(float) * 5, ResourceStatus(RESOURCE_USAGE_VERTEX_BUFFER, RESOURCE_FLAG_STABLY)));
+	std::unique_ptr<Buffer> idxBuffer(GlobalData.pDevice->CreateBuffer(6, sizeof(uint32_t), ResourceStatus(RESOURCE_USAGE_INDEX_BUFFER, RESOURCE_FLAG_STABLY)));
+	std::unique_ptr<Texture2D> texture(GlobalData.pDevice->CreateTexture2D(img->Width(), img->Height(), 1, 1, UnknownVision::ELEMENT_FORMAT_TYPE_R8G8B8A8_UNORM,
+		ResourceStatus(RESOURCE_USAGE_SHADER_RESOURCE, RESOURCE_FLAG_STABLY)));
+	std::unique_ptr<BindingBoard> bindingBoardForVS(GlobalData.pDevice->RequestBindingBoard(1, DEFAULT_COMMAND_UNIT));
+	std::unique_ptr<BindingBoard> bindingBoardForPS(GlobalData.pDevice->RequestBindingBoard(1, DEFAULT_COMMAND_UNIT));
+	std::unique_ptr<Buffer> cameraDataBuffer(GlobalData.pDevice->CreateBuffer(1, sizeof(UVCameraUtility::GeneralCameraDataStructure), ResourceStatus(RESOURCE_USAGE_CONSTANT_BUFFER, RESOURCE_FLAG_FREQUENTLY)));
+	CommandUnit* cmdUnit = GlobalData.pDevice->RequestCommandUnit(DEFAULT_COMMAND_UNIT);
+	GlobalData.pDevice->WriteToBuffer(VTXBufferData, vtxBuffer.get(), sizeof(VTXBufferData), 0, cmdUnit);
+	GlobalData.pDevice->WriteToBuffer(IDXBufferData, idxBuffer.get(), sizeof(IDXBufferData), 0, cmdUnit);
+	UnknownVision::ImageDesc desc;
+	desc.data = img->GetData(0);
+	desc.width = img->Width();
+	desc.height = img->Height();
+	desc.depth = 1;
+	desc.rowPitch = img->GetRowPitch(0);
+	desc.slicePitch = img->GetSlicePitch(0);
+	GlobalData.pDevice->WriteToTexture2D({ desc }, texture.get(), cmdUnit);
+	
+	cmdUnit->TransferState(vtxBuffer.get(), RESOURCE_STATE_VERTEX_BUFFER);
+	cmdUnit->TransferState(idxBuffer.get(), RESOURCE_STATE_INDEX_BUFFER);
+	cmdUnit->TransferState(texture.get(), RESOURCE_STATE_SHADER_RESOURCE);
+	cmdUnit->Flush(true);
+
+	bindingBoardForVS->BindingResource(0, cameraDataBuffer.get(), SHADER_PARAMETER_TYPE_BUFFER_R);
+	bindingBoardForVS->Close();
+	bindingBoardForPS->BindingResource(0, texture.get(), SHADER_PARAMETER_TYPE_TEXTURE_R);
+	bindingBoardForPS->Close();
+
+	ViewPort vp;
+	vp.topLeftX = 0; vp.topLeftY = 0;
+	vp.width = gWidth; vp.height = gHeight;
+	vp.maxDepth = 1.0f; vp.minDepth = 0.0f;
+
+	ScissorRect sr;
+	sr.left = 0; sr.right = 0; sr.bottom = gHeight; sr.right = gWidth;
+
+	img.reset();
+	while (!glfwWindowShouldClose(GlobalData.pWindow))
+	{
+		static std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+		static std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+		end = std::chrono::steady_clock::now();
+		GlobalData.deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0f;
+		GPUResource* rts[] = { GlobalData.pDevice->BackBuffer() };
+		Buffer* vtxbufs[] = { vtxBuffer.get() };
+		ImGui_ImplUVGlfw_NewFrame();
+		ImGui_ImplUV_NewFrame();
+		ImGui::NewFrame();
+		IMGUI_FRAME_FUNC();
+		ImGui::Render();
+
+		GlobalData.pDevice->WriteToBuffer(&GlobalData.camera->GetCameraData(), cameraDataBuffer.get(), sizeof(UVCameraUtility::GeneralCameraDataStructure), 0, cmdUnit);
+		cmdUnit->TransferState(GlobalData.pDevice->BackBuffer(), RESOURCE_STATE_RENDER_TARGET);
+		cmdUnit->ClearRenderTarget(GlobalData.pDevice->BackBuffer(), BLUE);
+		cmdUnit->BindRenderTargets(rts, 1, nullptr);
+
+		cmdUnit->BindPipeline(pso);
+		cmdUnit->BindViewports(1, &vp);
+		cmdUnit->BindScissorRects(1, &sr);
+		cmdUnit->BindVertexBuffers(0, 1, vtxbufs);
+		cmdUnit->BindIndexBuffer(idxBuffer.get());
+		cmdUnit->SetBindingBoard(0, bindingBoardForVS.get());
+		cmdUnit->SetBindingBoard(1, bindingBoardForPS.get());
+		cmdUnit->Draw(0, 6, 0);
+
+		ImGui_ImplUV_RenderDrawData(ImGui::GetDrawData(), cmdUnit);
+		cmdUnit->TransferState(GlobalData.pDevice->BackBuffer(), RESOURCE_STATE_PRESENT);
+		size_t fenceValue = cmdUnit->Flush(false);
+		ImGui_ImplUV_FrameEnd(fenceValue);
+		GlobalData.pDevice->Present();
+		GlobalData.pDevice->UpdatePerFrame();
+		GlobalData.pDevice->FreeCommandUnit(&cmdUnit);
+		cmdUnit = GlobalData.pDevice->RequestCommandUnit(DEFAULT_COMMAND_UNIT);
+		GlobalData.camera->UpdatePerFrameEnd();
+		GlobalData.cameraController->CalledPerFrame(GlobalData.deltaTime);
+		glfwPollEvents();
+		start = end;
+	}
+
+	Shutdown();
+	return 0;
+}

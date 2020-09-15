@@ -1,0 +1,123 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Utility">
+      <UniqueIdentifier>{a9456799-804f-487a-9dea-066098a550b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\GeneralCamera">
+      <UniqueIdentifier>{602fc837-b23a-4d59-82b6-2793ee555674}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\IMGUI_IMPL">
+      <UniqueIdentifier>{0d332b3b-cbd6-4f98-a166-31ee4704570e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\IMGUI_IMPL\src">
+      <UniqueIdentifier>{26f93239-3ae9-4f0c-9f36-41dcdd843201}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\MeshLoader">
+      <UniqueIdentifier>{707237b5-ba7b-472d-bd3d-536cbc152ef6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\Image">
+      <UniqueIdentifier>{5c94c719-24ad-4414-8aa1-bc40589d0417}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\SimpleLight">
+      <UniqueIdentifier>{2357508f-7f06-4d5e-9916-aa9fb92d1f3b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\ResourceSpecification">
+      <UniqueIdentifier>{5e43cb4b-8f65-4b55-9722-a065396cab53}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Examples\ConvoluteCubeMap\main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Examples\Utility\GeneralCamera\GenrealCamera.cpp">
+      <Filter>Utility\GeneralCamera</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Examples\Utility\IMGUI_IMPL\imgui_impl_uv.cpp">
+      <Filter>Utility\IMGUI_IMPL</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Examples\Utility\IMGUI_IMPL\imgui_impl_uv_glfw.cpp">
+      <Filter>Utility\IMGUI_IMPL</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\imgui-1.76\imgui.cpp">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\imgui-1.76\imgui_demo.cpp">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\imgui-1.76\imgui_draw.cpp">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\imgui-1.76\imgui_widgets.cpp">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Examples\Utility\MeshLoader\AssimpMeshLoader.cpp">
+      <Filter>Utility\MeshLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Examples\Utility\Image\DXImage.cpp">
+      <Filter>Utility\Image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Examples\Utility\SimpleLight\SimpleLight.cpp">
+      <Filter>Utility\SimpleLight</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Examples\Utility\GeneralCamera\GeneralCamera.h">
+      <Filter>Utility\GeneralCamera</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Examples\Utility\IMGUI_IMPL\imgui_impl_uv.h">
+      <Filter>Utility\IMGUI_IMPL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Examples\Utility\IMGUI_IMPL\imgui_impl_uv_glfw.h">
+      <Filter>Utility\IMGUI_IMPL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Examples\Utility\IMGUI_IMPL\imgui_impl_uv_helper.h">
+      <Filter>Utility\IMGUI_IMPL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Examples\Utility\IMGUI_IMPL\imgui_impl_uv_shader.hpp">
+      <Filter>Utility\IMGUI_IMPL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\imgui-1.76\imconfig.h">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\imgui-1.76\imgui.h">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\imgui-1.76\imgui_internal.h">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\imgui-1.76\imstb_rectpack.h">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\imgui-1.76\imstb_textedit.h">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\imgui-1.76\imstb_truetype.h">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Examples\Utility\MeshLoader\MeshLoader.h">
+      <Filter>Utility\MeshLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Examples\Utility\Image\DXImage.h">
+      <Filter>Utility\Image</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Examples\Utility\Image\Image.h">
+      <Filter>Utility\Image</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Examples\Utility\SimpleLight\SimpleLight.h">
+      <Filter>Utility\SimpleLight</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
