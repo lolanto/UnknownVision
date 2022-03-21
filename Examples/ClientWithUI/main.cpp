@@ -183,7 +183,8 @@ int main() {
 		IMGUI_FRAME_FUNC();
 		ImGui::Render();
 
-		GlobalData.pDevice->WriteToBuffer(&GlobalData.camera->GetCameraData(), cameraDataBuffer.get(), sizeof(UVCameraUtility::GeneralCameraDataStructure), 0, cmdUnit);
+		UVCameraUtility::GeneralCameraDataStructure cam = GlobalData.camera->GetCameraData();
+		GlobalData.pDevice->WriteToBuffer(&cam, cameraDataBuffer.get(), sizeof(UVCameraUtility::GeneralCameraDataStructure), 0, cmdUnit);
 		cmdUnit->TransferState(GlobalData.pDevice->BackBuffer(), RESOURCE_STATE_RENDER_TARGET);
 		cmdUnit->ClearRenderTarget(GlobalData.pDevice->BackBuffer(), BLUE);
 		cmdUnit->BindRenderTargets(rts, 1, nullptr);

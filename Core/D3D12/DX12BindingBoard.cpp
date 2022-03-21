@@ -94,9 +94,10 @@ void DX12BindingBoard::Close()
 	}
 	UINT rangeSize = Capacity();
 	m_alloc = m_pDevice->RequestDescriptorBlocks(rangeSize, m_type);
+	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_cpuHeap.GetCPUHandle(0);
 	m_pDevice->GetDevice()->CopyDescriptors(
 		1, &m_alloc.cpuHandle, &rangeSize,
-		1, &m_cpuHeap.GetCPUHandle(0), &rangeSize,
+		1, &cpuHandle, &rangeSize,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
 	);
 	BindingBoard::Close();

@@ -39,23 +39,26 @@
     <ClCompile Include="..\..\Examples\Utility\IMGUI_IMPL\imgui_impl_uv_glfw.cpp">
       <Filter>Utility\IMGUI_IMPL</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\imgui-1.76\imgui.cpp">
-      <Filter>Utility\IMGUI_IMPL\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\imgui-1.76\imgui_demo.cpp">
-      <Filter>Utility\IMGUI_IMPL\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\imgui-1.76\imgui_draw.cpp">
-      <Filter>Utility\IMGUI_IMPL\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\imgui-1.76\imgui_widgets.cpp">
-      <Filter>Utility\IMGUI_IMPL\src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Examples\Utility\Image\DXImage.cpp">
       <Filter>Utility\Image</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Examples\Utility\GeneralCamera\GenrealCamera.cpp">
       <Filter>Utility\GeneralCamera</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3rdPart\include\imgui\imgui.cpp">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3rdPart\include\imgui\imgui_demo.cpp">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3rdPart\include\imgui\imgui_draw.cpp">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3rdPart\include\imgui\imgui_impl_win32.cpp">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3rdPart\include\imgui\imgui_widgets.cpp">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -67,24 +70,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Examples\Utility\IMGUI_IMPL\imgui_impl_uv_shader.hpp">
       <Filter>Utility\IMGUI_IMPL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\imgui-1.76\imconfig.h">
-      <Filter>Utility\IMGUI_IMPL\src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\imgui-1.76\imgui.h">
-      <Filter>Utility\IMGUI_IMPL\src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\imgui-1.76\imgui_internal.h">
-      <Filter>Utility\IMGUI_IMPL\src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\imgui-1.76\imstb_rectpack.h">
-      <Filter>Utility\IMGUI_IMPL\src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\imgui-1.76\imstb_textedit.h">
-      <Filter>Utility\IMGUI_IMPL\src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\imgui-1.76\imstb_truetype.h">
-      <Filter>Utility\IMGUI_IMPL\src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Examples\Utility\Image\DXImage.h">
       <Filter>Utility\Image</Filter>
@@ -100,6 +85,27 @@
     </ClInclude>
     <ClInclude Include="..\..\Examples\Utility\GeneralCamera\GeneralCamera.h">
       <Filter>Utility\GeneralCamera</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rdPart\include\imgui\imconfig.h">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rdPart\include\imgui\imgui.h">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rdPart\include\imgui\imgui_impl_win32.h">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rdPart\include\imgui\imgui_internal.h">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rdPart\include\imgui\imstb_rectpack.h">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rdPart\include\imgui\imstb_textedit.h">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rdPart\include\imgui\imstb_truetype.h">
+      <Filter>Utility\IMGUI_IMPL\src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

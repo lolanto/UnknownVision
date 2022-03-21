@@ -48,7 +48,7 @@ namespace MImage {
 		DirectX::ScratchImage image;
 		auto ext = filePath.extension();
 		if (ext.compare(".dds") == 0) {
-			if (SUCCEEDED(DirectX::LoadFromDDSFile(filePath.generic_wstring().c_str(), DirectX::WIC_FLAGS_NONE, nullptr, image)) == false) {
+			if (SUCCEEDED(DirectX::LoadFromDDSFile(filePath.generic_wstring().c_str(), DirectX::DDS_FLAGS_NONE, nullptr, image)) == false) {
 				LOG_WARN("Load Image failed, path is: %s", filePath.generic_u8string().c_str());
 				return nullptr;
 			}
