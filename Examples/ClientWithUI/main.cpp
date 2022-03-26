@@ -23,7 +23,7 @@ const float BLUE[4] = { 0.2f, 0.4f, 0.8f, 1.0f };
 struct {
 	std::unique_ptr<UVCameraUtility::ICamera> camera;
 	std::unique_ptr<UVCameraUtility::ICameraController> cameraController;
-	IMath::IDOUBLE2 mouse_pos;
+	glm::vec2 mouse_pos;
 	RenderBackend* pBackend;
 	RenderDevice* pDevice;
 	GLFWwindow* pWindow;

@@ -3,11 +3,10 @@
 #include <functional>
 #include <array>
 #include <MathInterface/MathInterface.hpp>
-#define USING_DXMATH
 #define OUTPUT_MESSAGE /**< 输出错误信息，定义这个宏将会导致代码依赖Utility/InfoLog/InfoLog.h */
 namespace UVCameraUtility {
 
-	const  IMath::IFLOAT3 DEFAULT_UP_DIR = { 0.0f, 1.0f, 0.0f }; /**< 默认的“上”方向永远是y轴方向 */
+	const  glm::vec3 DEFAULT_UP_DIR = { 0.0f, 1.0f, 0.0f }; /**< 默认的“上”方向永远是y轴方向 */
 
 	class ICameraController;
 	class ICmaera;
@@ -35,15 +34,15 @@ namespace UVCameraUtility {
 	/** 摄像机数据缓冲的内存结构
 	 * Note: 该缓冲的结构必须与代码文件GeneralCamera.hlsl.inc中的同名结构题 **完全一致** */
 	struct GeneralCameraDataStructure {
-		IMath::IFLOAT4 position;
-		IMath::IFLOAT4X4 viewMat;
-		IMath::IFLOAT4X4 projMat;
+		glm::vec4 position;
+		glm::mat4x4 viewMat;
+		glm::mat4x4 projMat;
 	};
 
 	// 摄像机参数说明
 	struct CAMERA_DESC {
-		IMath::IFLOAT3 position;
-		IMath::IFLOAT3 lookAt;
+		glm::vec3 position;
+		glm::vec3 lookAt;
 		// 视场宽度单位是弧度制
 		float												fov;
 		// 视场宽高
@@ -54,8 +53,8 @@ namespace UVCameraUtility {
 		// 远平面
 		float												farPlane;
 		CAMERA_DESC(float width_, float height_,
-			const IMath::IFLOAT3& position_,
-			const IMath::IFLOAT3& lookAt_,
+			const glm::vec3& position_,
+			const glm::vec3& lookAt_,
 			float fov_ = 1.39f, float nearPlane_ = 0.01f, float farPlane_ = 50.0f)
 			: position(position_), lookAt(lookAt_), fov(fov_), height(height_), width(width_), nearPlane(nearPlane_), farPlane(farPlane_) {}
 		CAMERA_DESC() = default;
@@ -70,34 +69,36 @@ namespace UVCameraUtility {
 	public:
 		/** 返回当前摄像机的空间位置
 		 * @param output 指向存储输出结果的存储空间，必须至少能够容纳3个float */
-		virtual IMath::IFLOAT3 GetPosition() const = 0;
+		virtual glm::vec3 GetPosition() const = 0;
 		/** 返回当前摄像机的“前进方向”
 		 * @param output 指向存储输出结果的存储空间，必须至少能够容纳3个float，保证输出结果已经标准化*/
-		virtual IMath::IFLOAT3 GetForwardDirection() const = 0;
+		virtual glm::vec3 GetForwardDirection() const = 0;
 		/** 返回当前摄像机的“上方向”
 		 * @param output 指向存储输出结果的存储空间，必须至少能够容纳3个float，保证输出结果已经标准化*/
-		virtual IMath::IFLOAT3 GetUpDirection() const = 0;
+		virtual glm::vec3 GetUpDirection() const = 0;
 		/** 返回当前摄像机的“右边方向"
 		 * @param output 指向存储输出结果的存储空间，必须至少能够容纳3个float，保证输出结果已经标准化*/
-		virtual IMath::IFLOAT3 GetRightDirection() const = 0;
+		virtual glm::vec3 GetRightDirection() const = 0;
 
 		/** 返回摄像机缓冲数据，具体实现见CPP文件 */
 		virtual GeneralCameraDataStructure GetCameraData() = 0;
 
-		virtual IMath::IFLOAT4X4 GetLastFrameViewMat() const = 0;
-		virtual IMath::IFLOAT4X4 GetLastFrameProjMat() const = 0;
+		virtual glm::mat4x4 GetLastFrameViewMat() const = 0;
+		virtual glm::mat4x4 GetLastFrameProjMat() const = 0;
 
 		float GetFOV() const { return m_fov; }
 		float GetASPECT() const { return m_width / m_height; }
 		float GetNear() const { return m_near; }
 		float GetFar() const { return m_far; }
 
-		virtual void SetPosition(IMath::IFLOAT3 input) = 0;
-		virtual void SetForward(IMath::IFLOAT3 input) = 0;
+		virtual void SetPosition(glm::vec3 input) = 0;
+		virtual void SetForward(glm::vec3 input) = 0;
 		void SetFOV(float input) { m_fov = input; m_isProjDirty = true; }
 
 		void SetWidth(float input) { m_width = input; m_isProjDirty = true; }
 		void SetHeight(float input) { m_height = input; m_isProjDirty = true; }
+		virtual void SetOffset(glm::vec2 offset) { m_isProjDirty = false; }
+		virtual glm::vec2 GetOffset() const { return {}; }
 		/** 每帧处理完之后再执行 */
 		virtual void UpdatePerFrameEnd() {};
 	protected:

@@ -36,6 +36,7 @@ public:
 	virtual ~RenderDevice() = default;
 	/** @remark 必须在子类调用完成后调用该函数修改状态 */
 	virtual bool Initialize(std::string config) {
+		m_currentFrameCount = 0;
 		m_state = DEVICE_STATE_RUNNING;
 		return true;
 	};
@@ -134,8 +135,11 @@ public:
 	 * @return 返回实例化成功与否
 	 * @remark 实例化后的bindingBoard将占用一定量GPU资源，务必及时释放 */
 	virtual bool InstanceBindingBoard(BindingBoard* pboard) { return false; }
+	
+	uint64_t GetCurrentFrameCount() const { return m_currentFrameCount; }
 protected:
 	DeviceState m_state;
+	uint64_t m_currentFrameCount;
 };
 
 END_NAME_SPACE

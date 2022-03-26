@@ -70,7 +70,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>../../3rdPart/include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\LC\Workplace\UnknownVision\Utility;../../3rdPart/include;$(IncludePath)</IncludePath>
     <LibraryPath>../../3rdPart/lib/$(PlatformTarget)/$(Configuration);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

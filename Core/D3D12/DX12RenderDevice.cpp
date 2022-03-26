@@ -106,6 +106,7 @@ bool DX12RenderDevice::Present()
 	/** 等待下一个backbuffer可用 */
 	m_commandUnitManager_graphics.WaitForFence(m_backBufferFenceValues[nextBackBuffer]);
 	m_curBackBufferIndex = nextBackBuffer;
+	++m_currentFrameCount;
 	return true;
 }
 
