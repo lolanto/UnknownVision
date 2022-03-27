@@ -88,6 +88,7 @@ void DX12CommandUnit::Draw(size_t startOfIndex, size_t indexCount, size_t startO
 		m_graphicsCmdList->SetGraphicsRootDescriptorTable(board.first, board.second->AllocateDescriptorHeap().gpuHandle);
 		});
 	m_graphicsCmdList->DrawIndexedInstanced(indexCount, 1, startOfIndex, startOfVertex, 0);
+	m_bindingSlotToBindingBoards.clear();
 }
 
 void DX12CommandUnit::TransferState(GPUResource * pResource, ResourceStates newState)

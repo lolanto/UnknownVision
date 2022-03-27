@@ -39,6 +39,9 @@ public:
 			glm::mat4x4 viewMat = glm::lookAtLH(m_position, lookAt, DEFAULT_UP_DIR);
 			for (auto& mat : m_viewMats) mat = viewMat;
 		}
+		{
+			for (auto& offset : m_offsets) offset = { 0, 0 };
+		}
 	}
 	virtual ~Camera() = default;
 public:
