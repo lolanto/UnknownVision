@@ -22,6 +22,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core", "Core\Core.vcxproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConvoluteCubeMap", "ConVoluteCubeMap\ConvoluteCubeMap.vcxproj", "{408FF44C-B3E0-4CC0-AC09-3227AEE6908B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TAA", "TAA\TAA.vcxproj", "{759D4898-D20F-442C-B775-66DD92B6ED68}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B852AE1E-77BA-486A-948A-C1E3856DA517} = {B852AE1E-77BA-486A-948A-C1E3856DA517}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -70,6 +75,14 @@ Global
 		{408FF44C-B3E0-4CC0-AC09-3227AEE6908B}.Release|x64.Build.0 = Release|x64
 		{408FF44C-B3E0-4CC0-AC09-3227AEE6908B}.Release|x86.ActiveCfg = Release|Win32
 		{408FF44C-B3E0-4CC0-AC09-3227AEE6908B}.Release|x86.Build.0 = Release|Win32
+		{759D4898-D20F-442C-B775-66DD92B6ED68}.Debug|x64.ActiveCfg = Debug|x64
+		{759D4898-D20F-442C-B775-66DD92B6ED68}.Debug|x64.Build.0 = Debug|x64
+		{759D4898-D20F-442C-B775-66DD92B6ED68}.Debug|x86.ActiveCfg = Debug|Win32
+		{759D4898-D20F-442C-B775-66DD92B6ED68}.Debug|x86.Build.0 = Debug|Win32
+		{759D4898-D20F-442C-B775-66DD92B6ED68}.Release|x64.ActiveCfg = Release|x64
+		{759D4898-D20F-442C-B775-66DD92B6ED68}.Release|x64.Build.0 = Release|x64
+		{759D4898-D20F-442C-B775-66DD92B6ED68}.Release|x86.ActiveCfg = Release|Win32
+		{759D4898-D20F-442C-B775-66DD92B6ED68}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
