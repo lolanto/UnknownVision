@@ -49,9 +49,9 @@ public:
 	) final;
 	Texture2D* BackBuffer(size_t idx = SIZE_MAX) override final { if (idx == SIZE_MAX) return &m_swapChainResources[m_curBackBufferIndex]; else return &m_swapChainResources[idx]; }
 	Texture2D* DepthStencilBuffer(size_t idx = SIZE_MAX) override final { if (idx == SIZE_MAX) return m_depthStencilBuffers[m_curBackBufferIndex].get(); else return m_depthStencilBuffers[idx].get(); }
-	Buffer* CreateBuffer(size_t capacity, size_t elementStride, ResourceStatus status) override final;
+	GPUBuffer* CreateBuffer(size_t capacity, size_t elementStride, ResourceStatus status) override final;
 	virtual Texture2D* CreateTexture2D(size_t width, size_t height, size_t miplevels, size_t arrSize, ElementFormatType format, ResourceStatus status) override final;
-	bool WriteToBuffer(void* pSrc, Buffer* pDest, size_t srcSize, size_t destOffset, CommandUnit* cmdUnit) override final;
+	bool WriteToBuffer(const void* pSrc, GPUBuffer* pDest, size_t srcSize, size_t destOffset, CommandUnit* cmdUnit) override final;
 	bool WriteToTexture2D(const std::vector<ImageDesc>& srcDesc, Texture2D* pDest, CommandUnit* cmdUnit) override final;
 	bool WriteToTexture2DArr(const std::vector<std::vector<ImageDesc>>& srcDesc, Texture2D* pDest, CommandUnit* cmdUnit) override final;
 	bool ReadFromTexture2D(std::vector<uint8_t>& output, Texture2D* pSrc, CommandUnit* cmdUnit) override final;

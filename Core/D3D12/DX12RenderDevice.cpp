@@ -314,7 +314,7 @@ GraphicsPipelineObject* DX12RenderDevice::BuildGraphicsPipelineObject(
 }
 
 
-Buffer* DX12RenderDevice::CreateBuffer(size_t capacity, size_t elementStride, ResourceStatus status)
+GPUBuffer* DX12RenderDevice::CreateBuffer(size_t capacity, size_t elementStride, ResourceStatus status)
 {
 	D3D12_HEAP_TYPE heapType = D3D12_HEAP_TYPE_DEFAULT;
 	if (status.isFrequently() || status.isOnce()) heapType = D3D12_HEAP_TYPE_UPLOAD;
@@ -329,7 +329,7 @@ Buffer* DX12RenderDevice::CreateBuffer(size_t capacity, size_t elementStride, Re
 		ResourceStatusToResourceFlag(status),
 		heapType);
 	if (pRes == nullptr) return nullptr;
-	DX12Buffer* newBuf = new DX12Buffer();
+	DX12GPUBuffer* newBuf = new DX12GPUBuffer();
 	newBuf->m_status = status;
 	newBuf->m_state = DX12ResourceStateToResourceState(state);
 	newBuf->m_pResMgr = &m_resourceManager;
@@ -364,9 +364,9 @@ Texture2D* DX12RenderDevice::CreateTexture2D(size_t width, size_t height, size_t
 	return newTex2D;
 }
 
-bool DX12RenderDevice::WriteToBuffer(void* pSrc, Buffer* pDest, size_t srcSize, size_t destOffset, CommandUnit* cmdUnit)
+bool DX12RenderDevice::WriteToBuffer(const void* pSrc, GPUBuffer* pDest, size_t srcSize, size_t destOffset, CommandUnit* cmdUnit)
 {
-	DX12Buffer* pbuf = dynamic_cast<DX12Buffer*>(pDest);
+	DX12GPUBuffer* pbuf = dynamic_cast<DX12GPUBuffer*>(pDest);
 	ID3D12Resource* pRes = reinterpret_cast<ID3D12Resource*>(pbuf->GetResource());
 	DX12CommandUnit* pUnit = dynamic_cast<DX12CommandUnit*>(cmdUnit);
 	if (pDest->MemFootprint() < srcSize + destOffset) {

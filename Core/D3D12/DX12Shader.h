@@ -24,10 +24,15 @@ struct DX12Shader {
 class DX12ShaderManager {
 public:
 	DX12ShaderManager() : m_nextShaderHandle(0) {}
+
 	/** 从源码文件中编译Shader */
-	ShaderHandle Compile(const std::filesystem::path& filePath, ShaderType type);
-	/** 从源码字符串编译Shader */
-	ShaderHandle Compile(const char* srcCode, ShaderType type, const char* shaderName = "");
+	ShaderHandle Compile( const std::filesystem::path& filePath, ShaderType type);
+
+	/** 从源码字符串编译Shader 
+	 * @param srcCode 源码字符串, utf-8编码
+	 * @param type Shader的Profile类型，e.g. vs_5_1
+	 * @param shaderName 虽然是Shader的名字，*/
+	ShaderHandle Compile(const char* srcCode, ShaderType type, const char* shaderFileName = "");
 	/** 根据Shader句柄获得Shader对象，假如句柄有误返回nullptr */
 	const DX12Shader* operator[](ShaderHandle handle) const {
 		const auto& shaderItem = m_shaders.find(handle);

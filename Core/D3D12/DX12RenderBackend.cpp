@@ -3,6 +3,7 @@
 #include "DX12Shader.h"
 #include "../../Utility/InfoLog/InfoLog.h"
 #include <list>
+#include <fstream>
 
 #define XifFailed(function, behavior) if (FAILED(function)) behavior
 BEG_NAME_SPACE
@@ -120,7 +121,20 @@ RenderDevice* DX12RenderBackend::GetDevice(size_t node) {
 bool DX12RenderBackend::InitializeShaderObject(BasicShader* shader) {
 	/** 为shader分配shader handle */
 	if (shader->m_filePath.empty() == false) {
-		shader->m_handle = GShaderManager.Compile(shader->m_filePath, shader->GetShaderType());
+		std::ifstream file(shader->m_filePath);
+		if (!file.is_open()) {
+			LOG_WARN("Open shader file %s failed!", shader->m_filePath.filename().generic_u8string().c_str());
+			shader->m_handle = ShaderHandle::InvalidIndex();
+			return false;
+		}
+		std::string srcCode((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+		file.close();
+		shader->ModifyShaderCode(srcCode);
+		shader->m_handle = GShaderManager.Compile(srcCode.c_str(), shader->GetShaderType(), shader->m_filePath.generic_u8string().c_str());
+		if (shader->m_handle == ShaderHandle::InvalidIndex())
+		{
+			LOG_WARN("%s", srcCode.c_str());
+		}
 	}
 	else if (shader->m_srcCode) {
 		shader->m_handle = GShaderManager.Compile(shader->m_srcCode, shader->GetShaderType(), shader->Name());

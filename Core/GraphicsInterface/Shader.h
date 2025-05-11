@@ -81,6 +81,7 @@ public:
 	virtual ShaderType GetShaderType() const = 0;
 	virtual std::vector<std::vector<ShaderParameterSlotDesc>> GetShaderParameters() const { return { {} }; }
 	virtual const char* Name() const { return nullptr; }
+	virtual bool ModifyShaderCode(std::string& code) const { return false; }
 protected:
 	ShaderHandle m_handle;
 	std::filesystem::path m_filePath;

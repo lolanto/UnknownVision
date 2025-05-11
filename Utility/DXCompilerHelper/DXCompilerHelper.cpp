@@ -324,7 +324,7 @@ bool DXCompilerHelper::CompileToByteCode(const wchar_t* srcFilePath, const char*
 }
 
 bool DXCompilerHelper::CompileToByteCode(const char* srcCode, size_t srcSize, const char* profile,
-	Microsoft::WRL::ComPtr<ID3DBlob>& outputBuffer, bool outputDebugInfo, const char* shaderName)
+	Microsoft::WRL::ComPtr<ID3DBlob>& outputBuffer, bool outputDebugInfo, const char* shaderFileName)
 {
 	if (m_compiler.Get() == nullptr) {
 		m_err = "compiler is invalid!";
@@ -340,7 +340,7 @@ bool DXCompilerHelper::CompileToByteCode(const char* srcCode, size_t srcSize, co
 	if (bUseDXIL == false) {
 		SmartPtr<ID3DBlob> errorMsg;
 		/** 使用FXC */
-		if (FAILED(D3DCompile(srcCode, srcSize, shaderName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		if (FAILED(D3DCompile(srcCode, srcSize, shaderFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
 			"main", profile, D3DCOMPILE_DEBUG, 0, outputBuffer.GetAddressOf(), errorMsg.GetAddressOf()))) {
 			m_err = reinterpret_cast<char*>(errorMsg->GetBufferPointer());
 			return false;
@@ -350,7 +350,7 @@ bool DXCompilerHelper::CompileToByteCode(const char* srcCode, size_t srcSize, co
 	/**使用DXIL */
 	std::wstring&& pf = fromUTF8ToWideChar(profile);
 	SmartPtr<IDxcResult> compileOpResult;
-	std::wstring&& sn = fromUTF8ToWideChar(shaderName);
+	std::wstring&& sn = fromUTF8ToWideChar(shaderFileName);
 	const wchar_t* args[] = {
 		sn.c_str(),
 		L"-E", L"main",

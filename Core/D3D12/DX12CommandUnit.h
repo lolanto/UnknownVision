@@ -33,9 +33,9 @@ public:
 	/** 配置bindingBoards */
 	virtual void SetBindingBoard(size_t slot, BindingBoard* board) final;
 	/** 绑定顶点缓冲 */
-	virtual void BindVertexBuffers(size_t startSlot, size_t numberOfBuffers, Buffer** ppBuffers) final;
+	virtual void BindVertexBuffers(size_t startSlot, size_t numberOfBuffers, GPUBuffer** ppBuffers) final;
 	/** 绑定索引缓冲 */
-	virtual void BindIndexBuffer(Buffer* pBuffer) final;
+	virtual void BindIndexBuffer(GPUBuffer* pBuffer) final;
 	/** 绑定RTV */
 	virtual void BindRenderTargets(GPUResource** ppRenderTargets, size_t numRenderTargets, GPUResource* pDepthStencil) final;
 	/** 发起Draw指令 */

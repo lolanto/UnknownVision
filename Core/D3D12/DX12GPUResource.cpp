@@ -86,7 +86,7 @@ void DX12Texture2D::Release() {
 	}
 }
 
-D3D12_INDEX_BUFFER_VIEW DX12Buffer::GetIndexBufferView() const {
+D3D12_INDEX_BUFFER_VIEW DX12GPUBuffer::GetIndexBufferView() const {
 	D3D12_INDEX_BUFFER_VIEW idxView;
 	idxView.BufferLocation = m_pBuffer->GetGPUVirtualAddress();
 	switch (m_strideInBytes) {
@@ -104,7 +104,7 @@ D3D12_INDEX_BUFFER_VIEW DX12Buffer::GetIndexBufferView() const {
 	return idxView;
 }
 
-void DX12Buffer::Release() {
+void DX12GPUBuffer::Release() {
 	if (Avaliable()) {
 		if (m_pResMgr->ReleaseResource(m_pBuffer) == false) {
 			LOG_WARN("Release resource failed! Maybe there is some error occur!");

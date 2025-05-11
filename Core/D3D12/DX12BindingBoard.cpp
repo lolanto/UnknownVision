@@ -32,7 +32,7 @@ void DX12BindingBoard::BindingResource(size_t slotIdx, GPUResource* ptr, ShaderP
 	auto handle = m_cpuHeap.GetCPUHandle(slotIdx);
 	ID3D12Device* dev = m_pDevice->GetDevice();
 	if (type == SHADER_PARAMETER_TYPE_BUFFER_R && ptr->Type() == GPU_RESOURCE_TYPE_BUFFER) {
-		auto bufPtr = dynamic_cast<DX12Buffer*>(ptr);
+		auto bufPtr = dynamic_cast<DX12GPUBuffer*>(ptr);
 		if (bufPtr == nullptr) {
 			LOG_ERROR("Parameter type and GPU Resource doesn't match!");
 			abort();
@@ -41,7 +41,7 @@ void DX12BindingBoard::BindingResource(size_t slotIdx, GPUResource* ptr, ShaderP
 		dev->CreateConstantBufferView(&view, handle);
 	}
 	else if (type == SHADER_PARAMETER_TYPE_BUFFER_RW && ptr->Type() == GPU_RESOURCE_TYPE_BUFFER) {
-		auto bufPtr = dynamic_cast<DX12Buffer*>(ptr);
+		auto bufPtr = dynamic_cast<DX12GPUBuffer*>(ptr);
 		if (bufPtr == nullptr) {
 			LOG_ERROR("Parameter type and GPU Resource doesn't match!");
 			abort();

@@ -16,10 +16,10 @@ std::unique_ptr<PixelShader> gps;
 std::unique_ptr<BindingBoard> gBindingPS;
 std::unique_ptr<Texture2D> gFontTexture;
 struct FrameResource {
-	std::unique_ptr<Buffer> vtxBuffer;
-	std::unique_ptr<Buffer> idxBuffer;
+	std::unique_ptr<GPUBuffer> vtxBuffer;
+	std::unique_ptr<GPUBuffer> idxBuffer;
 	std::unique_ptr<BindingBoard> vsBindingBoard;
-	std::unique_ptr<Buffer> vsBuffer;
+	std::unique_ptr<GPUBuffer> vsBuffer;
 	size_t fenceValue = SIZE_MAX;
 };
 size_t gNumFrames; /**< 缓冲的帧数量 */
@@ -120,7 +120,7 @@ IMGUI_IMPL_API void ImGui_ImplUV_SetupRenderState(ImDrawData* drawData, CommandU
 	vp.topLeftX = vp.topLeftY = 0.0f;
 
 	cmdUnit->BindViewports(1, &vp);
-	Buffer* vtxBuffers[] = { curFrameResource.vtxBuffer.get() };
+	GPUBuffer* vtxBuffers[] = { curFrameResource.vtxBuffer.get() };
 	cmdUnit->BindVertexBuffers(0, 1, vtxBuffers);
 	cmdUnit->BindIndexBuffer(curFrameResource.idxBuffer.get());
 	cmdUnit->SetBindingBoard(0, curFrameResource.vsBindingBoard.get());

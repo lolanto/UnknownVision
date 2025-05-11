@@ -40,7 +40,7 @@ void DX12CommandUnit::SetBindingBoard(size_t slot, BindingBoard* board)
 	m_bindingSlotToBindingBoards[slot] = board;
 }
 
-void DX12CommandUnit::BindVertexBuffers(size_t startSlot, size_t numberOfBuffers, Buffer** ppBuffers)
+void DX12CommandUnit::BindVertexBuffers(size_t startSlot, size_t numberOfBuffers, GPUBuffer** ppBuffers)
 {
 	/** Note: 假如CommandUnit被多个线程使用，这个vbv就可能产生冲突 */
 	static D3D12_VERTEX_BUFFER_VIEW vbvs[MAX_VERTEX_BUFFER];
@@ -49,16 +49,16 @@ void DX12CommandUnit::BindVertexBuffers(size_t startSlot, size_t numberOfBuffers
 		abort();
 	}
 	for (size_t i = 0; i < numberOfBuffers; ++i) {
-		vbvs[i] = dynamic_cast<DX12Buffer*>(ppBuffers[i])->GetVertexBufferView();
+		vbvs[i] = dynamic_cast<DX12GPUBuffer*>(ppBuffers[i])->GetVertexBufferView();
 	}
 	m_graphicsCmdList->IASetVertexBuffers(startSlot, numberOfBuffers, vbvs);
 }
 
-void DX12CommandUnit::BindIndexBuffer(Buffer * pBuffer)
+void DX12CommandUnit::BindIndexBuffer(GPUBuffer * pBuffer)
 {
 	/** Note: 假如 */
 	static D3D12_INDEX_BUFFER_VIEW idxvbv;
-	auto pBuf =  dynamic_cast<DX12Buffer*>(pBuffer);
+	auto pBuf =  dynamic_cast<DX12GPUBuffer*>(pBuffer);
 	idxvbv = pBuf->GetIndexBufferView();
 	m_graphicsCmdList->IASetIndexBuffer(&idxvbv);
 }

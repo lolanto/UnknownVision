@@ -76,12 +76,17 @@ public:
 	/** 返回当前正在使用的depth stencil buffer指针 
 	 * -1 表示当前帧可以写入的depth stencil buffer */
 	virtual Texture2D* DepthStencilBuffer(size_t idx = SIZE_MAX) { return nullptr; }
+
 	/** 创建一维缓冲资源
 	 * @param capacity 缓冲容纳元素的数量
 	 * @param elementStride 一个元素的字节大小
 	 * @param status 资源的状态描述，详见具体定义
 	 * @return 返回创建成功后的资源，创建失败返回null */
-	virtual Buffer* CreateBuffer(size_t capacity, size_t elementStride, ResourceStatus status) { return nullptr; }
+	virtual GPUBuffer* CreateBuffer(size_t capacity, size_t elementStride, ResourceStatus status) { return nullptr; }
+
+	template<typename BufferType>
+	GPUBuffer* CreateBuffer(ResourceStatus status) { return CreateBuffer(1, sizeof(BufferType), status); }
+
 	/** 创建二维纹理资源
 	 * @param width 二维纹理的宽度像素数量
 	 * @param height 二维纹理的高度像素数量
@@ -100,7 +105,11 @@ public:
 	 * @return 返回写入是否成功
 	 * @remark 需要“假设”该调用会使cmdUnit之前录制的所有指令都被触发，同时线程等待指令执行完成后才返回
 	 * 同时需要保证目标缓冲的状态必须为Copy_dest*/
-	virtual bool WriteToBuffer(void* pSrc, Buffer* pDest, size_t srcSize, size_t destOffset, CommandUnit* cmdUnit) { return false; }
+	virtual bool WriteToBuffer(const void* pSrc, GPUBuffer* pDest, size_t srcSize, size_t destOffset, CommandUnit* cmdUnit) { return false; }
+
+	template<typename BufferType>
+	bool WriteToBuffer(const BufferType* pSrc, GPUBuffer* pDest, CommandUnit* cmdUnit) { return WriteToBuffer(static_cast<const void*>(pSrc), pDest, sizeof(BufferType), 0, cmdUnit); }
+
 	/** 向二维纹理中写入图片
 	 * @param srcDesc 描述写入图片的内存格式和地址，每个图片代表一级miplevel
 	 * @param pDest 指向被写入的纹理资源

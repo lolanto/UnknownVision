@@ -28,6 +28,7 @@ public:
 	 * @remark 调用者必须保证源码文件(.hlsl)的存在
 	 * 该函数保证相同shader加载过程可安全并行进行*/
 	Microsoft::WRL::ComPtr<ID3DBlob> LoadShader(const char* shaderName, const char* profile);
+
 	/** 从Shader源文件编译产生字节码供Shader生成使用
 	 * @param srcFilePath Shader源文件路径
 	 * @param profile 编译时必须设置的属性，决定了shader model 以及shader的类型
@@ -36,16 +37,18 @@ public:
 	 * @return 编译成功返回true，编译失败返回false */
 	bool CompileToByteCode(const wchar_t* srcFilePath, const char* profile,
 		Microsoft::WRL::ComPtr<ID3DBlob>& outputBuffer, bool outputDebugInfo = false);
+
 	/** 从源码字符串编译产生字节码供Shader生成使用
 	 * @param srcCode Shader源码字符串
 	 * @param srcSize 源码字符串缓冲大小
 	 * @param profile 编译时必须设置的属性，决定了shader model 以及shader的类型
 	 * @param outputBuffer 编译成功时会存储字节码，否则不做任何修改
 	 * @param outputDebugInfo 是否输出debug需要使用的信息
-	 * @param shaderName 可选的，用于标记当前编译Shader的名称，或许Debug会用到
+	 * @param shaderFileName 可选的，用于标记当前编译Shader的文件名称。假如Shader中包含#include命令，而且使用默认Include分析器，那么这个最好是Shader文件的绝对路径！否则Include分析会出错！
 	 * @return 编译成功返回true，编译失败返回false */
 	bool CompileToByteCode(const char* srcCode, size_t srcSize, const char* profile,
-		Microsoft::WRL::ComPtr<ID3DBlob>& outputBuffer, bool outputDebugInfo = false, const char* shaderName = "");
+		Microsoft::WRL::ComPtr<ID3DBlob>& outputBuffer, bool outputDebugInfo = false, const char* shaderFileName = "");
+
 	/** 从ByteCode中提取该shader的描述信息
 	 * @param byteCodes 存储DXC编译后，shader的字节码
 	 * @param outputDescription 存储shader描述信息的结构体的引用

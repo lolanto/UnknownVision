@@ -37,11 +37,11 @@ protected:
 	ResourceStates m_state;
 };
 
-class Buffer : public GPUResource {
+class GPUBuffer : public GPUResource {
 	friend class DX12RenderDevice;
 public:
-	Buffer() = default;
-	virtual ~Buffer() = default;
+	GPUBuffer() = default;
+	virtual ~GPUBuffer() = default;
 	size_t Capacity() const { return m_capacity; }
 	size_t StrideInBytes() const { return m_strideInBytes; }
 	size_t MemFootprint() const { return m_capacity * m_strideInBytes; }

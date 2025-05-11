@@ -131,13 +131,13 @@ int main() {
 	GlobalData.pBackend->InitializeShaderObject(&vs);
 	GlobalData.pBackend->InitializeShaderObject(&ps);
 	auto pso = GlobalData.pDevice->BuildGraphicsPipelineObject(&vs, &ps, GDefaultRasterizeOptions, GDefaultOutputStageOptions, LoadTextureVS::GetVertexAttributes);
-	std::unique_ptr<Buffer> vtxBuffer (GlobalData.pDevice->CreateBuffer(4, sizeof(float) * 5, ResourceStatus(RESOURCE_USAGE_VERTEX_BUFFER, RESOURCE_FLAG_STABLY)));
-	std::unique_ptr<Buffer> idxBuffer(GlobalData.pDevice->CreateBuffer(6, sizeof(uint32_t), ResourceStatus(RESOURCE_USAGE_INDEX_BUFFER, RESOURCE_FLAG_STABLY)));
+	std::unique_ptr<GPUBuffer> vtxBuffer (GlobalData.pDevice->CreateBuffer(4, sizeof(float) * 5, ResourceStatus(RESOURCE_USAGE_VERTEX_BUFFER, RESOURCE_FLAG_STABLY)));
+	std::unique_ptr<GPUBuffer> idxBuffer(GlobalData.pDevice->CreateBuffer(6, sizeof(uint32_t), ResourceStatus(RESOURCE_USAGE_INDEX_BUFFER, RESOURCE_FLAG_STABLY)));
 	std::unique_ptr<Texture2D> texture(GlobalData.pDevice->CreateTexture2D(img->Width(), img->Height(), 1, 1, UnknownVision::ELEMENT_FORMAT_TYPE_R8G8B8A8_UNORM,
 		ResourceStatus(RESOURCE_USAGE_SHADER_RESOURCE, RESOURCE_FLAG_STABLY)));
 	std::unique_ptr<BindingBoard> bindingBoardForVS(GlobalData.pDevice->RequestBindingBoard(1, DEFAULT_COMMAND_UNIT));
 	std::unique_ptr<BindingBoard> bindingBoardForPS(GlobalData.pDevice->RequestBindingBoard(1, DEFAULT_COMMAND_UNIT));
-	std::unique_ptr<Buffer> cameraDataBuffer(GlobalData.pDevice->CreateBuffer(1, sizeof(UVCameraUtility::GeneralCameraDataStructure), ResourceStatus(RESOURCE_USAGE_CONSTANT_BUFFER, RESOURCE_FLAG_FREQUENTLY)));
+	std::unique_ptr<GPUBuffer> vsConstantBuffer0(GlobalData.pDevice->CreateBuffer<LoadTextureVS::CameraDataBuffer>(ResourceStatus(RESOURCE_USAGE_CONSTANT_BUFFER, RESOURCE_FLAG_FREQUENTLY)));
 	CommandUnit* cmdUnit = GlobalData.pDevice->RequestCommandUnit(DEFAULT_COMMAND_UNIT);
 	GlobalData.pDevice->WriteToBuffer(VTXBufferData, vtxBuffer.get(), sizeof(VTXBufferData), 0, cmdUnit);
 	GlobalData.pDevice->WriteToBuffer(IDXBufferData, idxBuffer.get(), sizeof(IDXBufferData), 0, cmdUnit);
@@ -155,9 +155,9 @@ int main() {
 	cmdUnit->TransferState(texture.get(), RESOURCE_STATE_SHADER_RESOURCE);
 	cmdUnit->Flush(true);
 
-	bindingBoardForVS->BindingResource(0, cameraDataBuffer.get(), SHADER_PARAMETER_TYPE_BUFFER_R);
+	bindingBoardForVS->BindingResource(LoadTextureVS::CameraDataBuffer::GetSlotDesc().slot, vsConstantBuffer0.get(), LoadTextureVS::CameraDataBuffer::GetSlotDesc().paramType);
 	bindingBoardForVS->Close();
-	bindingBoardForPS->BindingResource(0, texture.get(), SHADER_PARAMETER_TYPE_TEXTURE_R);
+	bindingBoardForPS->BindingResource(LoadTexturePS::TextureBuffer::image_slot, texture.get(), LoadTexturePS::TextureBuffer::GetSlotDesc().paramType);
 	bindingBoardForPS->Close();
 
 	ViewPort vp;
@@ -176,15 +176,18 @@ int main() {
 		end = std::chrono::steady_clock::now();
 		GlobalData.deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0f;
 		GPUResource* rts[] = { GlobalData.pDevice->BackBuffer() };
-		Buffer* vtxbufs[] = { vtxBuffer.get() };
+		GPUBuffer* vtxbufs[] = { vtxBuffer.get() };
 		ImGui_ImplUVGlfw_NewFrame();
 		ImGui_ImplUV_NewFrame();
 		ImGui::NewFrame();
 		IMGUI_FRAME_FUNC();
 		ImGui::Render();
 
-		UVCameraUtility::GeneralCameraDataStructure cam = GlobalData.camera->GetCameraData();
-		GlobalData.pDevice->WriteToBuffer(&cam, cameraDataBuffer.get(), sizeof(UVCameraUtility::GeneralCameraDataStructure), 0, cmdUnit);
+		{
+			LoadTextureVS::CameraDataBuffer vsCPUBuffer;
+			vsCPUBuffer.CameraData = GlobalData.camera->GetCameraData();
+			GlobalData.pDevice->WriteToBuffer(&vsCPUBuffer, vsConstantBuffer0.get(), cmdUnit);
+		}
 		cmdUnit->TransferState(GlobalData.pDevice->BackBuffer(), RESOURCE_STATE_RENDER_TARGET);
 		cmdUnit->ClearRenderTarget(GlobalData.pDevice->BackBuffer(), BLUE);
 		cmdUnit->BindRenderTargets(rts, 1, nullptr);
@@ -194,8 +197,8 @@ int main() {
 		cmdUnit->BindScissorRects(1, &sr);
 		cmdUnit->BindVertexBuffers(0, 1, vtxbufs);
 		cmdUnit->BindIndexBuffer(idxBuffer.get());
-		cmdUnit->SetBindingBoard(0, bindingBoardForVS.get());
-		cmdUnit->SetBindingBoard(1, bindingBoardForPS.get());
+		cmdUnit->SetBindingBoard(LoadTextureVS::CameraDataBuffer::GetBindingBoardSlotIndex(0), bindingBoardForVS.get());
+		cmdUnit->SetBindingBoard(LoadTexturePS::TextureBuffer::GetBindingBoardSlotIndex(LoadTextureVS::TotalShaderParameterSlot), bindingBoardForPS.get());
 		cmdUnit->Draw(0, 6, 0);
 
 		ImGui_ImplUV_RenderDrawData(ImGui::GetDrawData(), cmdUnit);

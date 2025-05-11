@@ -9,9 +9,7 @@ struct VSOutput {
     float2 texcoord : TEXCOORD0;
 };
 
-cbuffer CameraDataBuffer : register(b0) {
-    GeneralCameraDataStructure CameraData;
-};
+/* #ConstantBuffer0# */
 
 
 

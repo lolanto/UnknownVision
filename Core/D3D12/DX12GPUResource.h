@@ -6,7 +6,7 @@
 BEG_NAME_SPACE
 #ifdef API_TYPE == DX12
 
-class DX12Buffer : public Buffer {
+class DX12GPUBuffer : public GPUBuffer {
 	friend class DX12RenderDevice;
 public:
 	D3D12_VERTEX_BUFFER_VIEW GetVertexBufferView() const {
@@ -45,8 +45,8 @@ public:
 		return desc;
 	}
 public:
-	DX12Buffer() : m_pBuffer(nullptr), m_pResMgr(nullptr) {}
-	virtual ~DX12Buffer() = default;
+	DX12GPUBuffer() : m_pBuffer(nullptr), m_pResMgr(nullptr) {}
+	virtual ~DX12GPUBuffer() = default;
 	
 	void* GetResource() override final {
 		return m_pBuffer;
