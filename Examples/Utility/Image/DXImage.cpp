@@ -122,12 +122,14 @@ namespace MImage {
 	{
 		DXGI_FORMAT originalFormat = ImageFormatToDXGI_Format(type);
 		const DirectX::Image* pImgs = m_image.GetImages();
+		bool isTheSameFormat = true;
 		for (int i = 0; i < m_image.GetImageCount(); ++i) {
-			if (pImgs[i].format == originalFormat) {
-				LOG_WARN("Subimage %d 's format is equal to type. Format convert Failed!", i);
-				return true;
+			if (pImgs[i].format != originalFormat) {
+				isTheSameFormat = false;
+				break;
 			}
 		}
+		if (isTheSameFormat) { return true; }
 		DirectX::ScratchImage newImage;
 		if (SUCCEEDED(DirectX::Convert(m_image.GetImages(), m_image.GetImageCount(), m_image.GetMetadata(),
 			ImageFormatToDXGI_Format(type), DirectX::TEX_FILTER_DEFAULT, DirectX::TEX_THRESHOLD_DEFAULT, newImage)) == false) {

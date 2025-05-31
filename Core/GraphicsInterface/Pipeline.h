@@ -1,5 +1,4 @@
 #pragma once
-#include "Shader.h"
 
 #include <functional>
 #include <assert.h>
@@ -7,6 +6,8 @@
 BEG_NAME_SPACE
 
 class CommandUnit;
+class VertexShader;
+class PixelShader;
 
 /** 管线中只能进行固定设置的描述信息集合 */
 struct RasterizeOptions {

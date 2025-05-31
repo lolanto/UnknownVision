@@ -2,6 +2,7 @@
 #include "DX12GPUResource.h"
 #include "DX12BindingBoard.h"
 #include "DX12Shader.h"
+#include "DX12Pipeline.h"
 #include "../../Utility/InfoLog/InfoLog.h"
 #include <optional>
 #include <iostream>

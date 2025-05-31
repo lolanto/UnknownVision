@@ -44,6 +44,23 @@ static const std::filesystem::path FileNameConcatenation(const char* root, const
 	return P;
 }
 
+/** 
+ * @brief 返回相对于指定文件所在路径的，指定文件的路径
+ * @param root 相对文件的路径
+ * @param file 指定的文件
+ * @return file非空时，返回root所在的文件夹+file，否则返回root
+ * @example 当root是/usr/t.txt, file是a.txt时，返回/usr/a.txt
+ */
+static const std::filesystem::path GetFilePathRelativeToFile(const char* root, const char* file = nullptr) {
+	static std::filesystem::path P(__FILE__);
+	P.assign(root);
+	if (file)
+		P.replace_filename(file);
+	return P;
+}
+
+#define GET_FILE_PATH_REATIVE_TO_THIS_FILE(file) UnknownVision::GetFilePathRelativeToFile(__FILE__, file)
+
 /** 以下代码块来自外部------------------------------------------------------------------ */
 //
 // Copyright (c) Microsoft. All rights reserved.

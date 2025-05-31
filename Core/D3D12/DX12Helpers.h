@@ -1,6 +1,7 @@
 #pragma once
 #include "DX12Config.h"
 #include "../GraphicsInterface/Pipeline.h"
+#include "../GraphicsInterface/GPUResource.h"
 #include "../UVType.h"
 #include "../../Utility/InfoLog/InfoLog.h"
 #include <cassert>
@@ -439,10 +440,10 @@ inline D3D12_VIEWPORT ViewPortToDX12ViewPort(const ViewPort& input) {
 
 inline D3D12_RECT ScissorRectToDX12ScissorRect(const ScissorRect& input) {
 	D3D12_RECT output;
-	output.top = input.top;
-	output.left = input.left;
-	output.right = input.right;
-	output.bottom = input.bottom;
+	output.top = static_cast<LONG>(input.top);
+	output.left = static_cast<LONG>(input.left);
+	output.right = static_cast<LONG>(input.right);
+	output.bottom = static_cast<LONG>(input.bottom);
 	return output;
 }
 

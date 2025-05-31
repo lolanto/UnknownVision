@@ -8,7 +8,7 @@
 
 BEG_NAME_SPACE
 
-class DX12Shader;
+struct DX12Shader;
 
 class DX12GraphicsPipelineObject : public GraphicsPipelineObject {
 	friend class DX12PipelineManager;

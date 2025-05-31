@@ -8,6 +8,8 @@
 BEG_NAME_SPACE
 class BindingBoard;
 class Image;
+class GPUBuffer;
+class Texture2D;
 
 /** 对存储于系统内存的图片数据的描述
  * 记录了图片数据的对齐信息，用于向Texture资源拷贝数据 */
@@ -81,7 +83,8 @@ public:
 	 * @param capacity 缓冲容纳元素的数量
 	 * @param elementStride 一个元素的字节大小
 	 * @param status 资源的状态描述，详见具体定义
-	 * @return 返回创建成功后的资源，创建失败返回null */
+	 * @return 返回创建成功后的资源，创建失败返回null
+	 */
 	virtual GPUBuffer* CreateBuffer(size_t capacity, size_t elementStride, ResourceStatus status) { return nullptr; }
 
 	template<typename BufferType>

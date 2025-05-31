@@ -10,6 +10,7 @@ class GPUResource;
 class BindingBoard;
 struct ViewPort;
 struct ScissorRect;
+class GPUBuffer;
 
 /** 指令队列的编辑器，按顺序向底层的CommandList写入指令 */
 class CommandUnit {

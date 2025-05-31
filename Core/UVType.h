@@ -117,9 +117,33 @@ enum ElementFormatType : uint8_t {
 	ELEMENT_FORMAT_TYPE_R16G16B16A16_FLOAT,
 	ELEMENT_FORMAT_TYPE_R8G8B8A8_UNORM, /**< 常用于描述渲染对象元素的格式 */
 	ELEMENT_FORMAT_TYPE_R8_UNORM,
+	/** 整数类型格式，通常给索引用 */
+	ELEMENT_FORMAT_TYPE_R32_UINT,
+	ELEMENT_FORMAT_TYPE_R16_UINT,
 	/**/
 	ELEMENT_FORMAT_TYPE_D24_UNORM_S8_UINT, /**< 常用于描述深度模板缓存元素的格式 */
+
+	ELEMENT_FORMAT_TYPE_NUM
 };
+
+constexpr size_t SizeOfElementFormat[ELEMENT_FORMAT_TYPE_NUM + 1] = {
+	0xFF, // Invalid 
+	0xFF, // Unknown
+	2, // R16_FLOAT
+	4, // R32_FLOAT
+	8, // R32G32_FLOAT
+	12, // R32G32B32_FLOAT
+	16, // R32G32B32A32_FLOAT
+	8, // R16G16B16A16_FLOAT
+	4, // R8G8B8A8_UNORM
+	1, // R8_UNORM
+	4, // R32_UINT
+	2, // R16_UINT
+	4, // D24_UNORM_S8_UINT
+	0xFF // NUM
+};
+
+static_assert((SizeOfElementFormat[ELEMENT_FORMAT_TYPE_NUM] == 0xFF), "元素类型及大小没有配对");
 
 enum FilterType : uint8_t {
 	FILTER_TYPE_MIN_MAG_MIP_POINT = 0,

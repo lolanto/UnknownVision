@@ -11,6 +11,12 @@ struct VSOutput {
 
 /* #ConstantBuffer0# */
 
+struct VertexData
+{
+    float3 Position;
+    float2 Texcoord;
+    float3 Normal;
+}
 
 
 VSOutput main(VSInput input) {
