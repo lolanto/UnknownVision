@@ -143,6 +143,7 @@ public:
 		m_isMidDown = false;
 		m_isShiftDown = false;
 		m_isWASDDown[0] = false; m_isWASDDown[1] = false; m_isWASDDown[2] = false; m_isWASDDown[3] = false;
+		m_isQDown = false; m_isEDown = false;
 	}
 	virtual ~EpicCameraController() = default;
 	virtual void KeyCallback(KeyButton key, bool isPressed) override final {
@@ -151,6 +152,8 @@ public:
 		if (key == KEY_BUTTON_A) m_isWASDDown[1] = isPressed;
 		if (key == KEY_BUTTON_S) m_isWASDDown[2] = isPressed;
 		if (key == KEY_BUTTON_D) m_isWASDDown[3] = isPressed;
+		if (key == KEY_BUTTON_Q) m_isQDown = isPressed;
+		if (key == KEY_BUTTON_E) m_isEDown = isPressed;
 	}
 	virtual void CalledPerFrame(float deltaTime) override final {
 		if (m_isWASDDown[0] || m_isWASDDown[2]) {
@@ -161,6 +164,11 @@ public:
 		if (m_isWASDDown[1] || m_isWASDDown[3]) {
 			float offset = m_isWASDDown[1] ? -1.0f : 1.0f;
 			m_pos = m_pos + m_right * offset * MovingSpeed * deltaTime;
+			m_camera.SetPosition(m_pos);
+		}
+		if (m_isQDown || m_isEDown) {
+			float offset = m_isQDown ? -1.0f : 1.0f;
+			m_pos = m_pos + m_up * offset * MovingSpeed * deltaTime;
 			m_camera.SetPosition(m_pos);
 		}
 	}
@@ -230,6 +238,8 @@ private:
 	bool m_isMidDown;
 	bool m_isShiftDown;
 	bool m_isWASDDown[4]; /**< 分别对应WASD */
+	bool m_isQDown; /**< Q键按下 */
+	bool m_isEDown; /**< E键按下 */
 	Camera& m_camera;
 };
 

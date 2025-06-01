@@ -24,6 +24,8 @@ namespace UVCameraUtility {
 		KEY_BUTTON_A,
 		KEY_BUTTON_S,
 		KEY_BUTTON_D,
+		KEY_BUTTON_Q,
+		KEY_BUTTON_E,
 		KEY_BUTTON_SHIFT
 	};
 
