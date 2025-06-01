@@ -66,6 +66,9 @@
     <ClCompile Include="..\..\Examples\LoadGLTF\VertexFactory.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Examples\LoadGLTF\Viewport.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Examples\Utility\IMGUI_IMPL\imgui_impl_uv.h">
@@ -119,10 +122,19 @@
     <ClInclude Include="..\..\Examples\LoadGLTF\MeshImpl_GLTF.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Examples\LoadGLTF\LoadMeshShader.hpp">
+    <ClInclude Include="..\..\Examples\LoadGLTF\VertexFactory.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Examples\LoadGLTF\TMeshPass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Examples\LoadGLTF\LoadMeshPass.hpp">
       <Filter>源文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Examples\LoadGLTF\VertexFactory.h">
+    <ClInclude Include="..\..\Examples\LoadGLTF\Viewport.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Examples\LoadGLTF\TShaderParameterSlot.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

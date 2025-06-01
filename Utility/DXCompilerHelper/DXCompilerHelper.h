@@ -34,9 +34,10 @@ public:
 	 * @param profile 编译时必须设置的属性，决定了shader model 以及shader的类型
 	 * @param outputBuffer 编译成功时会存储字节码，否则不做任何修改
 	 * @param outputDebugInfo 是否输出debug需要使用的信息
+	 * @param entranceName Shader的入口函数名称，默认是"main"
 	 * @return 编译成功返回true，编译失败返回false */
 	bool CompileToByteCode(const wchar_t* srcFilePath, const char* profile,
-		Microsoft::WRL::ComPtr<ID3DBlob>& outputBuffer, bool outputDebugInfo = false);
+		Microsoft::WRL::ComPtr<ID3DBlob>& outputBuffer, bool outputDebugInfo = false, const char* entranceName = "main");
 
 	/** 从源码字符串编译产生字节码供Shader生成使用
 	 * @param srcCode Shader源码字符串
@@ -45,9 +46,10 @@ public:
 	 * @param outputBuffer 编译成功时会存储字节码，否则不做任何修改
 	 * @param outputDebugInfo 是否输出debug需要使用的信息
 	 * @param shaderFileName 可选的，用于标记当前编译Shader的文件名称。假如Shader中包含#include命令，而且使用默认Include分析器，那么这个最好是Shader文件的绝对路径！否则Include分析会出错！
+	 * @param entranceName Shader的入口函数名称，默认是"main"
 	 * @return 编译成功返回true，编译失败返回false */
 	bool CompileToByteCode(const char* srcCode, size_t srcSize, const char* profile,
-		Microsoft::WRL::ComPtr<ID3DBlob>& outputBuffer, bool outputDebugInfo = false, const char* shaderFileName = "");
+		Microsoft::WRL::ComPtr<ID3DBlob>& outputBuffer, bool outputDebugInfo = false, const char* shaderFileName = "", const char* entranceName = "main");
 
 	/** 从ByteCode中提取该shader的描述信息
 	 * @param byteCodes 存储DXC编译后，shader的字节码

@@ -32,7 +32,7 @@ ShaderHandle DX12ShaderManager::Compile(const std::filesystem::path& filePath, S
 	return ShaderHandle::InvalidIndex();
 }
 
-ShaderHandle DX12ShaderManager::Compile(const char* srcCode, ShaderType type, const char* shaderFileName)
+ShaderHandle DX12ShaderManager::Compile(const char* srcCode, ShaderType type, const char* shaderFileName, const char* entranceName)
 {
 	DXCompilerHelper dxc;
 	std::string profile;
@@ -45,7 +45,7 @@ ShaderHandle DX12ShaderManager::Compile(const char* srcCode, ShaderType type, co
 	}
 	DX12Shader newShader;
 	/** +1是为了涵盖空字符 */
-	if (dxc.CompileToByteCode(srcCode, std::strlen(srcCode) + 1, profile.data(), newShader.shaderByteCode, false, shaderFileName) == false) {
+	if (dxc.CompileToByteCode(srcCode, std::strlen(srcCode) + 1, profile.data(), newShader.shaderByteCode, false, shaderFileName, entranceName) == false) {
 		LOG_ERROR("Compile shader failed!");
 		LOG_ERROR("Error Msg: %s", dxc.LastErrorMsg());
 		return ShaderHandle::InvalidIndex();

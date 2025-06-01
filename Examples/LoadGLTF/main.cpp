@@ -16,7 +16,7 @@
 #include <iostream>
 
 #include "MeshImpl_GLTF.h"
-#include "LoadMeshShader.hpp"
+#include "LoadMeshPass.hpp"
 
 using namespace UnknownVision;
 
@@ -139,25 +139,6 @@ int main() {
 
 	CommandUnit* cmdUnit = GlobalData.pDevice->RequestCommandUnit(DEFAULT_COMMAND_UNIT);
 
-
-	LoadMeshVS_PNT0 vs;
-	LoadMeshPS ps;
-	GlobalData.pBackend->InitializeShaderObject(&vs);
-	GlobalData.pBackend->InitializeShaderObject(&ps);
-
-	auto pso = GlobalData.pDevice->BuildGraphicsPipelineObject(&vs, &ps, GDefaultRasterizeOptions, GOutputStageOptionsWithDepthTest1_1, LoadMeshVS_PNT0::GetVertexAttributes);
-	if (pso == nullptr) {
-		std::cerr << "Failed to create PSO!" << std::endl;
-		return -1;
-	}
-	
-	VertexBuffersHolder vtxBuffers = LoadMeshVS_PNT0::VertexFactoryType::CreateVertexBuffersHolder(mesh.get(), cmdUnit, GlobalData.pDevice);
-
-
-	std::unique_ptr<BindingBoard> bindingBoardForVS(GlobalData.pDevice->RequestBindingBoard(1, DEFAULT_COMMAND_UNIT));
-	std::unique_ptr<BindingBoard> bindingBoardForPS(GlobalData.pDevice->RequestBindingBoard(1, DEFAULT_COMMAND_UNIT));
-	std::unique_ptr<GPUBuffer> vsConstantBuffer0(GlobalData.pDevice->CreateBuffer<LoadMeshVS_PNT0::CameraDataBuffer>(ResourceStatus(RESOURCE_USAGE_CONSTANT_BUFFER, RESOURCE_FLAG_FREQUENTLY)));
-
 	std::unique_ptr<Texture2D> texture(GlobalData.pDevice->CreateTexture2D(img->Width(), img->Height(), 1, 1, UnknownVision::ELEMENT_FORMAT_TYPE_R8G8B8A8_UNORM,
 		ResourceStatus(RESOURCE_USAGE_SHADER_RESOURCE, RESOURCE_FLAG_STABLY)));
 
@@ -173,18 +154,23 @@ int main() {
 	cmdUnit->TransferState(texture.get(), RESOURCE_STATE_SHADER_RESOURCE);
 	cmdUnit->Flush(true);
 
-	bindingBoardForVS->BindingResource(LoadMeshVS_PNT0::CameraDataBuffer::GetSlotDesc().slot, vsConstantBuffer0.get(), LoadMeshVS_PNT0::CameraDataBuffer::GetSlotDesc().paramType);
-	bindingBoardForVS->Close();
-	bindingBoardForPS->BindingResource(LoadMeshPS::TextureBuffer::image_slot, texture.get(), LoadMeshPS::TextureBuffer::GetSlotDesc().paramType);
-	bindingBoardForPS->Close();
+	MeshPass mp;
+	VertexBuffersHolder vtxBuffers = MeshPass::VertexShaderType::VertexFactoryType::CreateVertexBuffersHolder(mesh.get(), cmdUnit, GlobalData.pDevice);
+	mp.Init(cmdUnit, GlobalData.pDevice, GlobalData.pBackend);
 
-	ViewPort vp;
-	vp.topLeftX = 0; vp.topLeftY = 0;
-	vp.width = gWidth; vp.height = gHeight;
-	vp.maxDepth = 1.0f; vp.minDepth = 0.0f;
+	Viewport vp;
+	{
+		ViewportDesc vpDesc;
+		vpDesc.topLeftX = 0; vpDesc.topLeftY = 0;
+		vpDesc.width = gWidth; vpDesc.height = gHeight;
+		vpDesc.maxDepth = 1.0f; vpDesc.minDepth = 0.0f;
 
-	ScissorRect sr;
-	sr.left = 0; sr.right = 0; sr.bottom = gHeight; sr.right = gWidth;
+		ScissorRectDesc srDesc;
+		srDesc.left = 0; srDesc.right = 0; srDesc.bottom = gHeight; srDesc.right = gWidth;
+
+		vp.Init(vpDesc, srDesc, GlobalData.pDevice);
+	}
+	
 
 	img.reset();
 	while (!glfwWindowShouldClose(GlobalData.pWindow))
@@ -194,6 +180,7 @@ int main() {
 		end = std::chrono::steady_clock::now();
 		GlobalData.deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0f;
 		GPUResource* rts[] = { GlobalData.pDevice->BackBuffer() };
+		cmdUnit->TransferState(GlobalData.pDevice->BackBuffer(), RESOURCE_STATE_RENDER_TARGET);
 
 		ImGui_ImplUVGlfw_NewFrame();
 		ImGui_ImplUV_NewFrame();
@@ -202,23 +189,22 @@ int main() {
 		ImGui::Render();
 
 		{
-			LoadMeshVS_PNT0::CameraDataBuffer vsCPUBuffer;
-			vsCPUBuffer.CameraData = GlobalData.camera->GetCameraData();
-			GlobalData.pDevice->WriteToBuffer(&vsCPUBuffer, vsConstantBuffer0.get(), cmdUnit);
+			Viewport::ShaderConstantBuffer vpShaderData;
+			{
+				auto&& camData = GlobalData.camera->GetCameraData();
+				vpShaderData.viewMat = camData.viewMat;
+				vpShaderData.position = camData.position;
+				vpShaderData.projMat = camData.projMat;
+			}
+			vp.Update(vpShaderData, cmdUnit, GlobalData.pDevice);
 		}
-		cmdUnit->TransferState(GlobalData.pDevice->BackBuffer(), RESOURCE_STATE_RENDER_TARGET);
-		cmdUnit->TransferState(GlobalData.pDevice->DepthStencilBuffer(), RESOURCE_STATE_DEPTH_WRITE);
+		
+		mp.Update(&vtxBuffers, texture.get(), vp.GetGPUBuffer());
+
 		cmdUnit->ClearRenderTarget(GlobalData.pDevice->BackBuffer(), BLUE);
 		cmdUnit->ClearDepthStencilBuffer(GlobalData.pDevice->DepthStencilBuffer(), 1.0f, 0);
-		cmdUnit->BindRenderTargets(rts, 1, GlobalData.pDevice->DepthStencilBuffer());
 
-		cmdUnit->BindPipeline(pso);
-		cmdUnit->BindViewports(1, &vp);
-		cmdUnit->BindScissorRects(1, &sr);
-		vtxBuffers.BindingFunction(&vtxBuffers, cmdUnit);
-		cmdUnit->SetBindingBoard(LoadMeshVS_PNT0::CameraDataBuffer::GetBindingBoardSlotIndex(0), bindingBoardForVS.get());
-		cmdUnit->SetBindingBoard(LoadMeshPS::TextureBuffer::GetBindingBoardSlotIndex(LoadMeshVS_PNT0::TotalShaderParameterSlot), bindingBoardForPS.get());
-		cmdUnit->Draw(0, mesh->GetIndexCount(), 0);
+		mp.Draw(rts, 1, GlobalData.pDevice->DepthStencilBuffer(), cmdUnit, vp.GetViewportDesc(), vp.GetScissorRectDesc());
 
 		ImGui_ImplUV_RenderDrawData(ImGui::GetDrawData(), cmdUnit);
 		cmdUnit->TransferState(GlobalData.pDevice->BackBuffer(), RESOURCE_STATE_PRESENT);

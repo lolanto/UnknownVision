@@ -16,7 +16,7 @@ D3D12_RENDER_TARGET_VIEW_DESC DX12Texture2D::GetRenderTargetView(uint32_t mipSli
 	return rtvDesc;
 }
 
-D3D12_SHADER_RESOURCE_VIEW_DESC DX12Texture2D::GetShaderResourceView(uint32_t mipSlice, uint32_t mipLevels, size_t arr, bool cubemap)
+D3D12_SHADER_RESOURCE_VIEW_DESC DX12Texture2D::GetShaderResourceView(uint32_t mipSlice, uint32_t mipLevels, size_t arr, bool cubemap) const
 {
 	if (m_status.canBeShaderResource() == false) {
 		LOG_ERROR("this resource can not be used as shader resource!");

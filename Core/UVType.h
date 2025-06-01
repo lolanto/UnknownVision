@@ -205,13 +205,18 @@ enum PrimitiveType {
 //};
 
 /** 视口设置描述对象 */
-struct ViewPortDesc {
+struct ViewportDesc {
 	float topLeftX = 0.0f; /**< 视口的左上角横坐标，单位为像素 */
 	float topLeftY = 0.0f; /**< 视口的左上角纵坐标，单位为像素 */
 	float width = 0.0f; /**< 视口的宽度，单位为像素 */
 	float height = 0.0f; /**< 视口的高度，单位为像素 */
 	float minDepth = 0.0f; /**< 深度值最小值，范围0~1 */
 	float maxDepth = 1.0f; /**< 深度值最大值，范围0~1*/
+};
+
+/** 裁剪矩形描述对象 */
+struct ScissorRectDesc {
+	size_t left, top, right, bottom;
 };
 
 /** 着色器类型 */

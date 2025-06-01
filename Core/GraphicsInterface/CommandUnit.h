@@ -8,8 +8,8 @@ class RenderDevice;
 class GraphicsPipelineObject;
 class GPUResource;
 class BindingBoard;
-struct ViewPort;
-struct ScissorRect;
+struct ViewportDesc;
+struct ScissorRectDesc;
 class GPUBuffer;
 
 /** 指令队列的编辑器，按顺序向底层的CommandList写入指令 */
@@ -49,9 +49,9 @@ public:
 	/** 修改资源状态 */
 	virtual void TransferState(GPUResource* pResource, ResourceStates newState) = 0;
 	/** 绑定viewport */
-	virtual void BindViewports(size_t size, ViewPort* viewports) = 0;
+	virtual void BindViewports(size_t size, const ViewportDesc* viewports) = 0;
 	/** 绑定scissor rect */
-	virtual void BindScissorRects(size_t size, ScissorRect* scissorRects) = 0;
+	virtual void BindScissorRects(size_t size, const ScissorRectDesc* scissorRects) = 0;
 	/** 清空渲染目标 */
 	virtual void ClearRenderTarget(GPUResource* renderTarget, const float* clearColor) = 0;
 	/** 清空深度缓冲 */

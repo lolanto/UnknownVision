@@ -9,7 +9,7 @@ class DX12BindingBoard : public BindingBoard {
 public:
 	virtual ~DX12BindingBoard() = default;
 	DX12BindingBoard() = default;
-	virtual void BindingResource(size_t slotIdx, GPUResource* ptr, ShaderParameterType type, ShaderParameterFlag flag1 = SHADER_PARAMETER_FLAG_NONE, int flag2 = 0) override final;
+	virtual void BindingResource(size_t slotIdx, const GPUResource* ptr, ShaderParameterType type, ShaderParameterFlag flag1 = SHADER_PARAMETER_FLAG_NONE, int flag2 = 0) override final;
 	virtual size_t Capacity() const override final;
 	virtual void Close() override final;
 	virtual void Reset() override final;

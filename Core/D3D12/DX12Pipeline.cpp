@@ -21,6 +21,16 @@ DX12GraphicsPipelineObject* DX12PipelineManager::Build(DX12GraphicsPipelineObjec
 	auto shaderAnalyseHelper = [&rootSignatureParameters, &rangesList, &staticSamplers]
 	(const BasicShader* pBasicShader,  const DX12Shader* pDXShader, D3D12_SHADER_VISIBILITY visibility)
 	{
+		{
+			auto&& samplerParameters = pBasicShader->GetSamplerParameters();
+			for (const auto& parameter : samplerParameters)
+			{
+				assert(parameter.paramType == SHADER_PARAMETER_TYPE_SAMPLER);
+				auto&& desc = AnalyseStaticSamplerFromSamplerDescriptor(parameter.samplerDesc(), parameter.space, parameter.slot);
+				desc.ShaderVisibility = visibility;
+				staticSamplers.push_back(std::move(desc));
+			}
+		}
 		auto&& parameterGroups = pBasicShader->GetShaderParameters();
 		if (parameterGroups.empty()) return;
 		for (const auto& parameters : parameterGroups) {
@@ -30,12 +40,7 @@ DX12GraphicsPipelineObject* DX12PipelineManager::Build(DX12GraphicsPipelineObjec
 			size_t rangesCount = 0;
 			rangesList.push_back({});
 			for (const auto& e : parameters) {
-				if (e.paramType == SHADER_PARAMETER_TYPE_SAMPLER) {
-					auto&& desc = AnalyseStaticSamplerFromSamplerDescriptor(e.samplerDesc(), e.space, e.slot);
-					desc.ShaderVisibility = visibility;
-					staticSamplers.push_back(std::move(desc));
-				}
-				else {
+				{
 					D3D12_DESCRIPTOR_RANGE range;
 					range.BaseShaderRegister = e.slot;
 					range.NumDescriptors = e.count;

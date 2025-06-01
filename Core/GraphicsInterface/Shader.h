@@ -2,7 +2,6 @@
 #include "../UVConfig.h"
 #include "../UVType.h"
 #include "GPUResource.h"
-#include "CommandUnit.h"
 
 #include <string>
 #include <map>
@@ -80,8 +79,10 @@ public:
 	ShaderHandle GetHandle() const { return m_handle; }
 	virtual ShaderType GetShaderType() const = 0;
 	virtual std::vector<std::vector<ShaderParameterSlotDesc>> GetShaderParameters() const { return { {} }; }
+	virtual std::vector<ShaderParameterSlotDesc> GetSamplerParameters() const { return {  }; }
 	virtual const char* Name() const { return nullptr; }
 	virtual bool ModifyShaderCode(std::string& code) const { return false; }
+	virtual const char* GetEntranceName() const { return "main"; }
 protected:
 	ShaderHandle m_handle;
 	std::filesystem::path m_filePath;

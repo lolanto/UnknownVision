@@ -159,6 +159,7 @@
     <ClCompile Include="..\..\Examples\LoadGLTF\main.cpp" />
     <ClCompile Include="..\..\Examples\LoadGLTF\MeshImpl_GLTF.cpp" />
     <ClCompile Include="..\..\Examples\LoadGLTF\VertexFactory.cpp" />
+    <ClCompile Include="..\..\Examples\LoadGLTF\Viewport.cpp" />
     <ClCompile Include="..\..\Examples\Utility\GeneralCamera\GenrealCamera.cpp" />
     <ClCompile Include="..\..\Examples\Utility\Image\DXImage.cpp" />
     <ClCompile Include="..\..\Examples\Utility\IMGUI_IMPL\imgui_impl_uv.cpp" />
@@ -173,10 +174,13 @@
     <ClInclude Include="..\..\3rdPart\include\imgui\imstb_textedit.h" />
     <ClInclude Include="..\..\3rdPart\include\imgui\imstb_truetype.h" />
     <ClInclude Include="..\..\Examples\LoadGLTF\IMeshLoader.h" />
+    <ClInclude Include="..\..\Examples\LoadGLTF\TMeshPass.h" />
     <ClInclude Include="..\..\Examples\LoadGLTF\IMeshResource.h" />
-    <ClInclude Include="..\..\Examples\LoadGLTF\LoadMeshShader.hpp" />
+    <ClInclude Include="..\..\Examples\LoadGLTF\LoadMeshPass.hpp" />
     <ClInclude Include="..\..\Examples\LoadGLTF\MeshImpl_GLTF.h" />
+    <ClInclude Include="..\..\Examples\LoadGLTF\TShaderParameterSlot.h" />
     <ClInclude Include="..\..\Examples\LoadGLTF\VertexFactory.h" />
+    <ClInclude Include="..\..\Examples\LoadGLTF\Viewport.h" />
     <ClInclude Include="..\..\Examples\Utility\GeneralCamera\GeneralCamera.h" />
     <ClInclude Include="..\..\Examples\Utility\Image\DXImage.h" />
     <ClInclude Include="..\..\Examples\Utility\Image\Image.h" />

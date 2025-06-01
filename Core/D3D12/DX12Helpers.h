@@ -427,7 +427,7 @@ inline D3D12_INPUT_ELEMENT_DESC AnalyseInputElementDescFromVertexAttribute(const
 	return desc;
 }
 
-inline D3D12_VIEWPORT ViewPortToDX12ViewPort(const ViewPort& input) {
+inline D3D12_VIEWPORT ViewPortToDX12ViewPort(const ViewportDesc& input) {
 	D3D12_VIEWPORT output;
 	output.Height = input.height;
 	output.Width = input.width;
@@ -438,7 +438,7 @@ inline D3D12_VIEWPORT ViewPortToDX12ViewPort(const ViewPort& input) {
 	return output;
 }
 
-inline D3D12_RECT ScissorRectToDX12ScissorRect(const ScissorRect& input) {
+inline D3D12_RECT ScissorRectToDX12ScissorRect(const ScissorRectDesc& input) {
 	D3D12_RECT output;
 	output.top = static_cast<LONG>(input.top);
 	output.left = static_cast<LONG>(input.left);

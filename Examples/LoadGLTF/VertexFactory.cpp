@@ -90,6 +90,8 @@ VertexBuffersHolder VertexFactory_PNT0::CreateVertexBuffersHolder(const IMeshRes
 	holder.IndexBuffer = std::move(idxBuffer);
 	holder.BindingFunction = &VertexFactory_PNT0::BindingVertexBuffers;
 
+	holder.VertexCount = inputMesh->GetVertexCount();
+	holder.IndexCount = inputMesh->GetIndexCount();
 	return holder;
 }
 

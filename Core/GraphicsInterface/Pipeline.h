@@ -112,16 +112,6 @@ inline std::vector<VertexAttribute> GDefaultVertexAttributeList() {
 	return { position, texcoord0 };
 }
 
-struct ViewPort {
-	float topLeftX, topLeftY;
-	float width, height;
-	float minDepth, maxDepth;
-};
-
-struct ScissorRect {
-	size_t left, top, right, bottom;
-};
-
 class PipelineObject {
 public:
 	PipelineObject() = default;

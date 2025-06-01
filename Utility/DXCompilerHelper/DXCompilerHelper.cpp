@@ -249,7 +249,8 @@ public:
 
 bool DXCompilerHelper::CompileToByteCode(const wchar_t* srcFilePath, const char* profile,
 	SmartPtr<ID3DBlob>& outputBuffer, 
-	bool outputDebugInfo) {
+	bool outputDebugInfo,
+	const char* entranceName) {
 	if (m_compiler.Get() == nullptr) {
 		m_err = "compiler is invalid!";
 		return false;
@@ -271,7 +272,7 @@ bool DXCompilerHelper::CompileToByteCode(const wchar_t* srcFilePath, const char*
 		Flag = D3DCOMPILE_OPTIMIZATION_LEVEL3;
 #endif // _DEBUG
 		if (FAILED(D3DCompileFromFile(srcFilePath, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-			"main", profile, Flag, 0, outputBuffer.GetAddressOf(), errorMsg.GetAddressOf()))) {
+			entranceName, profile, Flag, 0, outputBuffer.GetAddressOf(), errorMsg.GetAddressOf()))) {
 			m_err = reinterpret_cast<char*>(errorMsg->GetBufferPointer());
 			return false;
 		}
@@ -295,9 +296,10 @@ bool DXCompilerHelper::CompileToByteCode(const wchar_t* srcFilePath, const char*
 	pdbFileName += fileName;
 	pdbFileName.replace_extension(".pdb");
 #endif // _DEBUG
+	std::wstring&& entranceName_w = fromUTF8ToWideChar(entranceName);
 	const wchar_t* args[] = {
 		fileName.c_str(),
-		L"-E", L"main",
+		L"-E", entranceName_w.c_str(),
 		L"-T", pf.c_str(),
 #ifdef _DEBUG
 		L"-D", L"_DEBUG",
@@ -324,7 +326,7 @@ bool DXCompilerHelper::CompileToByteCode(const wchar_t* srcFilePath, const char*
 }
 
 bool DXCompilerHelper::CompileToByteCode(const char* srcCode, size_t srcSize, const char* profile,
-	Microsoft::WRL::ComPtr<ID3DBlob>& outputBuffer, bool outputDebugInfo, const char* shaderFileName)
+	Microsoft::WRL::ComPtr<ID3DBlob>& outputBuffer, bool outputDebugInfo, const char* shaderFileName, const char* entranceName)
 {
 	if (m_compiler.Get() == nullptr) {
 		m_err = "compiler is invalid!";
@@ -335,13 +337,25 @@ bool DXCompilerHelper::CompileToByteCode(const char* srcCode, size_t srcSize, co
 		return false;
 	}
 
+	D3D_SHADER_MACRO shaderMarcos[] = {
+		{}, /**< Shader类型 */
+		{ "SHADER_DEBUG", "1" }, /**< 该宏用于标记当前编译的shader是debug版本 */
+		{ nullptr, nullptr } /**< 结束宏定义 */
+	};
+
+	if (profile[0] == 'v' && profile[1] == 's')
+		shaderMarcos[0] = { "VERTEX_SHADER", "1" };
+	else if (profile[0] == 'p' && profile[1] == 's')
+		shaderMarcos[0] = { "PIXEL_SHADER", "1" };
+	else
+		abort(); // unimplmented shader type
 
 	bool bUseDXIL = profile[3] - '0' >= 6;
 	if (bUseDXIL == false) {
 		SmartPtr<ID3DBlob> errorMsg;
 		/** 使用FXC */
-		if (FAILED(D3DCompile(srcCode, srcSize, shaderFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-			"main", profile, D3DCOMPILE_DEBUG, 0, outputBuffer.GetAddressOf(), errorMsg.GetAddressOf()))) {
+		if (FAILED(D3DCompile(srcCode, srcSize, shaderFileName, shaderMarcos, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+			entranceName, profile, D3DCOMPILE_DEBUG, 0, outputBuffer.GetAddressOf(), errorMsg.GetAddressOf()))) {
 			m_err = reinterpret_cast<char*>(errorMsg->GetBufferPointer());
 			return false;
 		}
@@ -351,20 +365,30 @@ bool DXCompilerHelper::CompileToByteCode(const char* srcCode, size_t srcSize, co
 	std::wstring&& pf = fromUTF8ToWideChar(profile);
 	SmartPtr<IDxcResult> compileOpResult;
 	std::wstring&& sn = fromUTF8ToWideChar(shaderFileName);
+	std::wstring&& entranceName_w = fromUTF8ToWideChar(entranceName);
 	const wchar_t* args[] = {
-		sn.c_str(),
-		L"-E", L"main",
-		L"-T", pf.c_str(),
 		L"-O3"
 	};
-
+	DxcDefine shaderMarcos2[] = {
+		{}, /**< Shader类型 */
+		{ L"SHADER_DEBUG", L"1" }, /**< 该宏用于标记当前编译的shader是debug版本 */
+	};
+	if (profile[0] == 'v' && profile[1] == 's')
+		shaderMarcos2[0] = { L"VERTEX_SHADER", L"1" };
+	else if (profile[0] == 'p' && profile[1] == 's')
+		shaderMarcos2[0] = { L"PIXEL_SHADER", L"1" };
+	else
+		abort(); // unimplmented shader type
+	
+	SmartPtr<IDxcCompilerArgs> dxcCompilerArgs;
+	m_utils->BuildArguments(sn.c_str(), entranceName_w.c_str(), pf.c_str(), args, 1, shaderMarcos2, 2, dxcCompilerArgs.ReleaseAndGetAddressOf());
 
 	DxcBuffer sourceBuffer;
 	sourceBuffer.Encoding = CP_UTF8;
 	sourceBuffer.Ptr = srcCode;
 	sourceBuffer.Size = srcSize;
 	
-	if (DXCComplie(&sourceBuffer, args, ArraySize(args), nullptr, compileOpResult) == false) return false;
+	if (DXCComplie(&sourceBuffer, dxcCompilerArgs->GetArguments(), dxcCompilerArgs->GetCount(), nullptr, compileOpResult) == false) return false;
 
 	SmartPtr<IDxcBlob> byteCodes;
 	compileOpResult->GetResult(byteCodes.ReleaseAndGetAddressOf());

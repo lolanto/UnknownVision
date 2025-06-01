@@ -112,7 +112,7 @@ IMGUI_IMPL_API void ImGui_ImplUV_SetupRenderState(ImDrawData* drawData, CommandU
 		pDev->WriteToBuffer(mvp, curFrameResource.vsBuffer.get(), sizeof(mvp), 0, cmdUnit);
 	}
 
-	ViewPort vp;
+	ViewportDesc vp;
 	vp.width = drawData->DisplaySize.x;
 	vp.height = drawData->DisplaySize.y;
 	vp.minDepth = 0.0f;
@@ -185,7 +185,7 @@ IMGUI_IMPL_API void ImGui_ImplUV_RenderDrawData(ImDrawData* drawData, CommandUni
 			else
 			{
 				// Apply Scissor, Bind texture, Draw
-				ScissorRect sr;
+				ScissorRectDesc sr;
 				sr.left = pcmd->ClipRect.x - clip_off.x;
 				sr.top = pcmd->ClipRect.y - clip_off.y;
 				sr.right = pcmd->ClipRect.z - clip_off.x;

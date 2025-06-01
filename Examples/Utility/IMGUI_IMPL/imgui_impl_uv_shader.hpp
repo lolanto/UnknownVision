@@ -73,10 +73,12 @@ public:
     IMGUI_PIXEL_SHADER() : PixelShader(pixelShader) {}
     virtual std::vector<std::vector<ShaderParameterSlotDesc>> GetShaderParameters() const override final {
         return {
-            {ShaderParameterSlotDesc::OnlyReadTexture(0, 1)},
-            {ShaderParameterSlotDesc::LinearSampler(0)}
+            {ShaderParameterSlotDesc::OnlyReadTexture(0, 1)}
         };
     }
+	virtual std::vector<ShaderParameterSlotDesc> GetSamplerParameters() const override final {
+		return  { ShaderParameterSlotDesc::LinearSampler(0) };
+	}
     virtual const char* Name() const override final { return "imgui_ps"; }
 };
 

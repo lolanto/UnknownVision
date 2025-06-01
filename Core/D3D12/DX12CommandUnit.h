@@ -43,9 +43,9 @@ public:
 	/** 修改资源状态 */
 	virtual void TransferState(GPUResource* pResource, ResourceStates newState) final;
 	/** 绑定viewport */
-	virtual void BindViewports(size_t size, ViewPort* viewports) final;
+	virtual void BindViewports(size_t size, const ViewportDesc* viewports) final;
 	/** 绑定scissor rect */
-	virtual void BindScissorRects(size_t size, ScissorRect* scissorRects) final;
+	virtual void BindScissorRects(size_t size, const ScissorRectDesc* scissorRects) final;
 	/** 清空渲染目标 */
 	virtual void ClearRenderTarget(GPUResource* renderTarget, const float* clearColor) final;
 	/** 清空depth stencil buffer */

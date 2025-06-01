@@ -23,10 +23,9 @@ struct VSOutput {
 
 /* #ConstantBuffer0# */
 
+#ifdef VERTEX_SHADER
 
-
-
-VSOutput main(VertexInput input) {
+VSOutput mainVS(VertexInput input) {
     VertexData resolvedVertexData = GetVertexData(input);
     VSOutput output;
     output.position = 
@@ -35,3 +34,16 @@ VSOutput main(VertexInput input) {
     output.texcoord = resolvedVertexData.Texcoord;
     return output;
 }
+
+#endif // VERTEX_SHADER
+
+/* #TextureBuffer0# */
+SamplerState linearSampler : register(s0);
+
+#ifdef PIXEL_SHADER
+
+float4 mainPS(VSOutput input) : SV_Target {
+    return image.Sample(linearSampler, input.texcoord);
+}
+
+#endif // PIXEL_SHADER

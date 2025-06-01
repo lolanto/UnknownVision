@@ -31,8 +31,11 @@ public:
 	/** 从源码字符串编译Shader 
 	 * @param srcCode 源码字符串, utf-8编码
 	 * @param type Shader的Profile类型，e.g. vs_5_1
-	 * @param shaderName 虽然是Shader的名字，*/
-	ShaderHandle Compile(const char* srcCode, ShaderType type, const char* shaderFileName = "");
+	 * @param shaderName 虽然是Shader的名字，
+	 * @param entranceName Shader的入口函数名称，默认是"main"
+	 * @return 返回编译成功的Shader句柄，失败返回ShaderHandle::InvalidIndex()
+	 */
+	ShaderHandle Compile(const char* srcCode, ShaderType type, const char* shaderFileName = "", const char* entranceName = "main");
 	/** 根据Shader句柄获得Shader对象，假如句柄有误返回nullptr */
 	const DX12Shader* operator[](ShaderHandle handle) const {
 		const auto& shaderItem = m_shaders.find(handle);

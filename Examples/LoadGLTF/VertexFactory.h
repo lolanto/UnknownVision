@@ -14,6 +14,8 @@ struct VertexAttribute;
 
 struct VertexBuffersHolder
 {
+	size_t VertexCount = 0; /**< 顶点数量 */
+	size_t IndexCount = 0; /**< 索引数量 */
 	std::vector<std::unique_ptr<GPUBuffer>> VertexBuffers;
 	std::unique_ptr<GPUBuffer> IndexBuffer;
 	std::function<void(VertexBuffersHolder*, CommandUnit*)> BindingFunction;

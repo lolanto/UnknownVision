@@ -106,7 +106,7 @@ void DX12CommandUnit::TransferState(GPUResource * pResource, ResourceStates newS
 	m_graphicsCmdList->ResourceBarrier(1, &barrier);
 }
 
-void DX12CommandUnit::BindViewports(size_t size, ViewPort * viewports)
+void DX12CommandUnit::BindViewports(size_t size, const ViewportDesc* viewports)
 {
 	std::vector<D3D12_VIEWPORT> vps(size);
 	for (size_t i = 0; i < size; ++i) {
@@ -115,7 +115,7 @@ void DX12CommandUnit::BindViewports(size_t size, ViewPort * viewports)
 	m_graphicsCmdList->RSSetViewports(size, vps.data());
 }
 
-void DX12CommandUnit::BindScissorRects(size_t size, ScissorRect * scissorRects)
+void DX12CommandUnit::BindScissorRects(size_t size, const ScissorRectDesc* scissorRects)
 {
 	std::vector<D3D12_RECT> srs(size);
 	for (size_t i = 0; i < size; ++i) {

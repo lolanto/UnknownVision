@@ -51,6 +51,11 @@ public:
 	void* GetResource() override final {
 		return m_pBuffer;
 	}
+
+	const void* GetResource() const override final {
+		return m_pBuffer;
+	}
+
 	void SetName(const wchar_t* name) final {
 		if (m_pBuffer)
 			m_pBuffer->SetName(name);
@@ -75,16 +80,18 @@ public:
 	 * @param cubemap 是否作为cubemap绑定，默认为非cubemap
 	 * @return 返回DSV描述
 	 * @remark 当且仅当纹理本身的arrsize为6时，cubemap为true方才有效，否则异常 */
-	D3D12_SHADER_RESOURCE_VIEW_DESC GetShaderResourceView(uint32_t mipSlice = 0, uint32_t mipLevels = 1, size_t arr = 0, bool cubemap = false);
+	D3D12_SHADER_RESOURCE_VIEW_DESC GetShaderResourceView(uint32_t mipSlice = 0, uint32_t mipLevels = 1, size_t arr = 0, bool cubemap = false) const;
 	/** 辅助函数 */
-	D3D12_SHADER_RESOURCE_VIEW_DESC GetSRV_Single(uint32_t mipSlice = 0, uint32_t mipLevels = 1) { return GetShaderResourceView(mipSlice, mipLevels, 0, false); }
-	D3D12_SHADER_RESOURCE_VIEW_DESC GetSRV_CUBE(uint32_t mipSlice = 0, uint32_t mipLevels = 1) { return GetShaderResourceView(mipSlice, mipLevels, 6, true); }
+	D3D12_SHADER_RESOURCE_VIEW_DESC GetSRV_Single(uint32_t mipSlice = 0, uint32_t mipLevels = 1) const { return GetShaderResourceView(mipSlice, mipLevels, 0, false); }
+	D3D12_SHADER_RESOURCE_VIEW_DESC GetSRV_CUBE(uint32_t mipSlice = 0, uint32_t mipLevels = 1) const { return GetShaderResourceView(mipSlice, mipLevels, 6, true); }
 	D3D12_DEPTH_STENCIL_VIEW_DESC GetDepthStencilView(uint32_t mipSlice = 0);
 public:
 	DX12Texture2D() : m_pTexture(nullptr), m_pResMgr(nullptr) {}
 	virtual ~DX12Texture2D() = default;
 
 	void* GetResource() override final { return m_pTexture; }
+
+	const void* GetResource() const override final { return m_pTexture; }
 
 	void SetName(const wchar_t* name) final {
 		if (m_pTexture)

@@ -27,6 +27,7 @@ public:
 	virtual ~GPUResource() { if (Avaliable()) Release(); }
 	virtual void SetName(const wchar_t* name) {}
 	virtual void* GetResource() { return nullptr; }
+	virtual const void* GetResource() const { return nullptr; }
 	virtual bool Avaliable() const { return false; }
 	virtual GPUResourceType Type() const { return GPU_RESOURCE_TYPE_INVALID; }
 	/** 用来手动释放资源，临时资源也可以提前进行手动释放，保证释放空资源不会有影响

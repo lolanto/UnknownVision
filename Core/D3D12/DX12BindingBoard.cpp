@@ -23,7 +23,7 @@ void DX12BindingBoard::Initialize(size_t capacity, DX12RenderDevice* pDevice, CO
 	}
 }
 
-void DX12BindingBoard::BindingResource(size_t slotIdx, GPUResource* ptr, ShaderParameterType type, ShaderParameterFlag flag1, int flag2)
+void DX12BindingBoard::BindingResource(size_t slotIdx, const GPUResource* ptr, ShaderParameterType type, ShaderParameterFlag flag1, int flag2)
 {
 	if (m_enableBinding == false) {
 		LOG_ERROR("Can not binding anymore until you call reset!");
@@ -32,7 +32,7 @@ void DX12BindingBoard::BindingResource(size_t slotIdx, GPUResource* ptr, ShaderP
 	auto handle = m_cpuHeap.GetCPUHandle(slotIdx);
 	ID3D12Device* dev = m_pDevice->GetDevice();
 	if (type == SHADER_PARAMETER_TYPE_BUFFER_R && ptr->Type() == GPU_RESOURCE_TYPE_BUFFER) {
-		auto bufPtr = dynamic_cast<DX12GPUBuffer*>(ptr);
+		auto bufPtr = dynamic_cast<const DX12GPUBuffer*>(ptr);
 		if (bufPtr == nullptr) {
 			LOG_ERROR("Parameter type and GPU Resource doesn't match!");
 			abort();
@@ -41,7 +41,7 @@ void DX12BindingBoard::BindingResource(size_t slotIdx, GPUResource* ptr, ShaderP
 		dev->CreateConstantBufferView(&view, handle);
 	}
 	else if (type == SHADER_PARAMETER_TYPE_BUFFER_RW && ptr->Type() == GPU_RESOURCE_TYPE_BUFFER) {
-		auto bufPtr = dynamic_cast<DX12GPUBuffer*>(ptr);
+		auto bufPtr = dynamic_cast<const DX12GPUBuffer*>(ptr);
 		if (bufPtr == nullptr) {
 			LOG_ERROR("Parameter type and GPU Resource doesn't match!");
 			abort();
@@ -49,12 +49,12 @@ void DX12BindingBoard::BindingResource(size_t slotIdx, GPUResource* ptr, ShaderP
 		auto&& view = bufPtr->GetUnorderedAccessView();
 		/**TODO: 暂时不支持counter */
 		dev->CreateUnorderedAccessView(
-			reinterpret_cast<ID3D12Resource*>(bufPtr->GetResource()), nullptr,
+			const_cast<ID3D12Resource*>(reinterpret_cast<const ID3D12Resource*>(bufPtr->GetResource())), nullptr,
 			&view, handle);
 	}
 	else if (type == SHADER_PARAMETER_TYPE_TEXTURE_R) {
 		if (ptr->Type() == GPU_RESOURCE_TYPE_TEXTURE2D) {
-			auto texPtr = dynamic_cast<DX12Texture2D*>(ptr);
+			auto texPtr = dynamic_cast<const DX12Texture2D*>(ptr);
 			if (texPtr == nullptr) {
 				LOG_ERROR("Parameter type and GPU Resource doesn't match!");
 				abort();
@@ -71,7 +71,7 @@ void DX12BindingBoard::BindingResource(size_t slotIdx, GPUResource* ptr, ShaderP
 				abort();
 			}
 			dev->CreateShaderResourceView(
-				reinterpret_cast<ID3D12Resource*>(texPtr->GetResource()), &view, handle);
+				const_cast<ID3D12Resource*>(reinterpret_cast<const ID3D12Resource*>(texPtr->GetResource())), &view, handle);
 		}
 		else {
 			LOG_WARN("Texture Type doesn't support!");
